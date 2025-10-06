@@ -97,9 +97,8 @@ fun CalendarScreen(
                 ),
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
                         Text(
-                            text = today.toYm(),
+                            text = focusedMonth.toYm(),
                             fontSize = 18.sp,
                             color = MaterialTheme.colorScheme.onPrimary,
                         )

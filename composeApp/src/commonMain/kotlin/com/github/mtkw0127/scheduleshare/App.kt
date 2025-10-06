@@ -8,10 +8,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.github.mtkw0127.scheduleshare.generator.CalendarGenerator
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -25,13 +21,13 @@ fun App() {
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-            val thisMonth = CalendarGenerator.createMonth(today)
+            val calendarState = rememberCalendarState()
+
             CalendarScreen(
-                months = listOf(thisMonth),
-                focusedMonth = today,
-                moveToNext = {},
-                moveToPrev = {}
+                months = calendarState.months,
+                focusedMonth = calendarState.focusedMonth,
+                moveToNext = calendarState::moveToNextMonth,
+                moveToPrev = calendarState::moveToPrevMonth
             )
         }
     }

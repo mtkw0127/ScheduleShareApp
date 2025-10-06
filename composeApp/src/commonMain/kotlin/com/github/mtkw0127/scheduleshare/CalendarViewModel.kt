@@ -8,16 +8,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.github.mtkw0127.scheduleshare.generator.CalendarGenerator
 import com.github.mtkw0127.scheduleshare.model.calendar.Month
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Stable
-class CalendarState(
+class CalendarState @OptIn(ExperimentalTime::class) constructor(
     initialFocusedMonth: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 ) {
     var months by mutableStateOf<List<Month>>(emptyList())
@@ -60,6 +61,7 @@ class CalendarState(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun rememberCalendarState(
     initialFocusedMonth: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())

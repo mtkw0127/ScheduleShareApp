@@ -8,12 +8,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import com.github.mtkw0127.scheduleshare.navigation.Screen
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 @Preview
 fun App() {
     MaterialTheme {
+        val navController = rememberNavController()
+
         Column(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.primaryContainer)
@@ -21,14 +28,34 @@ fun App() {
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val calendarState = rememberCalendarState()
+            NavHost(
+                navController = navController,
+                startDestination = Screen.Calendar
+            ) {
+                composable<Screen.Calendar> {
+                    val calendarState = rememberCalendarState()
 
-            CalendarScreen(
-                months = calendarState.months,
-                focusedMonth = calendarState.focusedMonth,
-                moveToNext = calendarState::moveToNextMonth,
-                moveToPrev = calendarState::moveToPrevMonth
-            )
+                    CalendarScreen(
+                        months = calendarState.months,
+                        focusedMonth = calendarState.focusedMonth,
+                        moveToNext = calendarState::moveToNextMonth,
+                        moveToPrev = calendarState::moveToPrevMonth,
+                        onClickDate = { day ->
+                            navController.navigate(Screen.DaySchedule.from(day.value))
+                        }
+                    )
+                }
+
+                composable<Screen.DaySchedule> { backStackEntry ->
+                    val daySchedule: Screen.DaySchedule = backStackEntry.toRoute()
+                    DayScheduleScreen(
+                        date = daySchedule.toLocalDate(),
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
         }
     }
 }

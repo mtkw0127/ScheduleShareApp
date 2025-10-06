@@ -45,11 +45,12 @@ import com.github.mtkw0127.scheduleshare.model.calendar.Day
 import com.github.mtkw0127.scheduleshare.model.calendar.Month
 import com.github.mtkw0127.scheduleshare.model.calendar.Week
 import kotlinx.coroutines.delay
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import kotlin.math.absoluteValue
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -263,6 +264,7 @@ private fun Week(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
 private fun DateCell(
     day: Day,

@@ -213,7 +213,9 @@ private fun DateView(
         Week(month.thirdWeek, onClickDate, Modifier.weight(1F))
         Week(month.fourthWeek, onClickDate, Modifier.weight(1F))
         Week(month.fifthWeek, onClickDate, Modifier.weight(1F))
-        Week(month.sixthWeek, onClickDate, Modifier.weight(1F))
+        month.sixthWeek?.let { week ->
+            Week(week, onClickDate, Modifier.weight(1F))
+        }
     }
 }
 

@@ -15,7 +15,9 @@ import kotlinx.datetime.plus
 object CalendarGenerator {
     fun createMonth(today: LocalDate): Month {
         // その月の初日を取得
-        val firstWeek = createFirstWeek(today.firstDayOfMonth())
+        val firstDayOfMonth = today.firstDayOfMonth()
+        val firstWeek = createFirstWeek(firstDayOfMonth)
+
         // 第二週作成
         val secondWeek =
             createWeekNotFirstAndLast(firstWeek.saturday.value.plus(1, DateTimeUnit.DAY))
@@ -28,12 +30,17 @@ object CalendarGenerator {
         // 第五週作成
         val fifthWeek =
             createWeekNotFirstAndLast(fourthWeek.saturday.value.plus(1, DateTimeUnit.DAY))
-        // 第六週作成するかも
-        val sixthWeek =
-            createWeekNotFirstAndLast(fifthWeek.saturday.value.plus(1, DateTimeUnit.DAY))
+
+        // 第六週が必要かチェック（第六週の日曜日が当月内なら第六週も作成）
+        val sixthWeekSunday = fifthWeek.saturday.value.plus(1, DateTimeUnit.DAY)
+        val sixthWeek = if (sixthWeekSunday.month == firstDayOfMonth.month) {
+            createWeekNotFirstAndLast(sixthWeekSunday)
+        } else {
+            null
+        }
 
         return Month(
-            firstDay = today,
+            firstDay = firstDayOfMonth,
             firstWeek = firstWeek,
             secondWeek = secondWeek,
             thirdWeek = thirdWeek,

@@ -9,5 +9,5 @@ data class Month(
     val thirdWeek: Week,
     val fourthWeek: Week,
     val fifthWeek: Week,
-    val sixthWeek: Week,
+    val sixthWeek: Week?,
 )

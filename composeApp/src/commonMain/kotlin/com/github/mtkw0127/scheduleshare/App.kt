@@ -13,17 +13,18 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.github.mtkw0127.scheduleshare.navigation.Screen
+import com.github.mtkw0127.scheduleshare.theme.ScheduleShareTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
+    ScheduleShareTheme {
         val navController = rememberNavController()
 
         Column(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
+                .background(MaterialTheme.colorScheme.background)
                 .statusBarsPadding()
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,

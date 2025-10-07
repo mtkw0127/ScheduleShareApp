@@ -1,6 +1,7 @@
 package com.github.mtkw0127.scheduleshare.navigation
 
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.number
 import kotlinx.serialization.Serializable
 
 sealed interface Screen {
@@ -23,8 +24,8 @@ sealed interface Screen {
             fun from(date: LocalDate): DaySchedule {
                 return DaySchedule(
                     year = date.year,
-                    month = date.monthNumber,
-                    day = date.dayOfMonth
+                    month = date.month.number,
+                    day = date.day
                 )
             }
         }
@@ -54,8 +55,8 @@ sealed interface Screen {
             ): ScheduleAdd {
                 return ScheduleAdd(
                     year = date.year,
-                    month = date.monthNumber,
-                    day = date.dayOfMonth,
+                    month = date.month.number,
+                    day = date.day,
                     scheduleId = scheduleId,
                     startHour = startTime?.hour,
                     startMinute = startTime?.minute,

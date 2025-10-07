@@ -4,13 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -33,6 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -203,7 +205,9 @@ private fun TimelineView(timedSchedules: List<Schedule>) {
                         is Schedule.TimeType.Timed -> {
                             ScheduleCard(schedule)
                         }
-                        else -> { /* 終日は別で表示済み */ }
+
+                        else -> { /* 終日は別で表示済み */
+                        }
                     }
                 }
             },
@@ -211,39 +215,81 @@ private fun TimelineView(timedSchedules: List<Schedule>) {
         ) { measurables, constraints ->
             val hourHeightPx = hourHeight.toPx()
 
-            val placeables = measurables.mapIndexed { index, measurable ->
-                val schedule = timedSchedules[index]
-                val timeType = schedule.timeType as Schedule.TimeType.Timed
+            // 予定の時間範囲情報を保持
+            data class ScheduleInfo(
+                val startMinutes: Int,
+                val endMinutes: Int,
+                val column: Int,
+                val totalColumns: Int
+            )
 
-                // 開始時刻から終了時刻までの分数を計算
+            // 重なりを検出して列を割り当て
+            val scheduleInfos = mutableListOf<ScheduleInfo>()
+            timedSchedules.forEach { schedule ->
+                val timeType = schedule.timeType as Schedule.TimeType.Timed
                 val startMinutes = timeType.start.hour * 60 + timeType.start.minute
                 val endMinutes = timeType.end.hour * 60 + timeType.end.minute
-                val durationMinutes = endMinutes - startMinutes
+
+                // この予定と重なる予定を探す
+                val overlapping = scheduleInfos.filter { info ->
+                    !(endMinutes <= info.startMinutes || startMinutes >= info.endMinutes)
+                }
+
+                // 使用可能な列を見つける
+                val usedColumns = overlapping.map { it.column }.toSet()
+                val column =
+                    (0 until (overlapping.size + 1)).firstOrNull { it !in usedColumns } ?: 0
+
+                // この予定と重なる全ての予定の最大列数を更新
+                val maxColumns = maxOf(column + 1, overlapping.maxOfOrNull { it.totalColumns } ?: 1)
+
+                scheduleInfos.add(ScheduleInfo(startMinutes, endMinutes, column, maxColumns))
+
+                // 重なっている予定の totalColumns を更新
+                overlapping.forEach { info ->
+                    val index = scheduleInfos.indexOf(info)
+                    if (index >= 0) {
+                        scheduleInfos[index] = info.copy(totalColumns = maxColumns)
+                    }
+                }
+            }
+
+            val placeables = measurables.mapIndexed { index, measurable ->
+                val info = scheduleInfos[index]
+                val durationMinutes = info.endMinutes - info.startMinutes
 
                 // 高さを計算（分単位で）
                 val scheduleHeight = (durationMinutes / 60f * hourHeightPx).toInt()
 
-                // 幅は親の幅いっぱい、高さは計算した値
+                // 幅を列数で分割
+                val availableWidth = constraints.maxWidth - 16
+                val scheduleWidth = availableWidth / info.totalColumns
+
                 val placeable = measurable.measure(
                     Constraints.fixed(
-                        width = constraints.maxWidth - 16, // 左右のパディング
+                        width = scheduleWidth - 4, // 列間のマージン
                         height = scheduleHeight.coerceAtLeast(40) // 最小40px
                     )
                 )
 
-                Triple(placeable, startMinutes, schedule)
+                Triple(placeable, info.startMinutes, info)
             }
 
             // 24時間分の高さを計算
             val totalHeight = (24 * hourHeightPx).toInt()
 
             layout(constraints.maxWidth, totalHeight) {
-                placeables.forEach { (placeable, startMinutes, _) ->
+                placeables.forEach { (placeable, startMinutes, info) ->
                     // Y座標を計算（開始時刻に基づく）
                     val yOffset = (startMinutes / 60f * hourHeightPx).toInt()
 
+                    // X座標を列に基づいて計算
+                    val availableWidth = constraints.maxWidth - 16
+                    val columnWidth = availableWidth / info.totalColumns
+                    val xOffset = 8 + (columnWidth * info.column)
+
                     placeable.placeRelative(
-                        x = 8, // 左パディング
+                        x = xOffset,
                         y = yOffset
                     )
                 }
@@ -253,41 +299,91 @@ private fun TimelineView(timedSchedules: List<Schedule>) {
 }
 
 @Composable
-private fun ScheduleCard(schedule: Schedule) {
+private fun ScheduleCard(schedule: Schedule, modifier: Modifier = Modifier) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         ),
         shape = RoundedCornerShape(4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(8.dp)
+        BoxWithConstraints(
+            modifier = Modifier.padding(4.dp)
         ) {
-            Text(
-                text = schedule.title,
-                fontSize = 14.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            if (schedule.description.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = schedule.description,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            when (val timeType = schedule.timeType) {
-                is Schedule.TimeType.Timed -> {
-                    Spacer(modifier = Modifier.height(4.dp))
+            val availableHeight = maxHeight
+
+            // 高さに応じて表示内容を調整
+            when {
+                // 60dp未満: タイトルのみ、1行に省略
+                availableHeight < 60.dp -> {
                     Text(
-                        text = "${timeType.start} - ${timeType.end}",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        text = schedule.title,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-                is Schedule.TimeType.AllDay -> { /* 終日は時刻を表示しない */ }
+                // 60-100dp: タイトルと時刻
+                availableHeight < 100.dp -> {
+                    Column {
+                        Text(
+                            text = schedule.title,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        when (val timeType = schedule.timeType) {
+                            is Schedule.TimeType.Timed -> {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "${timeType.start} - ${timeType.end}",
+                                    fontSize = 10.sp,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                                    maxLines = 1
+                                )
+                            }
+
+                            is Schedule.TimeType.AllDay -> {}
+                        }
+                    }
+                }
+                // 100dp以上: 全て表示
+                else -> {
+                    Column {
+                        Text(
+                            text = schedule.title,
+                            fontSize = 14.sp,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        if (schedule.description.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = schedule.description,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        when (val timeType = schedule.timeType) {
+                            is Schedule.TimeType.Timed -> {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "${timeType.start} - ${timeType.end}",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                )
+                            }
+
+                            is Schedule.TimeType.AllDay -> {}
+                        }
+                    }
+                }
             }
         }
     }

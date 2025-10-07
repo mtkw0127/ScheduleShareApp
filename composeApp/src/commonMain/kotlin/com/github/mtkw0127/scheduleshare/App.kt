@@ -31,8 +31,18 @@ fun App() {
         ) {
             NavHost(
                 navController = navController,
-                startDestination = Screen.Calendar
+                startDestination = Screen.Login
             ) {
+                composable<Screen.Login> {
+                    LoginScreen(
+                        onLoginClick = {
+                            navController.navigate(Screen.Calendar) {
+                                popUpTo(Screen.Login) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
                 composable<Screen.Calendar> {
                     val calendarState = rememberCalendarState()
 

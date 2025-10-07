@@ -6,13 +6,17 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,6 +36,8 @@ import androidx.compose.ui.unit.sp
 import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
 import com.github.mtkw0127.scheduleshare.extension.toJapanese
 import com.github.mtkw0127.scheduleshare.extension.toYmd
+import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
+import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
@@ -44,12 +50,16 @@ import kotlin.math.absoluteValue
 @Composable
 fun DayScheduleScreen(
     date: LocalDate,
+    scheduleRepository: ScheduleRepository,
     onBackClick: () -> Unit,
     onDateChange: (LocalDate) -> Unit = {},
     onAddScheduleClick: () -> Unit = {}
 ) {
     var currentDate by remember(date) { mutableStateOf(date) }
     var dragOffset by remember { mutableStateOf(0f) }
+    val schedules = remember(currentDate) {
+        scheduleRepository.getSchedulesByDate(currentDate)
+    }
 
     Scaffold(
         topBar = {
@@ -113,16 +123,88 @@ fun DayScheduleScreen(
                 }
                 .verticalScroll(rememberScrollState())
         ) {
+            // 終日の予定を最初に表示
+            val allDaySchedules = schedules.filter { it.timeType is Schedule.TimeType.AllDay }
+            if (allDaySchedules.isNotEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = "終日",
+                        fontSize = 12.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    allDaySchedules.forEach { schedule ->
+                        ScheduleCard(schedule)
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+                }
+            }
+
             // 0時から23時まで24時間分
             (0..23).forEach { hour ->
-                HourlyScheduleItem(hour = hour)
+                HourlyScheduleItem(
+                    hour = hour,
+                    schedules = schedules.filter { schedule ->
+                        when (val timeType = schedule.timeType) {
+                            is Schedule.TimeType.AllDay -> false
+                            is Schedule.TimeType.Timed -> timeType.start.hour == hour
+                        }
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun HourlyScheduleItem(hour: Int) {
+private fun ScheduleCard(schedule: Schedule) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        shape = RoundedCornerShape(4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp)
+        ) {
+            Text(
+                text = schedule.title,
+                fontSize = 14.sp,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            if (schedule.description.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = schedule.description,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            when (val timeType = schedule.timeType) {
+                is Schedule.TimeType.Timed -> {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "${timeType.start} - ${timeType.end}",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
+                }
+                is Schedule.TimeType.AllDay -> { /* 終日は時刻を表示しない */ }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HourlyScheduleItem(hour: Int, schedules: List<Schedule>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -148,14 +230,19 @@ private fun HourlyScheduleItem(hour: Int) {
             )
         }
 
-        // 予定表示部分（空白）
+        // 予定表示部分
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxSize()
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
-            // 予定がある場合はここに表示
+            Column {
+                schedules.forEach { schedule ->
+                    ScheduleCard(schedule)
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+            }
         }
     }
 }

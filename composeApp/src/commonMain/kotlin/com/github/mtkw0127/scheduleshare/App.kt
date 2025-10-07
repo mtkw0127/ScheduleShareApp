@@ -81,6 +81,7 @@ fun App() {
                     val daySchedule: Screen.DaySchedule = backStackEntry.toRoute()
                     DayScheduleScreen(
                         date = daySchedule.toLocalDate(),
+                        scheduleRepository = scheduleRepository,
                         onBackClick = {
                             navController.popBackStack()
                         },

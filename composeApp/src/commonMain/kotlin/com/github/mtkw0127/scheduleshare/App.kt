@@ -47,11 +47,12 @@ fun App() {
                 }
 
                 composable<Screen.Calendar> {
-                    val calendarState = rememberCalendarState()
+                    val calendarState = rememberCalendarState(scheduleRepository)
 
                     CalendarScreen(
                         months = calendarState.months,
                         focusedMonth = calendarState.focusedMonth,
+                        schedules = calendarState.schedules,
                         moveToNext = calendarState::moveToNextMonth,
                         moveToPrev = calendarState::moveToPrevMonth,
                         onClickDate = { day ->

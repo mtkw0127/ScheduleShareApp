@@ -58,6 +58,7 @@ import kotlin.time.ExperimentalTime
 fun CalendarScreen(
     months: List<Month>,
     focusedMonth: LocalDate,
+    schedules: Map<LocalDate, List<com.github.mtkw0127.scheduleshare.model.schedule.Schedule>>,
     moveToPrev: () -> Unit,
     moveToNext: () -> Unit,
     onClickDate: (Day) -> Unit = {},
@@ -140,7 +141,7 @@ fun CalendarScreen(
                         }
                     ) {
                         DayView(screenWidth)
-                        DateView(month, onClickDate, screenWidth, screenHeight)
+                        DateView(month, schedules, onClickDate, screenWidth, screenHeight)
                     }
                 }
             }
@@ -206,6 +207,7 @@ private fun DayCell(
 @Composable
 private fun DateView(
     month: Month,
+    schedules: Map<LocalDate, List<com.github.mtkw0127.scheduleshare.model.schedule.Schedule>>,
     onClickDate: (Day) -> Unit,
     screenWidth: Dp,
     screenHeight: Dp
@@ -215,13 +217,13 @@ private fun DateView(
             .width(screenWidth)
             .height(screenHeight)
     ) {
-        Week(month.firstWeek, onClickDate, Modifier.weight(1F))
-        Week(month.secondWeek, onClickDate, Modifier.weight(1F))
-        Week(month.thirdWeek, onClickDate, Modifier.weight(1F))
-        Week(month.fourthWeek, onClickDate, Modifier.weight(1F))
-        Week(month.fifthWeek, onClickDate, Modifier.weight(1F))
+        Week(month.firstWeek, schedules, onClickDate, Modifier.weight(1F))
+        Week(month.secondWeek, schedules, onClickDate, Modifier.weight(1F))
+        Week(month.thirdWeek, schedules, onClickDate, Modifier.weight(1F))
+        Week(month.fourthWeek, schedules, onClickDate, Modifier.weight(1F))
+        Week(month.fifthWeek, schedules, onClickDate, Modifier.weight(1F))
         month.sixthWeek?.let { week ->
-            Week(week, onClickDate, Modifier.weight(1F))
+            Week(week, schedules, onClickDate, Modifier.weight(1F))
         }
     }
 }
@@ -229,42 +231,50 @@ private fun DateView(
 @Composable
 private fun Week(
     week: Week,
+    schedules: Map<LocalDate, List<com.github.mtkw0127.scheduleshare.model.schedule.Schedule>>,
     onClickDate: (Day) -> Unit,
     modifier: Modifier,
 ) {
     Row(modifier = modifier.fillMaxWidth()) {
         DateCell(
             day = week.sunday,
+            schedules = schedules,
             onClickDate,
             Modifier.weight(1F)
         )
         DateCell(
             day = week.monday,
+            schedules = schedules,
             onClickDate,
             Modifier.weight(1F)
         )
         DateCell(
             day = week.tuesday,
+            schedules = schedules,
             onClickDate,
             Modifier.weight(1F)
         )
         DateCell(
             day = week.wednesday,
+            schedules = schedules,
             onClickDate,
             Modifier.weight(1F)
         )
         DateCell(
             day = week.thursday,
+            schedules = schedules,
             onClickDate,
             Modifier.weight(1F)
         )
         DateCell(
             day = week.friday,
+            schedules = schedules,
             onClickDate,
             Modifier.weight(1F)
         )
         DateCell(
             day = week.saturday,
+            schedules = schedules,
             onClickDate,
             Modifier.weight(1F)
         )
@@ -275,9 +285,12 @@ private fun Week(
 @Composable
 private fun DateCell(
     day: Day,
+    schedules: Map<LocalDate, List<com.github.mtkw0127.scheduleshare.model.schedule.Schedule>>,
     onClickDate: (Day) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val daySchedules = schedules[day.value] ?: emptyList()
+
     Column(
         modifier = modifier
             .fillMaxHeight()
@@ -310,6 +323,28 @@ private fun DateCell(
                 } else {
                     MaterialTheme.colorScheme.onSurface
                 }
+            )
+        }
+
+        // 予定の表示（最大3件まで）
+        daySchedules.take(3).forEach { schedule ->
+            Text(
+                text = schedule.title,
+                fontSize = 8.sp,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 2.dp)
+            )
+        }
+
+        // 3件以上ある場合は「...」を表示
+        if (daySchedules.size > 3) {
+            Text(
+                text = "...",
+                fontSize = 8.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

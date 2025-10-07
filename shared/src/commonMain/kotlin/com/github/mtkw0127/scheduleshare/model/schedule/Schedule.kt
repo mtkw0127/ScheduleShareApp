@@ -1,5 +1,6 @@
 package com.github.mtkw0127.scheduleshare.model.schedule
 
+import com.github.mtkw0127.scheduleshare.model.user.User
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 
@@ -11,6 +12,7 @@ data class Schedule(
     val title: String,
     val description: String,
     val date: LocalDate,
+    val user: User,
     val timeType: TimeType,
     val startTime: LocalTime? = null,
     val endTime: LocalTime? = null
@@ -44,13 +46,15 @@ data class Schedule(
             id: Id,
             title: String,
             description: String,
-            date: LocalDate
+            date: LocalDate,
+            user: User
         ): Schedule {
             return Schedule(
                 id = id,
                 title = title,
                 description = description,
                 date = date,
+                user = user,
                 timeType = TimeType.AllDay
             )
         }
@@ -63,6 +67,7 @@ data class Schedule(
             title: String,
             description: String,
             date: LocalDate,
+            user: User,
             startTime: LocalTime,
             endTime: LocalTime
         ): Schedule {
@@ -71,6 +76,7 @@ data class Schedule(
                 title = title,
                 description = description,
                 date = date,
+                user = user,
                 timeType = TimeType.Timed(startTime, endTime),
                 startTime = startTime,
                 endTime = endTime

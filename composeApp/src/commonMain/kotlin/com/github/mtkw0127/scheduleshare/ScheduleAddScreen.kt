@@ -31,7 +31,11 @@ import androidx.compose.ui.unit.sp
 import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
 import com.github.mtkw0127.scheduleshare.extension.toJapanese
 import com.github.mtkw0127.scheduleshare.extension.toYmd
+import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
+import com.github.mtkw0127.scheduleshare.model.user.User
+import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_back
@@ -39,6 +43,7 @@ import scheduleshare.composeapp.generated.resources.arrow_back
 @Composable
 fun ScheduleAddScreen(
     date: LocalDate,
+    scheduleRepository: ScheduleRepository,
     onBackClick: () -> Unit = {},
     onSaveClick: () -> Unit = {}
 ) {
@@ -199,8 +204,51 @@ fun ScheduleAddScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = onSaveClick,
-                modifier = Modifier.fillMaxWidth()
+                onClick = {
+                    // バリデーション
+                    if (title.isBlank()) {
+                        return@Button
+                    }
+
+                    // 予定を作成
+                    val schedule = if (isAllDay) {
+                        Schedule.createAllDay(
+                            id = Schedule.Id(System.currentTimeMillis().toString()),
+                            title = title,
+                            description = description,
+                            date = date,
+                            user = User.createTest()
+                        )
+                    } else {
+                        // 時刻のバリデーション
+                        val startH = startHour.toIntOrNull() ?: return@Button
+                        val startM = startMinute.toIntOrNull() ?: return@Button
+                        val endH = endHour.toIntOrNull() ?: return@Button
+                        val endM = endMinute.toIntOrNull() ?: return@Button
+
+                        if (startH !in 0..23 || startM !in 0..59 || endH !in 0..23 || endM !in 0..59) {
+                            return@Button
+                        }
+
+                        Schedule.createTimed(
+                            id = Schedule.Id(System.currentTimeMillis().toString()),
+                            title = title,
+                            description = description,
+                            date = date,
+                            user = User.createTest(),
+                            startTime = LocalTime(startH, startM),
+                            endTime = LocalTime(endH, endM)
+                        )
+                    }
+
+                    // Repositoryに追加
+                    scheduleRepository.addSchedule(schedule)
+
+                    // 画面を閉じる
+                    onSaveClick()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = title.isNotBlank()
             ) {
                 Text("保存")
             }

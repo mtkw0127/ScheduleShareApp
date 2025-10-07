@@ -4,6 +4,7 @@ import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.number
 
 /**
  * スケジュールのリポジトリ
@@ -20,7 +21,7 @@ class ScheduleRepository {
      */
     fun getSchedulesByMonth(year: Int, month: Int): List<Schedule> {
         return schedules.filter {
-            it.date.year == year && it.date.monthNumber == month
+            it.date.year == year && it.date.month.number == month
         }
     }
 

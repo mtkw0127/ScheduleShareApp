@@ -100,11 +100,11 @@ fun App() {
                     val scheduleAdd: Screen.ScheduleAdd = backStackEntry.toRoute()
                     ScheduleAddScreen(
                         date = scheduleAdd.toLocalDate(),
+                        scheduleRepository = scheduleRepository,
                         onBackClick = {
                             navController.popBackStack()
                         },
                         onSaveClick = {
-                            // TODO: 予定保存処理
                             navController.popBackStack()
                         }
                     )

@@ -2,6 +2,7 @@ package com.github.mtkw0127.scheduleshare
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,29 +19,41 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
 import com.github.mtkw0127.scheduleshare.extension.toJapanese
 import com.github.mtkw0127.scheduleshare.extension.toYmd
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_back
+import kotlin.math.absoluteValue
 
 @Composable
 fun DayScheduleScreen(
     date: LocalDate,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onDateChange: (LocalDate) -> Unit = {}
 ) {
+    var currentDate by remember(date) { mutableStateOf(date) }
+    var dragOffset by remember { mutableStateOf(0f) }
+
     Scaffold(
         topBar = {
             CommonTopAppBar(
                 title = {
                     Text(
-                        text = "${date.toYmd()} (${date.dayOfWeek.toJapanese()})",
+                        text = "${currentDate.toYmd()} (${currentDate.dayOfWeek.toJapanese()})",
                         fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
@@ -61,6 +74,28 @@ fun DayScheduleScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            val threshold = 100f
+                            if (dragOffset.absoluteValue > threshold) {
+                                val newDate = if (dragOffset > 0) {
+                                    // 右スワイプ: 前日へ
+                                    currentDate.plus(DatePeriod(days = -1))
+                                } else {
+                                    // 左スワイプ: 翌日へ
+                                    currentDate.plus(DatePeriod(days = 1))
+                                }
+                                currentDate = newDate
+                                onDateChange(newDate)
+                            }
+                            dragOffset = 0f
+                        },
+                        onHorizontalDrag = { _, dragAmount ->
+                            dragOffset += dragAmount
+                        }
+                    )
+                }
                 .verticalScroll(rememberScrollState())
         ) {
             // 0時から23時まで24時間分

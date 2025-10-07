@@ -79,6 +79,11 @@ fun App() {
                         date = daySchedule.toLocalDate(),
                         onBackClick = {
                             navController.popBackStack()
+                        },
+                        onDateChange = { newDate ->
+                            navController.navigate(Screen.DaySchedule.from(newDate)) {
+                                popUpTo(Screen.DaySchedule::class) { inclusive = true }
+                            }
                         }
                     )
                 }

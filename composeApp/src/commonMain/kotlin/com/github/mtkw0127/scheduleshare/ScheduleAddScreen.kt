@@ -50,6 +50,10 @@ fun ScheduleAddScreen(
     date: LocalDate,
     scheduleRepository: ScheduleRepository,
     scheduleId: String? = null,
+    initialStartHour: Int? = null,
+    initialStartMinute: Int? = null,
+    initialEndHour: Int? = null,
+    initialEndMinute: Int? = null,
     onBackClick: () -> Unit = {},
     onSaveClick: () -> Unit = {}
 ) {
@@ -60,17 +64,49 @@ fun ScheduleAddScreen(
 
     var title by remember { mutableStateOf(existingSchedule?.title ?: "") }
     var description by remember { mutableStateOf(existingSchedule?.description ?: "") }
+
+    // 初期時刻が指定されている場合は時間指定モードで開始
     var isAllDay by remember {
-        mutableStateOf(existingSchedule?.timeType is Schedule.TimeType.AllDay || existingSchedule == null)
+        mutableStateOf(
+            if (initialStartHour != null) {
+                false
+            } else {
+                existingSchedule?.timeType is Schedule.TimeType.AllDay || existingSchedule == null
+            }
+        )
     }
 
     val initialStartTime = (existingSchedule?.timeType as? Schedule.TimeType.Timed)?.start
     val initialEndTime = (existingSchedule?.timeType as? Schedule.TimeType.Timed)?.end
 
-    var startHour by remember { mutableStateOf(initialStartTime?.hour?.toString()?.padStart(2, '0') ?: "09") }
-    var startMinute by remember { mutableStateOf(initialStartTime?.minute?.toString()?.padStart(2, '0') ?: "00") }
-    var endHour by remember { mutableStateOf(initialEndTime?.hour?.toString()?.padStart(2, '0') ?: "10") }
-    var endMinute by remember { mutableStateOf(initialEndTime?.minute?.toString()?.padStart(2, '0') ?: "00") }
+    var startHour by remember {
+        mutableStateOf(
+            initialStartHour?.toString()?.padStart(2, '0')
+                ?: initialStartTime?.hour?.toString()?.padStart(2, '0')
+                ?: "09"
+        )
+    }
+    var startMinute by remember {
+        mutableStateOf(
+            initialStartMinute?.toString()?.padStart(2, '0')
+                ?: initialStartTime?.minute?.toString()?.padStart(2, '0')
+                ?: "00"
+        )
+    }
+    var endHour by remember {
+        mutableStateOf(
+            initialEndHour?.toString()?.padStart(2, '0')
+                ?: initialEndTime?.hour?.toString()?.padStart(2, '0')
+                ?: "10"
+        )
+    }
+    var endMinute by remember {
+        mutableStateOf(
+            initialEndMinute?.toString()?.padStart(2, '0')
+                ?: initialEndTime?.minute?.toString()?.padStart(2, '0')
+                ?: "00"
+        )
+    }
 
     // 保存ボタンの有効/無効を判定
     val isSaveEnabled = remember(title, isAllDay, startHour, startMinute, endHour, endMinute) {

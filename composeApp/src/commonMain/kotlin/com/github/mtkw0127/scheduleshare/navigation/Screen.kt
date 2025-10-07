@@ -39,15 +39,28 @@ sealed interface Screen {
         val year: Int,
         val month: Int,
         val day: Int,
-        val scheduleId: String? = null
+        val scheduleId: String? = null,
+        val startHour: Int? = null,
+        val startMinute: Int? = null,
+        val endHour: Int? = null,
+        val endMinute: Int? = null
     ) : Screen {
         companion object {
-            fun from(date: LocalDate, scheduleId: String? = null): ScheduleAdd {
+            fun from(
+                date: LocalDate,
+                scheduleId: String? = null,
+                startTime: kotlinx.datetime.LocalTime? = null,
+                endTime: kotlinx.datetime.LocalTime? = null
+            ): ScheduleAdd {
                 return ScheduleAdd(
                     year = date.year,
                     month = date.monthNumber,
                     day = date.dayOfMonth,
-                    scheduleId = scheduleId
+                    scheduleId = scheduleId,
+                    startHour = startTime?.hour,
+                    startMinute = startTime?.minute,
+                    endHour = endTime?.hour,
+                    endMinute = endTime?.minute
                 )
             }
         }

@@ -46,6 +46,7 @@ import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
@@ -60,6 +61,7 @@ fun DayScheduleScreen(
     onBackClick: () -> Unit,
     onDateChange: (LocalDate) -> Unit = {},
     onAddScheduleClick: () -> Unit = {},
+    onAddScheduleAtTime: (LocalTime) -> Unit = {},
     onScheduleClick: (Schedule) -> Unit = {}
 ) {
     var currentDate by remember(date) { mutableStateOf(date) }
@@ -155,7 +157,11 @@ fun DayScheduleScreen(
 
             // 時間軸と予定を表示
             val timedSchedules = schedules.filter { it.timeType is Schedule.TimeType.Timed }
-            TimelineView(timedSchedules = timedSchedules, onScheduleClick = onScheduleClick)
+            TimelineView(
+                timedSchedules = timedSchedules,
+                onScheduleClick = onScheduleClick,
+                onTimelineClick = onAddScheduleAtTime
+            )
         }
     }
 }
@@ -163,7 +169,8 @@ fun DayScheduleScreen(
 @Composable
 private fun TimelineView(
     timedSchedules: List<Schedule>,
-    onScheduleClick: (Schedule) -> Unit = {}
+    onScheduleClick: (Schedule) -> Unit = {},
+    onTimelineClick: (LocalTime) -> Unit = {}
 ) {
     val hourHeight = 60.dp
 
@@ -196,8 +203,14 @@ private fun TimelineView(
                         )
                     }
 
-                    // スケジュール配置用のスペース
-                    Box(modifier = Modifier.weight(1f))
+                    // スケジュール配置用のスペース（クリック可能）
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                onTimelineClick(LocalTime(hour, 0))
+                            }
+                    )
                 }
             }
         }

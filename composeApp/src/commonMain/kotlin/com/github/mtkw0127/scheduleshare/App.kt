@@ -16,6 +16,7 @@ import androidx.navigation.toRoute
 import com.github.mtkw0127.scheduleshare.navigation.Screen
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.theme.ScheduleShareTheme
+import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -93,6 +94,19 @@ fun App() {
                         onAddScheduleClick = {
                             navController.navigate(Screen.ScheduleAdd.from(daySchedule.toLocalDate()))
                         },
+                        onAddScheduleAtTime = { time ->
+                            val endTime = LocalTime(
+                                hour = if (time.hour == 23) 23 else time.hour + 1,
+                                minute = if (time.hour == 23) 59 else time.minute
+                            )
+                            navController.navigate(
+                                Screen.ScheduleAdd.from(
+                                    date = daySchedule.toLocalDate(),
+                                    startTime = time,
+                                    endTime = endTime
+                                )
+                            )
+                        },
                         onScheduleClick = { schedule ->
                             navController.navigate(
                                 Screen.ScheduleAdd.from(
@@ -110,6 +124,10 @@ fun App() {
                         date = scheduleAdd.toLocalDate(),
                         scheduleRepository = scheduleRepository,
                         scheduleId = scheduleAdd.scheduleId,
+                        initialStartHour = scheduleAdd.startHour,
+                        initialStartMinute = scheduleAdd.startMinute,
+                        initialEndHour = scheduleAdd.endHour,
+                        initialEndMinute = scheduleAdd.endMinute,
                         onBackClick = {
                             navController.popBackStack()
                         },

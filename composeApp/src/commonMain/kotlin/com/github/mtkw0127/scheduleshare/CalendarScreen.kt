@@ -1,6 +1,5 @@
 package com.github.mtkw0127.scheduleshare
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -18,6 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -46,6 +47,9 @@ import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import org.jetbrains.compose.resources.vectorResource
+import scheduleshare.composeapp.generated.resources.Res
+import scheduleshare.composeapp.generated.resources.user
 import kotlin.math.absoluteValue
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -95,6 +99,15 @@ fun CalendarScreen(
                             text = focusedMonth.toYm(),
                             fontSize = 18.sp,
                             color = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { /* TODO: ユーザー情報表示 */ }) {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.user),
+                            contentDescription = "ユーザー",
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }

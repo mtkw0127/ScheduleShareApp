@@ -11,13 +11,15 @@ import androidx.compose.ui.Modifier
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommonTopAppBar(
-    title: @Composable () -> Unit
+    title: @Composable () -> Unit,
+    actions: @Composable () -> Unit = {}
 ) {
     TopAppBar(
         modifier = Modifier.background(MaterialTheme.colorScheme.primary),
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.primary
         ),
-        title = title
+        title = title,
+        actions = { actions() }
     )
 }

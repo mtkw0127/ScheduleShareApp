@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -31,6 +32,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
@@ -146,17 +149,104 @@ fun DayScheduleScreen(
                 }
             }
 
-            // 0時から23時まで24時間分
+            // 時間軸と予定を表示
+            val timedSchedules = schedules.filter { it.timeType is Schedule.TimeType.Timed }
+            TimelineView(timedSchedules = timedSchedules)
+        }
+    }
+}
+
+@Composable
+private fun TimelineView(timedSchedules: List<Schedule>) {
+    val hourHeight = 60.dp
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        // 時間軸の背景（0-23時）
+        Column {
             (0..23).forEach { hour ->
-                HourlyScheduleItem(
-                    hour = hour,
-                    schedules = schedules.filter { schedule ->
-                        when (val timeType = schedule.timeType) {
-                            is Schedule.TimeType.AllDay -> false
-                            is Schedule.TimeType.Timed -> timeType.start.hour == hour
-                        }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(hourHeight)
+                        .border(
+                            width = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+                ) {
+                    // 時刻表示部分
+                    Box(
+                        modifier = Modifier
+                            .width(60.dp)
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(8.dp),
+                        contentAlignment = Alignment.TopCenter
+                    ) {
+                        Text(
+                            text = "${hour.toString().padStart(2, '0')}:00",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
+
+                    // スケジュール配置用のスペース
+                    Box(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+
+        // 予定を絶対配置
+        Layout(
+            content = {
+                timedSchedules.forEach { schedule ->
+                    when (val timeType = schedule.timeType) {
+                        is Schedule.TimeType.Timed -> {
+                            ScheduleCard(schedule)
+                        }
+                        else -> { /* 終日は別で表示済み */ }
+                    }
+                }
+            },
+            modifier = Modifier.padding(start = 60.dp)
+        ) { measurables, constraints ->
+            val hourHeightPx = hourHeight.toPx()
+
+            val placeables = measurables.mapIndexed { index, measurable ->
+                val schedule = timedSchedules[index]
+                val timeType = schedule.timeType as Schedule.TimeType.Timed
+
+                // 開始時刻から終了時刻までの分数を計算
+                val startMinutes = timeType.start.hour * 60 + timeType.start.minute
+                val endMinutes = timeType.end.hour * 60 + timeType.end.minute
+                val durationMinutes = endMinutes - startMinutes
+
+                // 高さを計算（分単位で）
+                val scheduleHeight = (durationMinutes / 60f * hourHeightPx).toInt()
+
+                // 幅は親の幅いっぱい、高さは計算した値
+                val placeable = measurable.measure(
+                    Constraints.fixed(
+                        width = constraints.maxWidth - 16, // 左右のパディング
+                        height = scheduleHeight.coerceAtLeast(40) // 最小40px
+                    )
                 )
+
+                Triple(placeable, startMinutes, schedule)
+            }
+
+            // 24時間分の高さを計算
+            val totalHeight = (24 * hourHeightPx).toInt()
+
+            layout(constraints.maxWidth, totalHeight) {
+                placeables.forEach { (placeable, startMinutes, _) ->
+                    // Y座標を計算（開始時刻に基づく）
+                    val yOffset = (startMinutes / 60f * hourHeightPx).toInt()
+
+                    placeable.placeRelative(
+                        x = 8, // 左パディング
+                        y = yOffset
+                    )
+                }
             }
         }
     }

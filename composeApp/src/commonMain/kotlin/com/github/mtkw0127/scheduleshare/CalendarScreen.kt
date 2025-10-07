@@ -61,6 +61,7 @@ fun CalendarScreen(
     moveToPrev: () -> Unit,
     moveToNext: () -> Unit,
     onClickDate: (Day) -> Unit = {},
+    onUserIconClick: () -> Unit = {},
 ) {
     val state = rememberLazyListState()
     var changingFocus by remember { mutableStateOf(false) }
@@ -103,7 +104,7 @@ fun CalendarScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: ユーザー情報表示 */ }) {
+                    IconButton(onClick = onUserIconClick) {
                         Icon(
                             imageVector = vectorResource(Res.drawable.user),
                             contentDescription = "ユーザー",

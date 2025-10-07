@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 @Composable
 fun CommonTopAppBar(
     title: @Composable () -> Unit,
+    navigationIcon: @Composable () -> Unit = {},
     actions: @Composable () -> Unit = {}
 ) {
     TopAppBar(
@@ -20,6 +21,7 @@ fun CommonTopAppBar(
             containerColor = MaterialTheme.colorScheme.primary
         ),
         title = title,
+        navigationIcon = navigationIcon,
         actions = { actions() }
     )
 }

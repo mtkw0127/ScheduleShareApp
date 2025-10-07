@@ -1,29 +1,35 @@
 package com.github.mtkw0127.scheduleshare
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.github.mtkw0127.scheduleshare.extension.toYm
+import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
+import com.github.mtkw0127.scheduleshare.extension.toJapanese
+import com.github.mtkw0127.scheduleshare.extension.toYmd
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_back
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DayScheduleScreen(
     date: LocalDate,
@@ -31,13 +37,10 @@ fun DayScheduleScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
+            CommonTopAppBar(
                 title = {
                     Text(
-                        text = "${date.toYm()}/${date.dayOfMonth}",
+                        text = "${date.toYmd()} (${date.dayOfWeek.toJapanese()})",
                         fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
@@ -58,20 +61,51 @@ fun DayScheduleScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .verticalScroll(rememberScrollState())
+        ) {
+            // 0時から23時まで24時間分
+            (0..23).forEach { hour ->
+                HourlyScheduleItem(hour = hour)
+            }
+        }
+    }
+}
+
+@Composable
+private fun HourlyScheduleItem(hour: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp)
+            .border(
+                width = 0.5.dp,
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+    ) {
+        // 時刻表示部分
+        Box(
+            modifier = Modifier
+                .width(60.dp)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(8.dp),
+            contentAlignment = Alignment.TopCenter
         ) {
             Text(
-                text = "${date.year}年${date.monthNumber}月${date.dayOfMonth}日の予定",
-                fontSize = 20.sp
+                text = "${hour.toString().padStart(2, '0')}:00",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                text = "予定機能は今後実装予定",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+        }
+
+        // 予定表示部分（空白）
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxSize()
+                .padding(horizontal = 8.dp)
+        ) {
+            // 予定がある場合はここに表示
         }
     }
 }

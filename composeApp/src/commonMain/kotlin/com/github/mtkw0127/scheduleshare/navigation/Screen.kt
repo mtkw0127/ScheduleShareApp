@@ -11,6 +11,9 @@ sealed interface Screen {
     data object Calendar : Screen
 
     @Serializable
+    data object Settings : Screen
+
+    @Serializable
     data class DaySchedule(
         val year: Int,
         val month: Int,

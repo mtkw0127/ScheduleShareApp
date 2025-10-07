@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -13,6 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.github.mtkw0127.scheduleshare.navigation.Screen
+import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.theme.ScheduleShareTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -21,6 +23,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun App() {
     ScheduleShareTheme {
         val navController = rememberNavController()
+        val scheduleRepository = remember { ScheduleRepository.createWithSampleData() }
 
         Column(
             modifier = Modifier

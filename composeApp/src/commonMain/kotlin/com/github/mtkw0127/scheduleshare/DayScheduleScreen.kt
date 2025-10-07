@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,13 +38,15 @@ import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_back
+import scheduleshare.composeapp.generated.resources.plus
 import kotlin.math.absoluteValue
 
 @Composable
 fun DayScheduleScreen(
     date: LocalDate,
     onBackClick: () -> Unit,
-    onDateChange: (LocalDate) -> Unit = {}
+    onDateChange: (LocalDate) -> Unit = {},
+    onAddScheduleClick: () -> Unit = {}
 ) {
     var currentDate by remember(date) { mutableStateOf(date) }
     var dragOffset by remember { mutableStateOf(0f) }
@@ -68,6 +71,18 @@ fun DayScheduleScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onAddScheduleClick,
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    imageVector = vectorResource(Res.drawable.plus),
+                    contentDescription = "予定追加",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
         }
     ) { paddingValues ->
         Column(

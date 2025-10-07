@@ -84,6 +84,23 @@ fun App() {
                             navController.navigate(Screen.DaySchedule.from(newDate)) {
                                 popUpTo(Screen.DaySchedule::class) { inclusive = true }
                             }
+                        },
+                        onAddScheduleClick = {
+                            navController.navigate(Screen.ScheduleAdd.from(daySchedule.toLocalDate()))
+                        }
+                    )
+                }
+
+                composable<Screen.ScheduleAdd> { backStackEntry ->
+                    val scheduleAdd: Screen.ScheduleAdd = backStackEntry.toRoute()
+                    ScheduleAddScreen(
+                        date = scheduleAdd.toLocalDate(),
+                        onBackClick = {
+                            navController.popBackStack()
+                        },
+                        onSaveClick = {
+                            // TODO: 予定保存処理
+                            navController.popBackStack()
                         }
                     )
                 }

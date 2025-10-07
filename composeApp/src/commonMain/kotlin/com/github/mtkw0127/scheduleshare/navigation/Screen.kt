@@ -33,4 +33,25 @@ sealed interface Screen {
             return LocalDate(year, month, day)
         }
     }
+
+    @Serializable
+    data class ScheduleAdd(
+        val year: Int,
+        val month: Int,
+        val day: Int
+    ) : Screen {
+        companion object {
+            fun from(date: LocalDate): ScheduleAdd {
+                return ScheduleAdd(
+                    year = date.year,
+                    month = date.monthNumber,
+                    day = date.dayOfMonth
+                )
+            }
+        }
+
+        fun toLocalDate(): LocalDate {
+            return LocalDate(year, month, day)
+        }
+    }
 }

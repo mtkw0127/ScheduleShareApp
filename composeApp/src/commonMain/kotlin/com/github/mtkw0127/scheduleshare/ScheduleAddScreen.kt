@@ -60,6 +60,31 @@ fun ScheduleAddScreen(
     var endHour by remember { mutableStateOf("10") }
     var endMinute by remember { mutableStateOf("00") }
 
+    // 保存ボタンの有効/無効を判定
+    val isSaveEnabled = remember(title, isAllDay, startHour, startMinute, endHour, endMinute) {
+        if (title.isBlank()) {
+            false
+        } else if (isAllDay) {
+            true
+        } else {
+            // 時間指定の場合は、時刻が妥当かつ開始 <= 終了であることを確認
+            val startH = startHour.toIntOrNull()
+            val startM = startMinute.toIntOrNull()
+            val endH = endHour.toIntOrNull()
+            val endM = endMinute.toIntOrNull()
+
+            if (startH == null || startM == null || endH == null || endM == null) {
+                false
+            } else if (startH !in 0..23 || startM !in 0..59 || endH !in 0..23 || endM !in 0..59) {
+                false
+            } else {
+                val startTime = LocalTime(startH, startM)
+                val endTime = LocalTime(endH, endM)
+                startTime <= endTime
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             CommonTopAppBar(
@@ -254,11 +279,6 @@ fun ScheduleAddScreen(
 
             Button(
                 onClick = {
-                    // バリデーション
-                    if (title.isBlank()) {
-                        return@Button
-                    }
-
                     // 予定を作成
                     val schedule = if (isAllDay) {
                         Schedule.createAllDay(
@@ -271,15 +291,10 @@ fun ScheduleAddScreen(
                             user = User.createTest()
                         )
                     } else {
-                        // 時刻のバリデーション
-                        val startH = startHour.toIntOrNull() ?: return@Button
-                        val startM = startMinute.toIntOrNull() ?: return@Button
-                        val endH = endHour.toIntOrNull() ?: return@Button
-                        val endM = endMinute.toIntOrNull() ?: return@Button
-
-                        if (startH !in 0..23 || startM !in 0..59 || endH !in 0..23 || endM !in 0..59) {
-                            return@Button
-                        }
+                        val startH = startHour.toInt()
+                        val startM = startMinute.toInt()
+                        val endH = endHour.toInt()
+                        val endM = endMinute.toInt()
 
                         Schedule.createTimed(
                             id = Schedule.Id(
@@ -301,7 +316,7 @@ fun ScheduleAddScreen(
                     onSaveClick()
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = title.isNotBlank()
+                enabled = isSaveEnabled
             ) {
                 Text("保存")
             }

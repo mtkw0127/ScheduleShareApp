@@ -125,7 +125,13 @@ fun App() {
                     }
 
                     composable<Screen.Settings> {
-                        SettingsScreen()
+                        SettingsScreen(
+                            onLogoutClick = {
+                                navController.navigate(Screen.Login) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            }
+                        )
                     }
 
                     composable<Screen.DaySchedule> { backStackEntry ->

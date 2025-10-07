@@ -49,16 +49,28 @@ import kotlin.time.TimeSource
 fun ScheduleAddScreen(
     date: LocalDate,
     scheduleRepository: ScheduleRepository,
+    scheduleId: String? = null,
     onBackClick: () -> Unit = {},
     onSaveClick: () -> Unit = {}
 ) {
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var isAllDay by remember { mutableStateOf(true) }
-    var startHour by remember { mutableStateOf("09") }
-    var startMinute by remember { mutableStateOf("00") }
-    var endHour by remember { mutableStateOf("10") }
-    var endMinute by remember { mutableStateOf("00") }
+    // 既存の予定を取得
+    val existingSchedule = remember(scheduleId) {
+        scheduleId?.let { scheduleRepository.getScheduleById(Schedule.Id(it)) }
+    }
+
+    var title by remember { mutableStateOf(existingSchedule?.title ?: "") }
+    var description by remember { mutableStateOf(existingSchedule?.description ?: "") }
+    var isAllDay by remember {
+        mutableStateOf(existingSchedule?.timeType is Schedule.TimeType.AllDay || existingSchedule == null)
+    }
+
+    val initialStartTime = (existingSchedule?.timeType as? Schedule.TimeType.Timed)?.start
+    val initialEndTime = (existingSchedule?.timeType as? Schedule.TimeType.Timed)?.end
+
+    var startHour by remember { mutableStateOf(initialStartTime?.hour?.toString()?.padStart(2, '0') ?: "09") }
+    var startMinute by remember { mutableStateOf(initialStartTime?.minute?.toString()?.padStart(2, '0') ?: "00") }
+    var endHour by remember { mutableStateOf(initialEndTime?.hour?.toString()?.padStart(2, '0') ?: "10") }
+    var endMinute by remember { mutableStateOf(initialEndTime?.minute?.toString()?.padStart(2, '0') ?: "00") }
 
     // 保存ボタンの有効/無効を判定
     val isSaveEnabled = remember(title, isAllDay, startHour, startMinute, endHour, endMinute) {
@@ -90,7 +102,11 @@ fun ScheduleAddScreen(
             CommonTopAppBar(
                 title = {
                     Text(
-                        text = "${date.toYmd()} (${date.dayOfWeek.toJapanese()}) 予定追加",
+                        text = if (existingSchedule != null) {
+                            "${date.toYmd()} (${date.dayOfWeek.toJapanese()}) 予定詳細"
+                        } else {
+                            "${date.toYmd()} (${date.dayOfWeek.toJapanese()}) 予定追加"
+                        },
                         fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
@@ -279,16 +295,16 @@ fun ScheduleAddScreen(
 
             Button(
                 onClick = {
-                    // 予定を作成
+                    // 予定を作成または更新
                     val schedule = if (isAllDay) {
                         Schedule.createAllDay(
-                            id = Schedule.Id(
+                            id = existingSchedule?.id ?: Schedule.Id(
                                 TimeSource.Monotonic.markNow().toString()
                             ),
                             title = title,
                             description = description,
                             date = date,
-                            user = User.createTest()
+                            user = existingSchedule?.user ?: User.createTest()
                         )
                     } else {
                         val startH = startHour.toInt()
@@ -297,20 +313,24 @@ fun ScheduleAddScreen(
                         val endM = endMinute.toInt()
 
                         Schedule.createTimed(
-                            id = Schedule.Id(
+                            id = existingSchedule?.id ?: Schedule.Id(
                                 TimeSource.Monotonic.markNow().toString()
                             ),
                             title = title,
                             description = description,
                             date = date,
-                            user = User.createTest(),
+                            user = existingSchedule?.user ?: User.createTest(),
                             startTime = LocalTime(startH, startM),
                             endTime = LocalTime(endH, endM)
                         )
                     }
 
-                    // Repositoryに追加
-                    scheduleRepository.addSchedule(schedule)
+                    // Repositoryに追加または更新
+                    if (existingSchedule != null) {
+                        scheduleRepository.updateSchedule(schedule)
+                    } else {
+                        scheduleRepository.addSchedule(schedule)
+                    }
 
                     // 画面を閉じる
                     onSaveClick()

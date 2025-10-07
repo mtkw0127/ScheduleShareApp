@@ -38,14 +38,16 @@ sealed interface Screen {
     data class ScheduleAdd(
         val year: Int,
         val month: Int,
-        val day: Int
+        val day: Int,
+        val scheduleId: String? = null
     ) : Screen {
         companion object {
-            fun from(date: LocalDate): ScheduleAdd {
+            fun from(date: LocalDate, scheduleId: String? = null): ScheduleAdd {
                 return ScheduleAdd(
                     year = date.year,
                     month = date.monthNumber,
-                    day = date.dayOfMonth
+                    day = date.dayOfMonth,
+                    scheduleId = scheduleId
                 )
             }
         }

@@ -2,6 +2,7 @@ package com.github.mtkw0127.scheduleshare
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -58,7 +59,8 @@ fun DayScheduleScreen(
     scheduleRepository: ScheduleRepository,
     onBackClick: () -> Unit,
     onDateChange: (LocalDate) -> Unit = {},
-    onAddScheduleClick: () -> Unit = {}
+    onAddScheduleClick: () -> Unit = {},
+    onScheduleClick: (Schedule) -> Unit = {}
 ) {
     var currentDate by remember(date) { mutableStateOf(date) }
     var dragOffset by remember { mutableStateOf(0f) }
@@ -145,7 +147,7 @@ fun DayScheduleScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     allDaySchedules.forEach { schedule ->
-                        ScheduleCard(schedule)
+                        ScheduleCard(schedule, onClick = { onScheduleClick(schedule) })
                         Spacer(modifier = Modifier.height(4.dp))
                     }
                 }
@@ -153,13 +155,16 @@ fun DayScheduleScreen(
 
             // 時間軸と予定を表示
             val timedSchedules = schedules.filter { it.timeType is Schedule.TimeType.Timed }
-            TimelineView(timedSchedules = timedSchedules)
+            TimelineView(timedSchedules = timedSchedules, onScheduleClick = onScheduleClick)
         }
     }
 }
 
 @Composable
-private fun TimelineView(timedSchedules: List<Schedule>) {
+private fun TimelineView(
+    timedSchedules: List<Schedule>,
+    onScheduleClick: (Schedule) -> Unit = {}
+) {
     val hourHeight = 60.dp
 
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -203,7 +208,7 @@ private fun TimelineView(timedSchedules: List<Schedule>) {
                 timedSchedules.forEach { schedule ->
                     when (val timeType = schedule.timeType) {
                         is Schedule.TimeType.Timed -> {
-                            ScheduleCard(schedule)
+                            ScheduleCard(schedule, onClick = { onScheduleClick(schedule) })
                         }
 
                         else -> { /* 終日は別で表示済み */
@@ -299,9 +304,15 @@ private fun TimelineView(timedSchedules: List<Schedule>) {
 }
 
 @Composable
-private fun ScheduleCard(schedule: Schedule, modifier: Modifier = Modifier) {
+private fun ScheduleCard(
+    schedule: Schedule,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
+) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         ),
@@ -357,7 +368,7 @@ private fun ScheduleCard(schedule: Schedule, modifier: Modifier = Modifier) {
                         Text(
                             text = schedule.title,
                             fontSize = 14.sp,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         if (schedule.description.isNotEmpty()) {

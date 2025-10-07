@@ -92,6 +92,14 @@ fun App() {
                         },
                         onAddScheduleClick = {
                             navController.navigate(Screen.ScheduleAdd.from(daySchedule.toLocalDate()))
+                        },
+                        onScheduleClick = { schedule ->
+                            navController.navigate(
+                                Screen.ScheduleAdd.from(
+                                    daySchedule.toLocalDate(),
+                                    schedule.id.value
+                                )
+                            )
                         }
                     )
                 }
@@ -101,6 +109,7 @@ fun App() {
                     ScheduleAddScreen(
                         date = scheduleAdd.toLocalDate(),
                         scheduleRepository = scheduleRepository,
+                        scheduleId = scheduleAdd.scheduleId,
                         onBackClick = {
                             navController.popBackStack()
                         },

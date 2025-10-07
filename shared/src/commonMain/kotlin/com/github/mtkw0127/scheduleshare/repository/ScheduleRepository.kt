@@ -50,6 +50,15 @@ class ScheduleRepository {
     }
 
     /**
+     * IDで予定を取得
+     * @param scheduleId 取得する予定のID
+     * @return 予定、見つからない場合はnull
+     */
+    fun getScheduleById(scheduleId: Schedule.Id): Schedule? {
+        return schedules.firstOrNull { it.id == scheduleId }
+    }
+
+    /**
      * 予定を削除
      * @param scheduleId 削除する予定のID
      */

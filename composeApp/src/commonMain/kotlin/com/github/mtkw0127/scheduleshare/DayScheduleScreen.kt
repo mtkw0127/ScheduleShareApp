@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,6 +27,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,7 +54,9 @@ import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_back
+import scheduleshare.composeapp.generated.resources.layers
 import scheduleshare.composeapp.generated.resources.plus
+import scheduleshare.composeapp.generated.resources.view_column
 import kotlin.math.absoluteValue
 
 @Composable
@@ -66,8 +71,14 @@ fun DayScheduleScreen(
 ) {
     var currentDate by remember(date) { mutableStateOf(date) }
     var dragOffset by remember { mutableStateOf(0f) }
+    var isColumnView by remember { mutableStateOf(false) } // 縦並び表示かどうか
     val schedules = remember(currentDate) {
         scheduleRepository.getSchedulesByDate(currentDate)
+    }
+
+    // ユーザーごとにグループ化
+    val schedulesByUser = remember(schedules) {
+        schedules.groupBy { it.user }
     }
 
     Scaffold(
@@ -87,6 +98,22 @@ fun DayScheduleScreen(
                             contentDescription = "戻る",
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
+                    }
+                },
+                actions = {
+                    // 複数ユーザーの予定がある場合のみ切り替えボタンを表示
+                    if (schedulesByUser.size > 1) {
+                        IconButton(
+                            onClick = { isColumnView = !isColumnView }
+                        ) {
+                            Icon(
+                                imageVector = vectorResource(
+                                    if (isColumnView) Res.drawable.layers else Res.drawable.view_column
+                                ),
+                                contentDescription = if (isColumnView) "重ねて表示" else "ユーザーごとに表示",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
                     }
                 }
             )
@@ -132,36 +159,164 @@ fun DayScheduleScreen(
                 }
                 .verticalScroll(rememberScrollState())
         ) {
-            // 終日の予定を最初に表示
-            val allDaySchedules = schedules.filter { it.timeType is Schedule.TimeType.AllDay }
-            if (allDaySchedules.isNotEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = "終日",
-                        fontSize = 12.sp,
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    allDaySchedules.forEach { schedule ->
-                        ScheduleCard(schedule, onClick = { onScheduleClick(schedule) })
-                        Spacer(modifier = Modifier.height(4.dp))
+            if (isColumnView && schedulesByUser.size > 1) {
+                // ユーザーごとに横並び表示（列分割）
+                // 終日予定の最大数を計算
+                val maxAllDayCount = schedulesByUser.values.maxOfOrNull { userSchedules ->
+                    userSchedules.count { it.timeType is Schedule.TimeType.AllDay }
+                } ?: 0
+
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    // 左側固定: 時刻表示エリア
+                    Column(
+                        modifier = Modifier.width(60.dp)
+                    ) {
+                        // ユーザー名エリアの高さを合わせる
+                        Spacer(modifier = Modifier.height(40.dp))
+                        androidx.compose.material3.HorizontalDivider()
+
+                        // 終日エリアの高さを合わせる
+                        if (maxAllDayCount > 0) {
+                            Spacer(modifier = Modifier.height((maxAllDayCount * 64 + 32).dp))
+                        }
+
+                        // 時刻ラベル
+                        TimeLabelsColumn()
+                    }
+
+                    // 右側スクロール: ユーザーの列
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .horizontalScroll(rememberScrollState())
+                    ) {
+                        schedulesByUser.forEach { (user, userSchedules) ->
+                            Column(
+                                modifier = Modifier
+                                    .width(150.dp)
+                                    .fillMaxHeight()
+                                    .padding(horizontal = 2.dp)
+                            ) {
+                                // ユーザー名表示
+                                Text(
+                                    text = user.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                                androidx.compose.material3.HorizontalDivider()
+
+                                // 終日の予定エリア（高さを統一）
+                                val allDaySchedules = userSchedules.filter { it.timeType is Schedule.TimeType.AllDay }
+                                if (maxAllDayCount > 0) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(
+                                                if (allDaySchedules.isNotEmpty())
+                                                    MaterialTheme.colorScheme.surfaceVariant
+                                                else
+                                                    MaterialTheme.colorScheme.surface
+                                            )
+                                            .padding(8.dp)
+                                    ) {
+                                        if (allDaySchedules.isNotEmpty()) {
+                                            Text(
+                                                text = "終日",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                        }
+
+                                        // 実際の終日予定を表示
+                                        allDaySchedules.forEach { schedule ->
+                                            ScheduleCard(schedule, onClick = { onScheduleClick(schedule) })
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                        }
+
+                                        // 不足分は空のスペースで埋める
+                                        val emptyCount = maxAllDayCount - allDaySchedules.size
+                                        repeat(emptyCount) {
+                                            Spacer(modifier = Modifier.height(64.dp)) // カード1つ分の高さ
+                                        }
+                                    }
+                                }
+
+                                // 時間軸と予定を表示（時刻ラベルなし）
+                                val timedSchedules = userSchedules.filter { it.timeType is Schedule.TimeType.Timed }
+                                TimelineView(
+                                    timedSchedules = timedSchedules,
+                                    onScheduleClick = onScheduleClick,
+                                    onTimelineClick = onAddScheduleAtTime,
+                                    showTimeLabels = false
+                                )
+                            }
+                        }
                     }
                 }
-            }
+            } else {
+                // 従来通りの重ねて表示
+                // 終日の予定を最初に表示
+                val allDaySchedules = schedules.filter { it.timeType is Schedule.TimeType.AllDay }
+                if (allDaySchedules.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            text = "終日",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        allDaySchedules.forEach { schedule ->
+                            ScheduleCard(schedule, onClick = { onScheduleClick(schedule) })
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                    }
+                }
 
-            // 時間軸と予定を表示
-            val timedSchedules = schedules.filter { it.timeType is Schedule.TimeType.Timed }
-            TimelineView(
-                timedSchedules = timedSchedules,
-                onScheduleClick = onScheduleClick,
-                onTimelineClick = onAddScheduleAtTime
-            )
+                // 時間軸と予定を表示
+                val timedSchedules = schedules.filter { it.timeType is Schedule.TimeType.Timed }
+                TimelineView(
+                    timedSchedules = timedSchedules,
+                    onScheduleClick = onScheduleClick,
+                    onTimelineClick = onAddScheduleAtTime
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimeLabelsColumn() {
+    val hourHeight = 60.dp
+    Column {
+        (0..23).forEach { hour ->
+            Box(
+                modifier = Modifier
+                    .width(60.dp)
+                    .height(hourHeight)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .border(
+                        width = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                    .padding(8.dp),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Text(
+                    text = "${hour.toString().padStart(2, '0')}:00",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -170,7 +325,8 @@ fun DayScheduleScreen(
 private fun TimelineView(
     timedSchedules: List<Schedule>,
     onScheduleClick: (Schedule) -> Unit = {},
-    onTimelineClick: (LocalTime) -> Unit = {}
+    onTimelineClick: (LocalTime) -> Unit = {},
+    showTimeLabels: Boolean = true
 ) {
     val hourHeight = 60.dp
 
@@ -187,20 +343,22 @@ private fun TimelineView(
                             color = MaterialTheme.colorScheme.outlineVariant
                         )
                 ) {
-                    // 時刻表示部分
-                    Box(
-                        modifier = Modifier
-                            .width(60.dp)
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .padding(8.dp),
-                        contentAlignment = Alignment.TopCenter
-                    ) {
-                        Text(
-                            text = "${hour.toString().padStart(2, '0')}:00",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    if (showTimeLabels) {
+                        // 時刻表示部分（1人目のみ）
+                        Box(
+                            modifier = Modifier
+                                .width(60.dp)
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .padding(8.dp),
+                            contentAlignment = Alignment.TopCenter
+                        ) {
+                            Text(
+                                text = "${hour.toString().padStart(2, '0')}:00",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
                     // スケジュール配置用のスペース（クリック可能）
@@ -229,7 +387,7 @@ private fun TimelineView(
                     }
                 }
             },
-            modifier = Modifier.padding(start = 60.dp)
+            modifier = Modifier.padding(start = if (showTimeLabels) 60.dp else 0.dp)
         ) { measurables, constraints ->
             val hourHeightPx = hourHeight.toPx()
 

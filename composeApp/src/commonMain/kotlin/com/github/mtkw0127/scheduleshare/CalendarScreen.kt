@@ -72,11 +72,14 @@ fun CalendarScreen(
     months: List<Month>,
     focusedMonth: LocalDate,
     schedules: Map<LocalDate, List<com.github.mtkw0127.scheduleshare.model.schedule.Schedule>>,
+    sharedUsers: List<User>,
+    userVisibilityMap: Map<User.Id, Boolean>,
     moveToPrev: () -> Unit,
     moveToNext: () -> Unit,
     onClickDate: (Day) -> Unit = {},
     onUserIconClick: () -> Unit = {},
     onQRShareClick: () -> Unit = {},
+    onUserVisibilityChange: (User.Id, Boolean) -> Unit = { _, _ -> }
 ) {
     val state = rememberLazyListState()
     var changingFocus by remember { mutableStateOf(false) }
@@ -84,18 +87,11 @@ fun CalendarScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    // 共有ユーザーのリスト（仮データ）
-    val sharedUsers = remember {
-        listOf(
-            User(User.Id("user_001"), "山田太郎"),
-            User(User.Id("user_002"), "佐藤花子"),
-            User(User.Id("user_003"), "鈴木一郎")
-        )
-    }
-
     // 各ユーザーの表示状態を管理
-    val userVisibilityState = remember {
-        mutableStateOf(sharedUsers.associateWith { true }.toMutableMap())
+    val userVisibilityState = remember(sharedUsers, userVisibilityMap) {
+        mutableStateOf(sharedUsers.associateWith { user ->
+            userVisibilityMap[user.id] ?: true
+        }.toMutableMap())
     }
 
     LaunchedEffect(key1 = focusedMonth) {
@@ -142,10 +138,12 @@ fun CalendarScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
+                                    val newChecked = !(userVisibilityState.value[user] ?: true)
                                     userVisibilityState.value =
                                         userVisibilityState.value.toMutableMap().apply {
-                                            this[user] = !(this[user] ?: true)
+                                            this[user] = newChecked
                                         }
+                                    onUserVisibilityChange(user.id, newChecked)
                                 }
                                 .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -157,6 +155,7 @@ fun CalendarScreen(
                                         userVisibilityState.value.toMutableMap().apply {
                                             this[user] = checked
                                         }
+                                    onUserVisibilityChange(user.id, checked)
                                 }
                             )
                             Spacer(modifier = Modifier.width(8.dp))

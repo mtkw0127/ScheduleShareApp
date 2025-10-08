@@ -9,7 +9,9 @@ import androidx.compose.runtime.setValue
 import com.github.mtkw0127.scheduleshare.generator.CalendarGenerator
 import com.github.mtkw0127.scheduleshare.model.calendar.Month
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
+import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
+import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -22,6 +24,7 @@ import kotlin.time.ExperimentalTime
 @Stable
 class CalendarState @OptIn(ExperimentalTime::class) constructor(
     private val scheduleRepository: ScheduleRepository,
+    private val userRepository: UserRepository,
     initialFocusedMonth: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 ) {
     var months by mutableStateOf<List<Month>>(emptyList())
@@ -33,8 +36,32 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
     var schedules by mutableStateOf<Map<LocalDate, List<Schedule>>>(emptyMap())
         private set
 
+    var sharedUsers by mutableStateOf<List<User>>(emptyList())
+        private set
+
+    var userVisibilityMap by mutableStateOf<Map<User.Id, Boolean>>(emptyMap())
+        private set
+
     init {
         loadMonths(initialFocusedMonth)
+        loadSchedules()
+        loadSharedUsers()
+    }
+
+    private fun loadSharedUsers() {
+        sharedUsers = userRepository.getSharedUsers()
+        // 表示状態のマップを更新
+        userVisibilityMap = sharedUsers.associate { user ->
+            user.id to userRepository.getUserVisibility(user.id)
+        }
+    }
+
+    fun updateUserVisibility(userId: User.Id, visible: Boolean) {
+        userRepository.setUserVisibility(userId, visible)
+        // 表示状態のマップを更新
+        userVisibilityMap = userVisibilityMap.toMutableMap().apply {
+            this[userId] = visible
+        }
         loadSchedules()
     }
 
@@ -85,9 +112,10 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
 @Composable
 fun rememberCalendarState(
     scheduleRepository: ScheduleRepository,
+    userRepository: UserRepository,
     initialFocusedMonth: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 ): CalendarState {
-    return remember(scheduleRepository, initialFocusedMonth) {
-        CalendarState(scheduleRepository, initialFocusedMonth)
+    return remember(scheduleRepository, userRepository, initialFocusedMonth) {
+        CalendarState(scheduleRepository, userRepository, initialFocusedMonth)
     }
 }

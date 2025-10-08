@@ -9,12 +9,11 @@ import kotlinx.datetime.number
 /**
  * スケジュールのリポジトリ
  */
-class ScheduleRepository {
+class ScheduleRepository(
+    private val userRepository: UserRepository
+) {
     // TODO: 実際のデータソースに置き換える
     private val schedules = mutableListOf<Schedule>()
-
-    // 共有ユーザーのID一覧（表示対象）
-    private val sharedUserIds = mutableSetOf<User.Id>()
 
     /**
      * その月の予定を取得（共有ユーザーの予定も含む）
@@ -23,6 +22,7 @@ class ScheduleRepository {
      * @return その月の予定リスト
      */
     fun getSchedulesByMonth(year: Int, month: Int): List<Schedule> {
+        val sharedUserIds = userRepository.getSharedUserIds()
         return schedules.filter {
             (it.date.year == year && it.date.month.number == month) &&
             (it.user.id == User.createTest().id || sharedUserIds.contains(it.user.id))
@@ -35,6 +35,7 @@ class ScheduleRepository {
      * @return その日の予定リスト（時刻順にソート）
      */
     fun getSchedulesByDate(date: LocalDate): List<Schedule> {
+        val sharedUserIds = userRepository.getSharedUserIds()
         return schedules.filter {
             it.date == date &&
             (it.user.id == User.createTest().id || sharedUserIds.contains(it.user.id))
@@ -44,30 +45,6 @@ class ScheduleRepository {
                 is Schedule.TimeType.Timed -> timeType.start
             }
         })
-    }
-
-    /**
-     * 共有ユーザーを追加
-     * @param userId 共有するユーザーのID
-     */
-    fun addSharedUser(userId: User.Id) {
-        sharedUserIds.add(userId)
-    }
-
-    /**
-     * 共有ユーザーを削除
-     * @param userId 共有を解除するユーザーのID
-     */
-    fun removeSharedUser(userId: User.Id) {
-        sharedUserIds.remove(userId)
-    }
-
-    /**
-     * 共有ユーザー一覧を取得
-     * @return 共有ユーザーのIDリスト
-     */
-    fun getSharedUserIds(): Set<User.Id> {
-        return sharedUserIds.toSet()
     }
 
     /**
@@ -111,18 +88,14 @@ class ScheduleRepository {
          * サンプルデータを持つリポジトリを作成
          */
         fun createWithSampleData(): ScheduleRepository {
-            val repository = ScheduleRepository()
+            val userRepository = UserRepository.createWithSampleData()
+            val repository = ScheduleRepository(userRepository)
             val testUser = User.createTest()
 
             // 共有ユーザーのサンプルデータ
             val sharedUser1 = User(User.Id("user_001"), "山田太郎")
             val sharedUser2 = User(User.Id("user_002"), "佐藤花子")
             val sharedUser3 = User(User.Id("user_003"), "鈴木一郎")
-
-            // 共有ユーザーを追加
-            repository.addSharedUser(sharedUser1.id)
-            repository.addSharedUser(sharedUser2.id)
-            repository.addSharedUser(sharedUser3.id)
 
             // 自分の予定
             repository.addSchedule(

@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.github.mtkw0127.scheduleshare.navigation.Screen
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
+import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import com.github.mtkw0127.scheduleshare.theme.ScheduleShareTheme
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -24,6 +25,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun App() {
     ScheduleShareTheme {
         val navController = rememberNavController()
+        val userRepository = remember { UserRepository.createWithSampleData() }
         val scheduleRepository = remember { ScheduleRepository.createWithSampleData() }
 
         Column(
@@ -48,12 +50,14 @@ fun App() {
                 }
 
                 composable<Screen.Calendar> {
-                    val calendarState = rememberCalendarState(scheduleRepository)
+                    val calendarState = rememberCalendarState(scheduleRepository, userRepository)
 
                     CalendarScreen(
                         months = calendarState.months,
                         focusedMonth = calendarState.focusedMonth,
                         schedules = calendarState.schedules,
+                        sharedUsers = calendarState.sharedUsers,
+                        userVisibilityMap = calendarState.userVisibilityMap,
                         moveToNext = calendarState::moveToNextMonth,
                         moveToPrev = calendarState::moveToPrevMonth,
                         onClickDate = { day ->
@@ -64,6 +68,9 @@ fun App() {
                         },
                         onQRShareClick = {
                             navController.navigate(Screen.QRShare)
+                        },
+                        onUserVisibilityChange = { userId, visible ->
+                            calendarState.updateUserVisibility(userId, visible)
                         }
                     )
                 }

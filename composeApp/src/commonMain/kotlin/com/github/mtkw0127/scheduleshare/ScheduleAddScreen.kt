@@ -1,6 +1,7 @@
 package com.github.mtkw0127.scheduleshare
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -36,11 +38,13 @@ import com.github.mtkw0127.scheduleshare.extension.toYmd
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
+import com.github.mtkw0127.scheduleshare.util.rememberClipboardManager
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_back
+import scheduleshare.composeapp.generated.resources.copy
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
@@ -61,6 +65,8 @@ fun ScheduleAddScreen(
     val existingSchedule = remember(scheduleId) {
         scheduleId?.let { scheduleRepository.getScheduleById(Schedule.Id(it)) }
     }
+
+    val clipboardManager = rememberClipboardManager()
 
     var title by remember { mutableStateOf(existingSchedule?.title ?: "") }
     var description by remember { mutableStateOf(existingSchedule?.description ?: "") }
@@ -166,12 +172,32 @@ fun ScheduleAddScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text("タイトル") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            // タイトル入力欄（既存の予定の場合はコピーアイコン付き）
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("タイトル") },
+                    modifier = Modifier.weight(1f)
+                )
+                if (existingSchedule != null && title.isNotEmpty()) {
+                    IconButton(
+                        onClick = {
+                            clipboardManager.setText(title)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.copy),
+                            contentDescription = "タイトルをコピー",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -317,15 +343,43 @@ fun ScheduleAddScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text("詳細") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                maxLines = 10
-            )
+            // 詳細入力欄（既存の予定の場合はコピーアイコン付き）
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "詳細",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (existingSchedule != null && description.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                clipboardManager.setText(description)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = vectorResource(Res.drawable.copy),
+                                contentDescription = "詳細をコピー",
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("詳細") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    maxLines = 10
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

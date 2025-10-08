@@ -86,6 +86,11 @@ fun DayScheduleScreen(
         }
     }
 
+    // ユーザーの色を取得する関数
+    val getUserColor: (com.github.mtkw0127.scheduleshare.model.user.User.Id) -> androidx.compose.ui.graphics.Color = { userId ->
+        androidx.compose.ui.graphics.Color(userRepository.getUserColor(userId).value)
+    }
+
     Scaffold(
         topBar = {
             CommonTopAppBar(
@@ -243,7 +248,11 @@ fun DayScheduleScreen(
                                         // 実際の終日予定を表示（固定の高さ）
                                         allDaySchedules.forEach { schedule ->
                                             Box(modifier = Modifier.height(64.dp)) {
-                                                ScheduleCard(schedule, onClick = { onScheduleClick(schedule) })
+                                                ScheduleCard(
+                                                    schedule = schedule,
+                                                    containerColor = getUserColor(schedule.user.id),
+                                                    onClick = { onScheduleClick(schedule) }
+                                                )
                                             }
                                             Spacer(modifier = Modifier.height(4.dp))
                                         }
@@ -262,7 +271,8 @@ fun DayScheduleScreen(
                                     timedSchedules = timedSchedules,
                                     onScheduleClick = onScheduleClick,
                                     onTimelineClick = onAddScheduleAtTime,
-                                    showTimeLabels = false
+                                    showTimeLabels = false,
+                                    getUserColor = getUserColor
                                 )
                             }
                         }
@@ -287,7 +297,11 @@ fun DayScheduleScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         allDaySchedules.forEach { schedule ->
-                            ScheduleCard(schedule, onClick = { onScheduleClick(schedule) })
+                            ScheduleCard(
+                                schedule = schedule,
+                                containerColor = getUserColor(schedule.user.id),
+                                onClick = { onScheduleClick(schedule) }
+                            )
                             Spacer(modifier = Modifier.height(4.dp))
                         }
                     }
@@ -298,7 +312,8 @@ fun DayScheduleScreen(
                 TimelineView(
                     timedSchedules = timedSchedules,
                     onScheduleClick = onScheduleClick,
-                    onTimelineClick = onAddScheduleAtTime
+                    onTimelineClick = onAddScheduleAtTime,
+                    getUserColor = getUserColor
                 )
             }
         }
@@ -337,7 +352,8 @@ private fun TimelineView(
     timedSchedules: List<Schedule>,
     onScheduleClick: (Schedule) -> Unit = {},
     onTimelineClick: (LocalTime) -> Unit = {},
-    showTimeLabels: Boolean = true
+    showTimeLabels: Boolean = true,
+    getUserColor: (com.github.mtkw0127.scheduleshare.model.user.User.Id) -> androidx.compose.ui.graphics.Color = { androidx.compose.ui.graphics.Color.Unspecified }
 ) {
     val hourHeight = 60.dp
 
@@ -390,7 +406,11 @@ private fun TimelineView(
                 timedSchedules.forEach { schedule ->
                     when (val timeType = schedule.timeType) {
                         is Schedule.TimeType.Timed -> {
-                            ScheduleCard(schedule, onClick = { onScheduleClick(schedule) })
+                            ScheduleCard(
+                                schedule = schedule,
+                                containerColor = getUserColor(schedule.user.id),
+                                onClick = { onScheduleClick(schedule) }
+                            )
                         }
 
                         else -> { /* 終日は別で表示済み */
@@ -489,6 +509,7 @@ private fun TimelineView(
 private fun ScheduleCard(
     schedule: Schedule,
     modifier: Modifier = Modifier,
+    containerColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primaryContainer,
     onClick: () -> Unit = {}
 ) {
     Card(
@@ -496,7 +517,7 @@ private fun ScheduleCard(
             .fillMaxWidth()
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+            containerColor = containerColor
         ),
         shape = RoundedCornerShape(4.dp)
     ) {

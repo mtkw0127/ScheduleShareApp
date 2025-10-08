@@ -10,6 +10,7 @@ import com.github.mtkw0127.scheduleshare.generator.CalendarGenerator
 import com.github.mtkw0127.scheduleshare.model.calendar.Month
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
+import com.github.mtkw0127.scheduleshare.model.user.UserColor
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import kotlinx.datetime.DateTimeUnit
@@ -43,6 +44,9 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
     var userVisibilityMap by mutableStateOf<Map<User.Id, Boolean>>(emptyMap())
         private set
 
+    var userColorMap by mutableStateOf<Map<User.Id, UserColor>>(emptyMap())
+        private set
+
     init {
         loadMonths(initialFocusedMonth)
         loadSchedules()
@@ -55,6 +59,10 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
         userVisibilityMap = sharedUsers.associate { user ->
             user.id to userRepository.getUserVisibility(user.id)
         }
+        // 色のマップを更新
+        userColorMap = sharedUsers.associate { user ->
+            user.id to userRepository.getUserColor(user.id)
+        }
     }
 
     fun updateUserVisibility(userId: User.Id, visible: Boolean) {
@@ -64,6 +72,14 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
             this[userId] = visible
         }
         loadSchedules()
+    }
+
+    fun updateUserColor(userId: User.Id, color: UserColor) {
+        userRepository.setUserColor(userId, color)
+        // 色のマップを更新
+        userColorMap = userColorMap.toMutableMap().apply {
+            this[userId] = color
+        }
     }
 
     private fun loadSchedules() {

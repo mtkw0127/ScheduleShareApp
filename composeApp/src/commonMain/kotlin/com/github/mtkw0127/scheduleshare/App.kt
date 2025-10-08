@@ -140,6 +140,7 @@ fun App() {
                         schedules = calendarState.schedules,
                         sharedUsers = calendarState.sharedUsers,
                         userVisibilityMap = calendarState.userVisibilityMap,
+                        userColorMap = calendarState.userColorMap,
                         moveToNext = calendarState::moveToNextMonth,
                         moveToPrev = calendarState::moveToPrevMonth,
                         onClickDate = { day ->
@@ -153,6 +154,9 @@ fun App() {
                         },
                         onUserVisibilityChange = { userId, visible ->
                             calendarState.updateUserVisibility(userId, visible)
+                        },
+                        onUserColorChange = { userId, color ->
+                            calendarState.updateUserColor(userId, color)
                         }
                     )
                 }

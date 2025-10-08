@@ -1,6 +1,7 @@
 package com.github.mtkw0127.scheduleshare.repository
 
 import com.github.mtkw0127.scheduleshare.model.user.User
+import com.github.mtkw0127.scheduleshare.model.user.UserColor
 
 /**
  * ユーザーのリポジトリ
@@ -14,6 +15,9 @@ class UserRepository {
 
     // ユーザーの表示/非表示状態
     private val userVisibility = mutableMapOf<User.Id, Boolean>()
+
+    // ユーザーの色設定
+    private val userColors = mutableMapOf<User.Id, UserColor>()
 
     /**
      * 共有中のユーザー一覧を取得
@@ -34,6 +38,10 @@ class UserRepository {
         // デフォルトで表示ON
         if (!userVisibility.containsKey(userId)) {
             userVisibility[userId] = true
+        }
+        // デフォルトの色を設定
+        if (!userColors.containsKey(userId)) {
+            userColors[userId] = UserColor.default()
         }
     }
 
@@ -65,6 +73,26 @@ class UserRepository {
      */
     fun getUserVisibility(userId: User.Id): Boolean {
         return userVisibility[userId] ?: true
+    }
+
+    /**
+     * ユーザーの色を設定
+     * @param userId ユーザーのID
+     * @param color 設定する色
+     */
+    fun setUserColor(userId: User.Id, color: UserColor) {
+        if (sharedUserIds.contains(userId)) {
+            userColors[userId] = color
+        }
+    }
+
+    /**
+     * ユーザーの色を取得
+     * @param userId ユーザーのID
+     * @return ユーザーの色（デフォルトBLUE）
+     */
+    fun getUserColor(userId: User.Id): UserColor {
+        return userColors[userId] ?: UserColor.default()
     }
 
     /**

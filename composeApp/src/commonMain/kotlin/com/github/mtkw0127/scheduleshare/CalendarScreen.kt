@@ -1,5 +1,6 @@
 package com.github.mtkw0127.scheduleshare
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -74,12 +75,14 @@ fun CalendarScreen(
     schedules: Map<LocalDate, List<com.github.mtkw0127.scheduleshare.model.schedule.Schedule>>,
     sharedUsers: List<User>,
     userVisibilityMap: Map<User.Id, Boolean>,
+    userColorMap: Map<User.Id, com.github.mtkw0127.scheduleshare.model.user.UserColor>,
     moveToPrev: () -> Unit,
     moveToNext: () -> Unit,
     onClickDate: (Day) -> Unit = {},
     onUserIconClick: () -> Unit = {},
     onQRShareClick: () -> Unit = {},
-    onUserVisibilityChange: (User.Id, Boolean) -> Unit = { _, _ -> }
+    onUserVisibilityChange: (User.Id, Boolean) -> Unit = { _, _ -> },
+    onUserColorChange: (User.Id, com.github.mtkw0127.scheduleshare.model.user.UserColor) -> Unit = { _, _ -> }
 ) {
     val state = rememberLazyListState()
     var changingFocus by remember { mutableStateOf(false) }
@@ -134,35 +137,69 @@ fun CalendarScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     sharedUsers.forEach { user ->
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    val newChecked = !(userVisibilityState.value[user] ?: true)
-                                    userVisibilityState.value =
-                                        userVisibilityState.value.toMutableMap().apply {
-                                            this[user] = newChecked
-                                        }
-                                    onUserVisibilityChange(user.id, newChecked)
-                                }
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(vertical = 8.dp)
                         ) {
-                            Checkbox(
-                                checked = userVisibilityState.value[user] ?: true,
-                                onCheckedChange = { checked ->
-                                    userVisibilityState.value =
-                                        userVisibilityState.value.toMutableMap().apply {
-                                            this[user] = checked
-                                        }
-                                    onUserVisibilityChange(user.id, checked)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val newChecked = !(userVisibilityState.value[user] ?: true)
+                                        userVisibilityState.value =
+                                            userVisibilityState.value.toMutableMap().apply {
+                                                this[user] = newChecked
+                                            }
+                                        onUserVisibilityChange(user.id, newChecked)
+                                    },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = userVisibilityState.value[user] ?: true,
+                                    onCheckedChange = { checked ->
+                                        userVisibilityState.value =
+                                            userVisibilityState.value.toMutableMap().apply {
+                                                this[user] = checked
+                                            }
+                                        onUserVisibilityChange(user.id, checked)
+                                    }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = user.name,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+
+                            // 色選択
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 48.dp, top = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                val currentColor = userColorMap[user.id] ?: com.github.mtkw0127.scheduleshare.model.user.UserColor.default()
+                                com.github.mtkw0127.scheduleshare.model.user.UserColor.entries.forEach { color ->
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .background(
+                                                color = androidx.compose.ui.graphics.Color(color.value),
+                                                shape = androidx.compose.foundation.shape.CircleShape
+                                            )
+                                            .border(
+                                                width = if (currentColor == color) 3.dp else 0.dp,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                shape = androidx.compose.foundation.shape.CircleShape
+                                            )
+                                            .clickable {
+                                                onUserColorChange(user.id, color)
+                                            }
+                                    )
                                 }
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = user.name,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
+                            }
                         }
                     }
 

@@ -171,13 +171,15 @@ fun DayScheduleScreen(
                     Column(
                         modifier = Modifier.width(60.dp)
                     ) {
-                        // ユーザー名エリアの高さを合わせる
-                        Spacer(modifier = Modifier.height(40.dp))
+                        // ユーザー名エリアの高さを合わせる (padding vertical 4.dp * 2 + titleMedium text height ~24.dp)
+                        Spacer(modifier = Modifier.height(32.dp))
                         androidx.compose.material3.HorizontalDivider()
 
                         // 終日エリアの高さを合わせる
                         if (maxAllDayCount > 0) {
-                            Spacer(modifier = Modifier.height((maxAllDayCount * 64 + 32).dp))
+                            // padding 8.dp * 2 + "終日" text 12.sp (~16.dp) + spacer 4.dp + (maxAllDayCount * (64.dp card + 4.dp spacer))
+                            val allDayAreaHeight = 16.dp + 16.dp + 4.dp + (68.dp * maxAllDayCount)
+                            Spacer(modifier = Modifier.height(allDayAreaHeight))
                         }
 
                         // 時刻ラベル
@@ -221,26 +223,30 @@ fun DayScheduleScreen(
                                             )
                                             .padding(8.dp)
                                     ) {
-                                        if (allDaySchedules.isNotEmpty()) {
-                                            Text(
-                                                text = "終日",
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                        }
+                                        // 全ユーザーで"終日"テキストを表示（高さを統一するため）
+                                        Text(
+                                            text = "終日",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (allDaySchedules.isNotEmpty())
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                            else
+                                                MaterialTheme.colorScheme.surface // 透明にする
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
 
-                                        // 実際の終日予定を表示
+                                        // 実際の終日予定を表示（固定の高さ）
                                         allDaySchedules.forEach { schedule ->
-                                            ScheduleCard(schedule, onClick = { onScheduleClick(schedule) })
+                                            Box(modifier = Modifier.height(64.dp)) {
+                                                ScheduleCard(schedule, onClick = { onScheduleClick(schedule) })
+                                            }
                                             Spacer(modifier = Modifier.height(4.dp))
                                         }
 
                                         // 不足分は空のスペースで埋める
                                         val emptyCount = maxAllDayCount - allDaySchedules.size
                                         repeat(emptyCount) {
-                                            Spacer(modifier = Modifier.height(64.dp)) // カード1つ分の高さ
+                                            Spacer(modifier = Modifier.height(68.dp)) // カード1つ分の高さ(64dp) + spacer(4dp)
                                         }
                                     }
                                 }

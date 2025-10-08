@@ -16,6 +16,7 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
+import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import kotlin.time.Clock
@@ -69,7 +70,7 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
         // 表示中の月の予定を取得
         val schedulesForMonth = scheduleRepository.getSchedulesByMonth(
             year = focusedMonth.year,
-            month = focusedMonth.monthNumber
+            month = focusedMonth.month.number
         )
 
         // 日付ごとにグループ化

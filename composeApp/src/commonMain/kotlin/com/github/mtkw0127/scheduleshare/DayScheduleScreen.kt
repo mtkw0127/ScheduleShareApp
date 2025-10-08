@@ -63,6 +63,7 @@ import kotlin.math.absoluteValue
 fun DayScheduleScreen(
     date: LocalDate,
     scheduleRepository: ScheduleRepository,
+    userRepository: com.github.mtkw0127.scheduleshare.repository.UserRepository,
     onBackClick: () -> Unit,
     onDateChange: (LocalDate) -> Unit = {},
     onAddScheduleClick: () -> Unit = {},
@@ -76,9 +77,13 @@ fun DayScheduleScreen(
         scheduleRepository.getSchedulesByDate(currentDate)
     }
 
-    // ユーザーごとにグループ化
+    // ユーザーごとにグループ化（visibilityがtrueのユーザーのみ）
     val schedulesByUser = remember(schedules) {
-        schedules.groupBy { it.user }
+        schedules.groupBy { it.user }.filter { (user, _) ->
+            // 自分の予定または表示ONの共有ユーザーの予定のみ
+            user.id == com.github.mtkw0127.scheduleshare.model.user.User.createTest().id ||
+            userRepository.getUserVisibility(user.id)
+        }
     }
 
     Scaffold(

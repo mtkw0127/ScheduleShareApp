@@ -13,10 +13,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
+import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.navigation.Screen
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import com.github.mtkw0127.scheduleshare.theme.ScheduleShareTheme
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -26,7 +29,86 @@ fun App() {
     ScheduleShareTheme {
         val navController = rememberNavController()
         val userRepository = remember { UserRepository.createWithSampleData() }
-        val scheduleRepository = remember { ScheduleRepository.createWithSampleData() }
+        val scheduleRepository = remember {
+            ScheduleRepository(userRepository).apply {
+                val testUser = User.createTest()
+
+                // 共有ユーザーのサンプルデータ
+                val sharedUser1 = User(User.Id("user_001"), "山田太郎")
+                val sharedUser2 = User(User.Id("user_002"), "佐藤花子")
+                val sharedUser3 = User(User.Id("user_003"), "鈴木一郎")
+
+                // 自分の予定
+                addSchedule(
+                    Schedule.createAllDay(
+                        id = Schedule.Id("1"),
+                        title = "終日イベント",
+                        description = "終日のサンプル予定",
+                        date = kotlinx.datetime.LocalDate(2025, 10, 8),
+                        user = testUser
+                    )
+                )
+
+                addSchedule(
+                    Schedule.createTimed(
+                        id = Schedule.Id("2"),
+                        title = "ミーティング",
+                        description = "プロジェクト定例会議",
+                        date = kotlinx.datetime.LocalDate(2025, 10, 8),
+                        user = testUser,
+                        startTime = LocalTime(10, 0),
+                        endTime = LocalTime(11, 0)
+                    )
+                )
+
+                addSchedule(
+                    Schedule.createTimed(
+                        id = Schedule.Id("3"),
+                        title = "ランチ",
+                        description = "チームランチ",
+                        date = LocalDate(2025, 10, 8),
+                        user = testUser,
+                        startTime = LocalTime(12, 0),
+                        endTime = LocalTime(13, 0)
+                    )
+                )
+
+                // 共有ユーザーの予定
+                addSchedule(
+                    Schedule.createTimed(
+                        id = Schedule.Id("4"),
+                        title = "山田さんの会議",
+                        description = "営業部ミーティング",
+                        date = LocalDate(2025, 10, 8),
+                        user = sharedUser1,
+                        startTime = LocalTime(14, 0),
+                        endTime = LocalTime(15, 0)
+                    )
+                )
+
+                addSchedule(
+                    Schedule.createTimed(
+                        id = Schedule.Id("5"),
+                        title = "佐藤さんの打ち合わせ",
+                        description = "クライアントとの打ち合わせ",
+                        date = LocalDate(2025, 10, 8),
+                        user = sharedUser2,
+                        startTime = LocalTime(15, 30),
+                        endTime = LocalTime(17, 0)
+                    )
+                )
+
+                addSchedule(
+                    Schedule.createAllDay(
+                        id = Schedule.Id("6"),
+                        title = "鈴木さんの出張",
+                        description = "大阪出張",
+                        date = LocalDate(2025, 10, 8),
+                        user = sharedUser3
+                    )
+                )
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -101,6 +183,7 @@ fun App() {
                     DayScheduleScreen(
                         date = daySchedule.toLocalDate(),
                         scheduleRepository = scheduleRepository,
+                        userRepository = userRepository,
                         onBackClick = {
                             navController.popBackStack()
                         },

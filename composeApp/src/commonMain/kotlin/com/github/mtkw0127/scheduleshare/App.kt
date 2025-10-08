@@ -61,6 +61,9 @@ fun App() {
                         },
                         onUserIconClick = {
                             navController.navigate(Screen.Settings)
+                        },
+                        onQRShareClick = {
+                            navController.navigate(Screen.QRShare)
                         }
                     )
                 }
@@ -74,6 +77,14 @@ fun App() {
                             navController.navigate(Screen.Login) {
                                 popUpTo(0) { inclusive = true }
                             }
+                        }
+                    )
+                }
+
+                composable<Screen.QRShare> {
+                    QRShareScreen(
+                        onBackClick = {
+                            navController.popBackStack()
                         }
                     )
                 }

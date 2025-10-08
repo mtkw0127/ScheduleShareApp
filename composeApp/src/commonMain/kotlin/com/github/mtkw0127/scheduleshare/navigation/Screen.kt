@@ -15,6 +15,9 @@ sealed interface Screen {
     data object Settings : Screen
 
     @Serializable
+    data object QRShare : Screen
+
+    @Serializable
     data class DaySchedule(
         val year: Int,
         val month: Int,

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
@@ -60,6 +61,7 @@ import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.menu
+import scheduleshare.composeapp.generated.resources.qr_code
 import scheduleshare.composeapp.generated.resources.user
 import kotlin.math.absoluteValue
 import kotlin.time.Clock
@@ -74,6 +76,7 @@ fun CalendarScreen(
     moveToNext: () -> Unit,
     onClickDate: (Day) -> Unit = {},
     onUserIconClick: () -> Unit = {},
+    onQRShareClick: () -> Unit = {},
 ) {
     val state = rememberLazyListState()
     var changingFocus by remember { mutableStateOf(false) }
@@ -162,6 +165,29 @@ fun CalendarScreen(
                                 style = MaterialTheme.typography.bodyLarge
                             )
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // QRコード共有ボタン
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                drawerState.close()
+                                onQRShareClick()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.qr_code),
+                            contentDescription = "QRコード",
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("QRコードで共有")
                     }
                 }
             }

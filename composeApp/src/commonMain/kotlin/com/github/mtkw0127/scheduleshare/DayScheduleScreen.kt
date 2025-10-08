@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.font.FontWeight
@@ -46,7 +47,9 @@ import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
 import com.github.mtkw0127.scheduleshare.extension.toJapanese
 import com.github.mtkw0127.scheduleshare.extension.toYmd
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
+import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
+import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
@@ -63,7 +66,7 @@ import kotlin.math.absoluteValue
 fun DayScheduleScreen(
     date: LocalDate,
     scheduleRepository: ScheduleRepository,
-    userRepository: com.github.mtkw0127.scheduleshare.repository.UserRepository,
+    userRepository: UserRepository,
     onBackClick: () -> Unit,
     onDateChange: (LocalDate) -> Unit = {},
     onAddScheduleClick: () -> Unit = {},
@@ -81,14 +84,14 @@ fun DayScheduleScreen(
     val schedulesByUser = remember(schedules) {
         schedules.groupBy { it.user }.filter { (user, _) ->
             // 自分の予定または表示ONの共有ユーザーの予定のみ
-            user.id == com.github.mtkw0127.scheduleshare.model.user.User.createTest().id ||
+            user.id == User.createTest().id ||
             userRepository.getUserVisibility(user.id)
         }
     }
 
     // ユーザーの色を取得する関数
-    val getUserColor: (com.github.mtkw0127.scheduleshare.model.user.User.Id) -> androidx.compose.ui.graphics.Color = { userId ->
-        androidx.compose.ui.graphics.Color(userRepository.getUserColor(userId).value)
+    val getUserColor: (User.Id) -> Color = { userId ->
+        Color(userRepository.getUserColor(userId).value)
     }
 
     Scaffold(
@@ -353,7 +356,7 @@ private fun TimelineView(
     onScheduleClick: (Schedule) -> Unit = {},
     onTimelineClick: (LocalTime) -> Unit = {},
     showTimeLabels: Boolean = true,
-    getUserColor: (com.github.mtkw0127.scheduleshare.model.user.User.Id) -> androidx.compose.ui.graphics.Color = { androidx.compose.ui.graphics.Color.Unspecified }
+    getUserColor: (User.Id) -> Color = { Color.Unspecified }
 ) {
     val hourHeight = 60.dp
 
@@ -509,7 +512,7 @@ private fun TimelineView(
 private fun ScheduleCard(
     schedule: Schedule,
     modifier: Modifier = Modifier,
-    containerColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primaryContainer,
+    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
     onClick: () -> Unit = {}
 ) {
     Card(

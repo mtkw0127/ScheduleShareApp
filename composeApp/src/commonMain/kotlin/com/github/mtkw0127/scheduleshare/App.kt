@@ -44,7 +44,7 @@ fun App() {
                         id = Schedule.Id("1"),
                         title = "終日イベント",
                         description = "終日のサンプル予定",
-                        date = kotlinx.datetime.LocalDate(2025, 10, 8),
+                        date = LocalDate(2025, 10, 8),
                         user = testUser
                     )
                 )

@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
@@ -44,6 +46,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -53,7 +56,9 @@ import com.github.mtkw0127.scheduleshare.extension.toYm
 import com.github.mtkw0127.scheduleshare.model.calendar.Day
 import com.github.mtkw0127.scheduleshare.model.calendar.Month
 import com.github.mtkw0127.scheduleshare.model.calendar.Week
+import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
+import com.github.mtkw0127.scheduleshare.model.user.UserColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -72,17 +77,17 @@ import kotlin.time.ExperimentalTime
 fun CalendarScreen(
     months: List<Month>,
     focusedMonth: LocalDate,
-    schedules: Map<LocalDate, List<com.github.mtkw0127.scheduleshare.model.schedule.Schedule>>,
+    schedules: Map<LocalDate, List<Schedule>>,
     sharedUsers: List<User>,
     userVisibilityMap: Map<User.Id, Boolean>,
-    userColorMap: Map<User.Id, com.github.mtkw0127.scheduleshare.model.user.UserColor>,
+    userColorMap: Map<User.Id, UserColor>,
     moveToPrev: () -> Unit,
     moveToNext: () -> Unit,
     onClickDate: (Day) -> Unit = {},
     onUserIconClick: () -> Unit = {},
     onQRShareClick: () -> Unit = {},
     onUserVisibilityChange: (User.Id, Boolean) -> Unit = { _, _ -> },
-    onUserColorChange: (User.Id, com.github.mtkw0127.scheduleshare.model.user.UserColor) -> Unit = { _, _ -> }
+    onUserColorChange: (User.Id, UserColor) -> Unit = { _, _ -> }
 ) {
     val state = rememberLazyListState()
     var changingFocus by remember { mutableStateOf(false) }
@@ -180,19 +185,19 @@ fun CalendarScreen(
                                     .padding(start = 48.dp, top = 4.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                val currentColor = userColorMap[user.id] ?: com.github.mtkw0127.scheduleshare.model.user.UserColor.default()
-                                com.github.mtkw0127.scheduleshare.model.user.UserColor.entries.forEach { color ->
+                                val currentColor = userColorMap[user.id] ?: UserColor.default()
+                                UserColor.entries.forEach { color ->
                                     Box(
                                         modifier = Modifier
                                             .size(32.dp)
                                             .background(
-                                                color = androidx.compose.ui.graphics.Color(color.value),
-                                                shape = androidx.compose.foundation.shape.CircleShape
+                                                color = Color(color.value),
+                                                shape = CircleShape
                                             )
                                             .border(
                                                 width = if (currentColor == color) 3.dp else 0.dp,
                                                 color = MaterialTheme.colorScheme.primary,
-                                                shape = androidx.compose.foundation.shape.CircleShape
+                                                shape = CircleShape
                                             )
                                             .clickable {
                                                 onUserColorChange(user.id, color)
@@ -291,7 +296,14 @@ fun CalendarScreen(
                             }
                         ) {
                             DayView(screenWidth)
-                            DateView(month, schedules, onClickDate, screenWidth, screenHeight)
+                            DateView(
+                                month,
+                                schedules,
+                                userColorMap,
+                                onClickDate,
+                                screenWidth,
+                                screenHeight
+                            )
                         }
                     }
                 }
@@ -358,7 +370,8 @@ private fun DayCell(
 @Composable
 private fun DateView(
     month: Month,
-    schedules: Map<LocalDate, List<com.github.mtkw0127.scheduleshare.model.schedule.Schedule>>,
+    schedules: Map<LocalDate, List<Schedule>>,
+    userColorMap: Map<User.Id, UserColor>,
     onClickDate: (Day) -> Unit,
     screenWidth: Dp,
     screenHeight: Dp
@@ -368,13 +381,13 @@ private fun DateView(
             .width(screenWidth)
             .height(screenHeight)
     ) {
-        Week(month.firstWeek, schedules, onClickDate, Modifier.weight(1F))
-        Week(month.secondWeek, schedules, onClickDate, Modifier.weight(1F))
-        Week(month.thirdWeek, schedules, onClickDate, Modifier.weight(1F))
-        Week(month.fourthWeek, schedules, onClickDate, Modifier.weight(1F))
-        Week(month.fifthWeek, schedules, onClickDate, Modifier.weight(1F))
+        Week(month.firstWeek, schedules, userColorMap, onClickDate, Modifier.weight(1F))
+        Week(month.secondWeek, schedules, userColorMap, onClickDate, Modifier.weight(1F))
+        Week(month.thirdWeek, schedules, userColorMap, onClickDate, Modifier.weight(1F))
+        Week(month.fourthWeek, schedules, userColorMap, onClickDate, Modifier.weight(1F))
+        Week(month.fifthWeek, schedules, userColorMap, onClickDate, Modifier.weight(1F))
         month.sixthWeek?.let { week ->
-            Week(week, schedules, onClickDate, Modifier.weight(1F))
+            Week(week, schedules, userColorMap, onClickDate, Modifier.weight(1F))
         }
     }
 }
@@ -382,7 +395,8 @@ private fun DateView(
 @Composable
 private fun Week(
     week: Week,
-    schedules: Map<LocalDate, List<com.github.mtkw0127.scheduleshare.model.schedule.Schedule>>,
+    schedules: Map<LocalDate, List<Schedule>>,
+    userColorMap: Map<User.Id, UserColor>,
     onClickDate: (Day) -> Unit,
     modifier: Modifier,
 ) {
@@ -390,44 +404,51 @@ private fun Week(
         DateCell(
             day = week.sunday,
             schedules = schedules,
-            onClickDate,
-            Modifier.weight(1F)
+            userColorMap = userColorMap,
+            onClickDate = onClickDate,
+            modifier = Modifier.weight(1F)
         )
         DateCell(
             day = week.monday,
             schedules = schedules,
-            onClickDate,
-            Modifier.weight(1F)
+            userColorMap = userColorMap,
+            onClickDate = onClickDate,
+            modifier = Modifier.weight(1F)
         )
         DateCell(
             day = week.tuesday,
             schedules = schedules,
-            onClickDate,
-            Modifier.weight(1F)
+            userColorMap = userColorMap,
+            onClickDate = onClickDate,
+            modifier = Modifier.weight(1F)
         )
         DateCell(
             day = week.wednesday,
             schedules = schedules,
-            onClickDate,
-            Modifier.weight(1F)
+            userColorMap = userColorMap,
+            onClickDate = onClickDate,
+            modifier = Modifier.weight(1F)
         )
         DateCell(
             day = week.thursday,
             schedules = schedules,
-            onClickDate,
-            Modifier.weight(1F)
+            userColorMap = userColorMap,
+            onClickDate = onClickDate,
+            modifier = Modifier.weight(1F)
         )
         DateCell(
             day = week.friday,
             schedules = schedules,
-            onClickDate,
-            Modifier.weight(1F)
+            userColorMap = userColorMap,
+            onClickDate = onClickDate,
+            modifier = Modifier.weight(1F)
         )
         DateCell(
             day = week.saturday,
             schedules = schedules,
-            onClickDate,
-            Modifier.weight(1F)
+            userColorMap = userColorMap,
+            onClickDate = onClickDate,
+            modifier = Modifier.weight(1F)
         )
     }
 }
@@ -436,7 +457,8 @@ private fun Week(
 @Composable
 private fun DateCell(
     day: Day,
-    schedules: Map<LocalDate, List<com.github.mtkw0127.scheduleshare.model.schedule.Schedule>>,
+    schedules: Map<LocalDate, List<Schedule>>,
+    userColorMap: Map<User.Id, UserColor>,
     onClickDate: (Day) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -479,15 +501,26 @@ private fun DateCell(
 
         // 予定の表示（最大3件まで）
         daySchedules.take(3).forEach { schedule ->
-            Text(
-                text = schedule.title,
-                fontSize = 8.sp,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
+            val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 2.dp)
-            )
+                    .padding(horizontal = 2.dp, vertical = 1.dp)
+                    .background(
+                        color = Color(userColor.value),
+                        shape = RoundedCornerShape(2.dp)
+                    )
+                    .padding(horizontal = 4.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = schedule.title,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+            }
         }
 
         // 3件以上ある場合は「...」を表示

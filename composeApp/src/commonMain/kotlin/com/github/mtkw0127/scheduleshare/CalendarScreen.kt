@@ -129,7 +129,9 @@ fun CalendarScreen(
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet {
+            ModalDrawerSheet(
+                modifier = Modifier.width(240.dp)
+            ) {
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
@@ -189,7 +191,7 @@ fun CalendarScreen(
                                 UserColor.entries.forEach { color ->
                                     Box(
                                         modifier = Modifier
-                                            .size(32.dp)
+                                            .size(24.dp)
                                             .background(
                                                 color = Color(color.value),
                                                 shape = CircleShape

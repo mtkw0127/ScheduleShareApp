@@ -107,6 +107,18 @@ fun App() {
                         user = sharedUser3
                     )
                 )
+
+                // 連日予定のサンプル
+                addSchedule(
+                    Schedule.createMultiDayAllDay(
+                        id = Schedule.Id("7"),
+                        title = "夏季休暇",
+                        description = "家族旅行",
+                        startDate = LocalDate(2025, 10, 10),
+                        endDate = LocalDate(2025, 10, 12),
+                        user = testUser
+                    )
+                )
             }
         }
 

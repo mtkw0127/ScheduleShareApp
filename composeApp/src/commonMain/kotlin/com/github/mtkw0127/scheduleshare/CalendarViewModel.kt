@@ -88,9 +88,7 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
             year = focusedMonth.year,
             month = focusedMonth.month.number
         )
-
-        // 日付ごとにグループ化
-        schedules = schedulesForMonth.groupBy { it.date }
+        // TODO: データの整形
     }
 
     private fun loadMonths(centerMonth: LocalDate) {

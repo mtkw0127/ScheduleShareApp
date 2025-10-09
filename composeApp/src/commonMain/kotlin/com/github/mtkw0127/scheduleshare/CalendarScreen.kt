@@ -504,6 +504,11 @@ private fun DateCell(
         // 予定の表示（最大3件まで）
         daySchedules.take(3).forEach { schedule ->
             val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
+            val displayTitle = if (schedule.isMultiDay) {
+                "${schedule.title} (${schedule.startDateTime.date.dayOfMonth}日〜${schedule.endDateTime.date.dayOfMonth}日)"
+            } else {
+                schedule.title
+            }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -515,7 +520,7 @@ private fun DateCell(
                     .padding(horizontal = 4.dp, vertical = 2.dp)
             ) {
                 Text(
-                    text = schedule.title,
+                    text = displayTitle,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,

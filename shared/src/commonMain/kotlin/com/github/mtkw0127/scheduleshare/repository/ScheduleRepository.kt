@@ -23,9 +23,16 @@ class ScheduleRepository(
      */
     fun getSchedulesByMonth(year: Int, month: Int): List<Schedule> {
         val sharedUserIds = userRepository.getSharedUserIds()
-        return schedules.filter {
-            (it.date.year == year && it.date.month.number == month) &&
-            (it.user.id == User.createTest().id || sharedUserIds.contains(it.user.id))
+        return schedules.filter { schedule ->
+            val isUserVisible = schedule.user.id == User.createTest().id || sharedUserIds.contains(schedule.user.id)
+            if (!isUserVisible) return@filter false
+
+            // 開始日または終了日がその月に含まれるか、その月をまたいでいる場合
+            val scheduleStartInMonth = schedule.startDateTime.date.year == year && schedule.startDateTime.date.month.number == month
+            val scheduleEndInMonth = schedule.endDateTime.date.year == year && schedule.endDateTime.date.month.number == month
+            val scheduleSpansMonth = schedule.startDateTime.date.year <= year && schedule.startDateTime.date.month.number <= month &&
+                    schedule.endDateTime.date.year >= year && schedule.endDateTime.date.month.number >= month
+            scheduleStartInMonth || scheduleEndInMonth || scheduleSpansMonth
         }
     }
 
@@ -36,14 +43,14 @@ class ScheduleRepository(
      */
     fun getSchedulesByDate(date: LocalDate): List<Schedule> {
         val sharedUserIds = userRepository.getSharedUserIds()
-        return schedules.filter {
-            it.date == date &&
-            (it.user.id == User.createTest().id || sharedUserIds.contains(it.user.id))
+        return schedules.filter { schedule ->
+            val isUserVisible = schedule.user.id == User.createTest().id || sharedUserIds.contains(schedule.user.id)
+            if (!isUserVisible) return@filter false
+
+            // 指定日が開始日と終了日の間にあるかチェック
+            date >= schedule.startDateTime.date && date <= schedule.endDateTime.date
         }.sortedWith(compareBy {
-            when (val timeType = it.timeType) {
-                is Schedule.TimeType.AllDay -> LocalTime(0, 0)
-                is Schedule.TimeType.Timed -> timeType.start
-            }
+            it.startDateTime
         })
     }
 

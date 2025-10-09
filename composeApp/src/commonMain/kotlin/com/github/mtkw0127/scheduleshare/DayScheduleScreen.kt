@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -17,17 +18,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -85,7 +85,7 @@ fun DayScheduleScreen(
         schedules.groupBy { it.user }.filter { (user, _) ->
             // 自分の予定または表示ONの共有ユーザーの予定のみ
             user.id == User.createTest().id ||
-            userRepository.getUserVisibility(user.id)
+                    userRepository.getUserVisibility(user.id)
         }
     }
 
@@ -176,7 +176,7 @@ fun DayScheduleScreen(
                 // ユーザーごとに横並び表示（列分割）
                 // 終日予定の最大数を計算
                 val maxAllDayCount = schedulesByUser.values.maxOfOrNull { userSchedules ->
-                    userSchedules.count { it.timeType is Schedule.TimeType.AllDay }
+                    userSchedules.count { it.isAllDay }
                 } ?: 0
 
                 Row(modifier = Modifier.fillMaxWidth()) {
@@ -186,7 +186,7 @@ fun DayScheduleScreen(
                     ) {
                         // ユーザー名エリアの高さを合わせる (padding vertical 4.dp * 2 + titleMedium text height ~24.dp)
                         Spacer(modifier = Modifier.height(32.dp))
-                        androidx.compose.material3.HorizontalDivider()
+                        HorizontalDivider()
 
                         // 終日エリアの高さを合わせる
                         if (maxAllDayCount > 0) {
@@ -220,10 +220,10 @@ fun DayScheduleScreen(
                                     color = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
-                                androidx.compose.material3.HorizontalDivider()
+                                HorizontalDivider()
 
                                 // 終日の予定エリア（高さを統一）
-                                val allDaySchedules = userSchedules.filter { it.timeType is Schedule.TimeType.AllDay }
+                                val allDaySchedules = userSchedules.filter { it.isAllDay }
                                 if (maxAllDayCount > 0) {
                                     Column(
                                         modifier = Modifier
@@ -269,7 +269,7 @@ fun DayScheduleScreen(
                                 }
 
                                 // 時間軸と予定を表示（時刻ラベルなし）
-                                val timedSchedules = userSchedules.filter { it.timeType is Schedule.TimeType.Timed }
+                                val timedSchedules = userSchedules.filter { it.isTimed }
                                 TimelineView(
                                     timedSchedules = timedSchedules,
                                     onScheduleClick = onScheduleClick,
@@ -284,7 +284,7 @@ fun DayScheduleScreen(
             } else {
                 // 従来通りの重ねて表示
                 // 終日の予定を最初に表示
-                val allDaySchedules = schedules.filter { it.timeType is Schedule.TimeType.AllDay }
+                val allDaySchedules = schedules.filter { it.isAllDay }
                 if (allDaySchedules.isNotEmpty()) {
                     Column(
                         modifier = Modifier
@@ -311,7 +311,7 @@ fun DayScheduleScreen(
                 }
 
                 // 時間軸と予定を表示
-                val timedSchedules = schedules.filter { it.timeType is Schedule.TimeType.Timed }
+                val timedSchedules = schedules.filter { it.isTimed }
                 TimelineView(
                     timedSchedules = timedSchedules,
                     onScheduleClick = onScheduleClick,
@@ -407,17 +407,12 @@ private fun TimelineView(
         Layout(
             content = {
                 timedSchedules.forEach { schedule ->
-                    when (val timeType = schedule.timeType) {
-                        is Schedule.TimeType.Timed -> {
-                            ScheduleCard(
-                                schedule = schedule,
-                                containerColor = getUserColor(schedule.user.id),
-                                onClick = { onScheduleClick(schedule) }
-                            )
-                        }
-
-                        else -> { /* 終日は別で表示済み */
-                        }
+                    if (schedule.isTimed) {
+                        ScheduleCard(
+                            schedule = schedule,
+                            containerColor = getUserColor(schedule.user.id),
+                            onClick = { onScheduleClick(schedule) }
+                        )
                     }
                 }
             },
@@ -436,9 +431,10 @@ private fun TimelineView(
             // 重なりを検出して列を割り当て
             val scheduleInfos = mutableListOf<ScheduleInfo>()
             timedSchedules.forEach { schedule ->
-                val timeType = schedule.timeType as Schedule.TimeType.Timed
-                val startMinutes = timeType.start.hour * 60 + timeType.start.minute
-                val endMinutes = timeType.end.hour * 60 + timeType.end.minute
+                val startMinutes =
+                    checkNotNull(schedule.startDateTime.time).hour * 60 + checkNotNull(schedule.startDateTime.time).minute
+                val endMinutes =
+                    checkNotNull(schedule.endDateTime.time).hour * 60 + checkNotNull(schedule.endDateTime.time).minute
 
                 // この予定と重なる予定を探す
                 val overlapping = scheduleInfos.filter { info ->
@@ -530,11 +526,17 @@ private fun ScheduleCard(
             val availableHeight = maxHeight
 
             // 高さに応じて表示内容を調整
+            val displayTitle = if (schedule.isMultiDay) {
+                "${schedule.title} (${schedule.startDateTime.date.dayOfMonth}日〜${schedule.endDateTime.date.dayOfMonth}日)"
+            } else {
+                schedule.title
+            }
+
             when {
                 // 60dp未満: タイトルのみ、1行に省略
                 availableHeight < 60.dp -> {
                     Text(
-                        text = schedule.title,
+                        text = displayTitle,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -546,25 +548,21 @@ private fun ScheduleCard(
                 availableHeight < 100.dp -> {
                     Column {
                         Text(
-                            text = schedule.title,
+                            text = displayTitle,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
-                        when (val timeType = schedule.timeType) {
-                            is Schedule.TimeType.Timed -> {
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "${timeType.start} - ${timeType.end}",
-                                    fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                                    maxLines = 1
-                                )
-                            }
-
-                            is Schedule.TimeType.AllDay -> {}
+                        if (schedule.isTimed) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "${schedule.startDateTime.time} - ${schedule.endDateTime.time}",
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                                maxLines = 1
+                            )
                         }
                     }
                 }
@@ -572,7 +570,7 @@ private fun ScheduleCard(
                 else -> {
                     Column {
                         Text(
-                            text = schedule.title,
+                            text = displayTitle,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -587,17 +585,13 @@ private fun ScheduleCard(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        when (val timeType = schedule.timeType) {
-                            is Schedule.TimeType.Timed -> {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "${timeType.start} - ${timeType.end}",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                )
-                            }
-
-                            is Schedule.TimeType.AllDay -> {}
+                        if (schedule.isTimed) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "${schedule.startDateTime.time} - ${schedule.endDateTime.time}",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
                         }
                     }
                 }

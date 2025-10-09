@@ -38,23 +38,24 @@ fun App() {
                 val sharedUser2 = User(User.Id("user_002"), "佐藤花子")
                 val sharedUser3 = User(User.Id("user_003"), "鈴木一郎")
 
-                // 自分の予定
+                // パターン1: SingleAllDay（同一日・終日の予定）
                 addSchedule(
                     Schedule.createAllDay(
                         id = Schedule.Id("1"),
-                        title = "終日イベント",
-                        description = "終日のサンプル予定",
+                        title = "${testUser.name}: 終日イベント",
+                        description = "一日終日のサンプル予定",
                         date = LocalDate(2025, 10, 8),
                         user = testUser
                     )
                 )
 
+                // パターン2: TimeRange（同一日・時間指定の予定）
                 addSchedule(
                     Schedule.createTimed(
                         id = Schedule.Id("2"),
-                        title = "ミーティング",
+                        title = "${testUser.name}: ミーティング",
                         description = "プロジェクト定例会議",
-                        date = kotlinx.datetime.LocalDate(2025, 10, 8),
+                        date = LocalDate(2025, 10, 8),
                         user = testUser,
                         startTime = LocalTime(10, 0),
                         endTime = LocalTime(11, 0)
@@ -64,7 +65,7 @@ fun App() {
                 addSchedule(
                     Schedule.createTimed(
                         id = Schedule.Id("3"),
-                        title = "ランチ",
+                        title = "${testUser.name}: ランチ",
                         description = "チームランチ",
                         date = LocalDate(2025, 10, 8),
                         user = testUser,
@@ -73,11 +74,37 @@ fun App() {
                     )
                 )
 
+                // パターン3: AllDayRange（連日・終日の予定）
+                addSchedule(
+                    Schedule.createMultiDayAllDay(
+                        id = Schedule.Id("4"),
+                        title = "${testUser.name}: 夏季休暇",
+                        description = "家族旅行",
+                        startDate = LocalDate(2025, 10, 10),
+                        endDate = LocalDate(2025, 10, 12),
+                        user = testUser
+                    )
+                )
+
+                // パターン4: DateTimeRange（連日・時間指定の予定）
+                addSchedule(
+                    Schedule.createMultiDayTimed(
+                        id = Schedule.Id("5"),
+                        title = "${testUser.name}: 出張プロジェクト",
+                        description = "大阪での開発プロジェクト",
+                        startDate = LocalDate(2025, 10, 13),
+                        endDate = LocalDate(2025, 10, 15),
+                        user = testUser,
+                        startTime = LocalTime(9, 0),
+                        endTime = LocalTime(18, 0)
+                    )
+                )
+
                 // 共有ユーザーの予定
                 addSchedule(
                     Schedule.createTimed(
-                        id = Schedule.Id("4"),
-                        title = "山田さんの会議",
+                        id = Schedule.Id("6"),
+                        title = "${sharedUser1.name}: 会議",
                         description = "営業部ミーティング",
                         date = LocalDate(2025, 10, 8),
                         user = sharedUser1,
@@ -88,8 +115,8 @@ fun App() {
 
                 addSchedule(
                     Schedule.createTimed(
-                        id = Schedule.Id("5"),
-                        title = "佐藤さんの打ち合わせ",
+                        id = Schedule.Id("7"),
+                        title = "${sharedUser2.name}: 打ち合わせ",
                         description = "クライアントとの打ち合わせ",
                         date = LocalDate(2025, 10, 8),
                         user = sharedUser2,
@@ -100,23 +127,22 @@ fun App() {
 
                 addSchedule(
                     Schedule.createAllDay(
-                        id = Schedule.Id("6"),
-                        title = "鈴木さんの出張",
+                        id = Schedule.Id("8"),
+                        title = "${sharedUser3.name}: 出張",
                         description = "大阪出張",
                         date = LocalDate(2025, 10, 8),
                         user = sharedUser3
                     )
                 )
 
-                // 連日予定のサンプル
                 addSchedule(
                     Schedule.createMultiDayAllDay(
-                        id = Schedule.Id("7"),
-                        title = "夏季休暇",
-                        description = "家族旅行",
-                        startDate = LocalDate(2025, 10, 10),
-                        endDate = LocalDate(2025, 10, 12),
-                        user = testUser
+                        id = Schedule.Id("9"),
+                        title = "${sharedUser1.name}: 研修",
+                        description = "新人研修",
+                        startDate = LocalDate(2025, 10, 9),
+                        endDate = LocalDate(2025, 10, 11),
+                        user = sharedUser1
                     )
                 )
             }

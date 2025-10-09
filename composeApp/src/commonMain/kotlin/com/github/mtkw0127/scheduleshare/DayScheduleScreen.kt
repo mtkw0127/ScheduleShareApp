@@ -157,35 +157,72 @@ fun DayScheduleScreen(
             }
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onDragEnd = {
-                            val threshold = 100f
-                            if (dragOffset.absoluteValue > threshold) {
-                                val newDate = if (dragOffset > 0) {
-                                    // 右スワイプ: 前日へ
-                                    currentDate.plus(DatePeriod(days = -1))
-                                } else {
-                                    // 左スワイプ: 翌日へ
-                                    currentDate.plus(DatePeriod(days = 1))
-                                }
-                                currentDate = newDate
-                                onDateChange(newDate)
-                            }
-                            dragOffset = 0f
-                        },
-                        onHorizontalDrag = { _, dragAmount ->
-                            dragOffset += dragAmount
-                        }
-                    )
-                }
-                .verticalScroll(rememberScrollState())
         ) {
             if (isColumnView && schedulesByUser.size > 1) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // ユーザー名ヘッダー（固定）
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        // 左側固定: 時刻表示エリアの幅を合わせる
+                        Spacer(modifier = Modifier.width(60.dp))
+
+                        // 右側スクロール: ユーザー名
+                        val horizontalScrollState = rememberScrollState()
+
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .horizontalScroll(horizontalScrollState)
+                                .background(MaterialTheme.colorScheme.surface)
+                        ) {
+                            schedulesByUser.keys.forEach { user ->
+                                Column(
+                                    modifier = Modifier
+                                        .width(150.dp)
+                                        .padding(horizontal = 2.dp)
+                                ) {
+                                    Text(
+                                        text = user.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                    HorizontalDivider()
+                                }
+                            }
+                        }
+                    }
+
+                    // スクロール可能なコンテンツ
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .pointerInput(Unit) {
+                                detectHorizontalDragGestures(
+                                    onDragEnd = {
+                                        val threshold = 100f
+                                        if (dragOffset.absoluteValue > threshold) {
+                                            val newDate = if (dragOffset > 0) {
+                                                currentDate.plus(DatePeriod(days = -1))
+                                            } else {
+                                                currentDate.plus(DatePeriod(days = 1))
+                                            }
+                                            currentDate = newDate
+                                            onDateChange(newDate)
+                                        }
+                                        dragOffset = 0f
+                                    },
+                                    onHorizontalDrag = { _, dragAmount ->
+                                        dragOffset += dragAmount
+                                    }
+                                )
+                            }
+                    ) {
                 // ユーザーごとに横並び表示（列分割）
                 // 終日予定の最大数を計算（最低1つは表示）
                 val maxAllDayCount = schedulesByUser.values.maxOfOrNull { userSchedules ->
@@ -197,10 +234,6 @@ fun DayScheduleScreen(
                     Column(
                         modifier = Modifier.width(60.dp)
                     ) {
-                        // ユーザー名エリアの高さを合わせる (padding vertical 4.dp * 2 + titleMedium text height ~24.dp)
-                        Spacer(modifier = Modifier.height(32.dp))
-                        HorizontalDivider()
-
                         // 終日エリアの高さを合わせる（常に表示）
                         // padding 8.dp * 2 + "終日" text 12.sp (~16.dp) + spacer 4.dp + (maxAllDayCount * (64.dp card + 4.dp spacer))
                         val allDayAreaHeight = 16.dp + 16.dp + 4.dp + (68.dp * maxAllDayCount)
@@ -259,16 +292,6 @@ fun DayScheduleScreen(
                                     .fillMaxHeight()
                                     .padding(horizontal = 2.dp)
                             ) {
-                                // ユーザー名表示
-                                Text(
-                                    text = user.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                                HorizontalDivider()
-
                                 // 終日の予定エリア（高さを統一、常に表示）
                                 val allDaySchedules = userSchedules.filter { it.isAllDay }
                                 Column(
@@ -326,8 +349,35 @@ fun DayScheduleScreen(
                         }
                     }
                 }
+                    }
+                }
             } else {
                 // 従来通りの重ねて表示
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .pointerInput(Unit) {
+                            detectHorizontalDragGestures(
+                                onDragEnd = {
+                                    val threshold = 100f
+                                    if (dragOffset.absoluteValue > threshold) {
+                                        val newDate = if (dragOffset > 0) {
+                                            currentDate.plus(DatePeriod(days = -1))
+                                        } else {
+                                            currentDate.plus(DatePeriod(days = 1))
+                                        }
+                                        currentDate = newDate
+                                        onDateChange(newDate)
+                                    }
+                                    dragOffset = 0f
+                                },
+                                onHorizontalDrag = { _, dragAmount ->
+                                    dragOffset += dragAmount
+                                }
+                            )
+                        }
+                ) {
                 // 終日の予定を最初に表示
                 val allDaySchedules = schedules.filter { it.isAllDay }
                 if (allDaySchedules.isNotEmpty()) {
@@ -355,14 +405,15 @@ fun DayScheduleScreen(
                     }
                 }
 
-                // 時間軸と予定を表示
-                val timedSchedules = schedules.filter { it.isTimed }
-                TimelineView(
-                    timedSchedules = timedSchedules,
-                    onScheduleClick = onScheduleClick,
-                    onTimelineClick = onAddScheduleAtTime,
-                    getUserColor = getUserColor
-                )
+                    // 時間軸と予定を表示
+                    val timedSchedules = schedules.filter { it.isTimed }
+                    TimelineView(
+                        timedSchedules = timedSchedules,
+                        onScheduleClick = onScheduleClick,
+                        onTimelineClick = onAddScheduleAtTime,
+                        getUserColor = getUserColor
+                    )
+                }
             }
         }
     }

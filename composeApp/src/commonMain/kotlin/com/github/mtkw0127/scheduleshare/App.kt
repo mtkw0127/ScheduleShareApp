@@ -229,10 +229,8 @@ fun App() {
                         onBackClick = {
                             navController.popBackStack()
                         },
-                        onDateChange = { newDate ->
-                            navController.navigate(Screen.DaySchedule.from(newDate)) {
-                                popUpTo(Screen.DaySchedule::class) { inclusive = true }
-                            }
+                        onDateChange = {
+                            // 内部状態で日付管理するため、何もしない
                         },
                         onAddScheduleClick = {
                             navController.navigate(Screen.ScheduleAdd.from(daySchedule.toLocalDate()))

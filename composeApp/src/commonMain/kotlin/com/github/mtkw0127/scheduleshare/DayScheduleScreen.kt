@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -32,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +52,7 @@ import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
+import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
@@ -73,9 +76,11 @@ fun DayScheduleScreen(
     onAddScheduleAtTime: (LocalTime) -> Unit = {},
     onScheduleClick: (Schedule) -> Unit = {}
 ) {
-    var currentDate by remember(date) { mutableStateOf(date) }
+    val scope = rememberCoroutineScope()
+    var currentDate by remember { mutableStateOf(date) }
     var dragOffset by remember { mutableStateOf(0f) }
-    var isColumnView by remember { mutableStateOf(false) } // 縦並び表示かどうか
+    var isColumnView by remember { mutableStateOf(false) } // 縦並び表示かどうか（一度trueになったら保持）
+
     val schedules = remember(currentDate) {
         scheduleRepository.getSchedulesByDate(currentDate)
     }
@@ -208,10 +213,46 @@ fun DayScheduleScreen(
                     }
 
                     // 右側スクロール: ユーザーの列
+                    val horizontalScrollState = rememberScrollState()
+                    var horizontalDragOffset by remember { mutableStateOf(0f) }
+
                     Row(
                         modifier = Modifier
                             .weight(1f)
-                            .horizontalScroll(rememberScrollState())
+                            .horizontalScroll(horizontalScrollState)
+                            .pointerInput(Unit) {
+                                detectHorizontalDragGestures(
+                                    onDragEnd = {
+                                        // スクロールが端に到達している場合のみ日付移動
+                                        val threshold = 100f
+                                        val isAtStart = horizontalScrollState.value == 0
+                                        val isAtEnd =
+                                            horizontalScrollState.value == horizontalScrollState.maxValue
+
+                                        if (horizontalDragOffset.absoluteValue > threshold) {
+                                            if (horizontalDragOffset > 0 && isAtStart) {
+                                                // 右スワイプ & 左端: 前日へ
+                                                val newDate =
+                                                    currentDate.plus(DatePeriod(days = -1))
+                                                currentDate = newDate
+                                                onDateChange(newDate)
+                                            } else if (horizontalDragOffset < 0 && isAtEnd) {
+                                                // 左スワイプ & 右端: 翌日へ
+                                                val newDate = currentDate.plus(DatePeriod(days = 1))
+                                                currentDate = newDate
+                                                onDateChange(newDate)
+                                            }
+                                        }
+                                        horizontalDragOffset = 0f
+                                    },
+                                    onHorizontalDrag = { _, dragAmount ->
+                                        horizontalDragOffset += dragAmount
+                                        scope.launch {
+                                            horizontalScrollState.scrollBy(-dragAmount)
+                                        }
+                                    }
+                                )
+                            }
                     ) {
                         schedulesByUser.forEach { (user, userSchedules) ->
                             Column(

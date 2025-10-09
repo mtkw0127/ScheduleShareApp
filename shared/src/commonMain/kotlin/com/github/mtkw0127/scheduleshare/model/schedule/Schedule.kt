@@ -31,10 +31,10 @@ data class Schedule(
         get() = startDateTime.isTimed && endDateTime.isTimed
 
     /**
-     * 単日予定かどうか
+     * 一日終日の予定かどうか
      */
-    val isSingleDay: Boolean
-        get() = startDateTime.date == endDateTime.date
+    val isSingleAllDay: Boolean
+        get() = startDateTime.date == endDateTime.date && isTimed.not()
 
     /**
      * 連日予定かどうか

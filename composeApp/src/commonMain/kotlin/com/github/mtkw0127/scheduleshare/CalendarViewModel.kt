@@ -88,7 +88,6 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
             year = focusedMonth.year,
             month = focusedMonth.month.number
         )
-        // TODO: データの整形
     }
 
     private fun loadMonths(centerMonth: LocalDate) {

@@ -464,7 +464,10 @@ private fun DateCell(
     onClickDate: (Day) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val daySchedules = schedules[day.value] ?: emptyList()
+    val daySchedules = schedules[day.value]
+        ?.filter {
+            it.isTimed || it.isSingleAllDay
+        } ?: emptyList()
 
     Column(
         modifier = modifier

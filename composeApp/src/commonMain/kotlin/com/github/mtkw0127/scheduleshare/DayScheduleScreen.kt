@@ -169,6 +169,9 @@ fun DayScheduleScreen(
                 .padding(paddingValues)
         ) {
             if (isColumnView && schedulesByUser.size > 1) {
+                // 横スクロール状態を共有
+                val sharedHorizontalScrollState = rememberScrollState()
+
                 Column(modifier = Modifier.fillMaxSize()) {
                     // ユーザー名ヘッダー（固定）
                     Row(modifier = Modifier.fillMaxWidth()) {
@@ -176,12 +179,10 @@ fun DayScheduleScreen(
                         Spacer(modifier = Modifier.width(60.dp))
 
                         // 右側スクロール: ユーザー名
-                        val horizontalScrollState = rememberScrollState()
-
                         Row(
                             modifier = Modifier
                                 .weight(1f)
-                                .horizontalScroll(horizontalScrollState)
+                                .horizontalScroll(sharedHorizontalScrollState)
                                 .background(MaterialTheme.colorScheme.surface)
                         ) {
                             schedulesByUser.keys.forEach { user ->
@@ -254,21 +255,20 @@ fun DayScheduleScreen(
                             }
 
                             // 右側スクロール: ユーザーの列
-                            val horizontalScrollState = rememberScrollState()
                             var horizontalDragOffset by remember { mutableStateOf(0f) }
 
                             Row(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .horizontalScroll(horizontalScrollState)
+                                    .horizontalScroll(sharedHorizontalScrollState)
                                     .pointerInput(Unit) {
                                         detectHorizontalDragGestures(
                                             onDragEnd = {
                                                 // スクロールが端に到達している場合のみ日付移動
                                                 val threshold = 100f
-                                                val isAtStart = horizontalScrollState.value == 0
+                                                val isAtStart = sharedHorizontalScrollState.value == 0
                                                 val isAtEnd =
-                                                    horizontalScrollState.value == horizontalScrollState.maxValue
+                                                    sharedHorizontalScrollState.value == sharedHorizontalScrollState.maxValue
 
                                                 if (horizontalDragOffset.absoluteValue > threshold) {
                                                     if (horizontalDragOffset > 0 && isAtStart) {
@@ -290,7 +290,7 @@ fun DayScheduleScreen(
                                             onHorizontalDrag = { _, dragAmount ->
                                                 horizontalDragOffset += dragAmount
                                                 scope.launch {
-                                                    horizontalScrollState.scrollBy(-dragAmount)
+                                                    sharedHorizontalScrollState.scrollBy(-dragAmount)
                                                 }
                                             }
                                         )

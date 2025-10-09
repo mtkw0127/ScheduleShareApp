@@ -2,7 +2,36 @@ package com.github.mtkw0127.scheduleshare.model.schedule
 
 import com.github.mtkw0127.scheduleshare.model.user.User
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
+
+// 予定の日時パターンを表す sealed interface
+sealed interface ScheduleTime {
+
+    // 開始と終了が別日（時刻ありで日を跨ぐ）
+    data class DateTimeRange(
+        val start: LocalDateTime,
+        val end: LocalDateTime
+    ) : ScheduleTime
+
+    // 開始と終了が別日（終日で日を跨ぐ）
+    data class AllDayRange(
+        val startDate: LocalDate,
+        val endDate: LocalDate
+    ) : ScheduleTime
+
+    // 同一日（一日終日の予定）
+    data class SingleAllDay(
+        val date: LocalDate
+    ) : ScheduleTime
+
+    // 同一日（一日の中で何時から何時の予定）
+    data class TimeRange(
+        val date: LocalDate,
+        val startTime: LocalTime,
+        val endTime: LocalTime
+    ) : ScheduleTime
+}
 
 /**
  * 予定のUIモデル
@@ -11,8 +40,7 @@ data class Schedule(
     val id: Id,
     val title: String,
     val description: String,
-    val startDateTime: DateTime,
-    val endDateTime: DateTime,
+    val time: ScheduleTime,
     val user: User
 ) {
 
@@ -22,25 +50,47 @@ data class Schedule(
      * 終日かどうか
      */
     val isAllDay: Boolean
-        get() = startDateTime.isAllDay && endDateTime.isAllDay
+        get() = time is ScheduleTime.SingleAllDay || time is ScheduleTime.AllDayRange
 
     /**
      * 時間指定かどうか
      */
     val isTimed: Boolean
-        get() = startDateTime.isTimed && endDateTime.isTimed
+        get() = time is ScheduleTime.TimeRange || time is ScheduleTime.DateTimeRange
 
     /**
      * 一日終日の予定かどうか
      */
     val isSingleAllDay: Boolean
-        get() = startDateTime.date == endDateTime.date && isTimed.not()
+        get() = time is ScheduleTime.SingleAllDay
 
     /**
      * 連日予定かどうか
      */
     val isMultiDay: Boolean
-        get() = startDateTime.date != endDateTime.date
+        get() = time is ScheduleTime.AllDayRange || time is ScheduleTime.DateTimeRange
+
+    /**
+     * 開始日時を取得
+     */
+    val startDateTime: DateTime
+        get() = when (val t = time) {
+            is ScheduleTime.SingleAllDay -> DateTime.allDay(t.date)
+            is ScheduleTime.TimeRange -> DateTime.timed(t.date, t.startTime)
+            is ScheduleTime.AllDayRange -> DateTime.allDay(t.startDate)
+            is ScheduleTime.DateTimeRange -> DateTime.timed(t.start.date, t.start.time)
+        }
+
+    /**
+     * 終了日時を取得
+     */
+    val endDateTime: DateTime
+        get() = when (val t = time) {
+            is ScheduleTime.SingleAllDay -> DateTime.allDay(t.date)
+            is ScheduleTime.TimeRange -> DateTime.timed(t.date, t.endTime)
+            is ScheduleTime.AllDayRange -> DateTime.allDay(t.endDate)
+            is ScheduleTime.DateTimeRange -> DateTime.timed(t.end.date, t.end.time)
+        }
 
     companion object {
         /**
@@ -57,8 +107,7 @@ data class Schedule(
                 id = id,
                 title = title,
                 description = description,
-                startDateTime = DateTime.allDay(date),
-                endDateTime = DateTime.allDay(date),
+                time = ScheduleTime.SingleAllDay(date),
                 user = user
             )
         }
@@ -78,8 +127,7 @@ data class Schedule(
                 id = id,
                 title = title,
                 description = description,
-                startDateTime = DateTime.allDay(startDate),
-                endDateTime = DateTime.allDay(endDate),
+                time = ScheduleTime.AllDayRange(startDate, endDate),
                 user = user
             )
         }
@@ -100,8 +148,7 @@ data class Schedule(
                 id = id,
                 title = title,
                 description = description,
-                startDateTime = DateTime.timed(date, startTime),
-                endDateTime = DateTime.timed(date, endTime),
+                time = ScheduleTime.TimeRange(date, startTime, endTime),
                 user = user
             )
         }
@@ -123,8 +170,10 @@ data class Schedule(
                 id = id,
                 title = title,
                 description = description,
-                startDateTime = DateTime.timed(startDate, startTime),
-                endDateTime = DateTime.timed(endDate, endTime),
+                time = ScheduleTime.DateTimeRange(
+                    start = LocalDateTime(startDate, startTime),
+                    end = LocalDateTime(endDate, endTime)
+                ),
                 user = user
             )
         }

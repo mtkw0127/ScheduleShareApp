@@ -80,12 +80,20 @@ fun DayScheduleScreen(
         scheduleRepository.getSchedulesByDate(currentDate)
     }
 
+    // 表示対象のユーザー一覧を取得
+    val visibleUsers = remember {
+        val testUser = User.createTest()
+        val sharedUsers = userRepository.getSharedUsers().filter { user ->
+            userRepository.getUserVisibility(user.id)
+        }
+        listOf(testUser) + sharedUsers
+    }
+
     // ユーザーごとにグループ化（visibilityがtrueのユーザーのみ）
-    val schedulesByUser = remember(schedules) {
-        schedules.groupBy { it.user }.filter { (user, _) ->
-            // 自分の予定または表示ONの共有ユーザーの予定のみ
-            user.id == User.createTest().id ||
-                    userRepository.getUserVisibility(user.id)
+    val schedulesByUser = remember(schedules, visibleUsers) {
+        // 列表示の場合は予定がなくてもユーザーを表示するため、全ユーザーをマップに含める
+        visibleUsers.associateWith { user ->
+            schedules.filter { it.user.id == user.id }
         }
     }
 

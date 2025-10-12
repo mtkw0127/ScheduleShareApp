@@ -21,8 +21,13 @@ import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import com.github.mtkw0127.scheduleshare.theme.ScheduleShareTheme
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 @Composable
 @Preview
 fun App() {
@@ -171,6 +176,7 @@ fun App() {
 
                 composable<Screen.Calendar> {
                     val calendarState = rememberCalendarState(scheduleRepository, userRepository)
+                    val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
                     CalendarScreen(
                         months = calendarState.months,
@@ -191,7 +197,10 @@ fun App() {
                             navController.navigate(Screen.QRShare)
                         },
                         onWeekScheduleClick = {
-                            navController.navigate(Screen.WeekSchedule.from(calendarState.focusedMonth))
+                            navController.navigate(Screen.WeekSchedule.from(today))
+                        },
+                        onDayScheduleClick = {
+                            navController.navigate(Screen.DaySchedule.from(today))
                         },
                         onUserVisibilityChange = { userId, visible ->
                             calendarState.updateUserVisibility(userId, visible)

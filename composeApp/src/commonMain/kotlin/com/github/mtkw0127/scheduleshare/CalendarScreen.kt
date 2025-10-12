@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,6 +34,7 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -66,6 +69,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
+import scheduleshare.composeapp.generated.resources.arrow_drop_down
 import scheduleshare.composeapp.generated.resources.menu
 import scheduleshare.composeapp.generated.resources.qr_code
 import scheduleshare.composeapp.generated.resources.user
@@ -88,6 +92,7 @@ fun CalendarScreen(
     onUserIconClick: () -> Unit = {},
     onQRShareClick: () -> Unit = {},
     onWeekScheduleClick: () -> Unit = {},
+    onDayScheduleClick: () -> Unit = {},
     onUserVisibilityChange: (User.Id, Boolean) -> Unit = { _, _ -> },
     onUserColorChange: (User.Id, UserColor) -> Unit = { _, _ -> }
 ) {
@@ -96,6 +101,8 @@ fun CalendarScreen(
     var initialized by remember { mutableStateOf(false) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    var viewModeMenuExpanded by remember { mutableStateOf(false) }
+    var selectedViewMode by remember { mutableStateOf("月") }
 
     // 各ユーザーの表示状態を管理
     val userVisibilityState = remember(sharedUsers, userVisibilityMap) {
@@ -242,13 +249,11 @@ fun CalendarScreen(
             topBar = {
                 CommonTopAppBar(
                     title = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = focusedMonth.toYm(),
-                                fontSize = 18.sp,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                            )
-                        }
+                        Text(
+                            text = focusedMonth.toYm(),
+                            fontSize = 18.sp,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                        )
                     },
                     navigationIcon = {
                         IconButton(onClick = {
@@ -264,13 +269,90 @@ fun CalendarScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = onWeekScheduleClick) {
-                            Icon(
-                                imageVector = vectorResource(Res.drawable.view_week),
-                                contentDescription = "週間予定",
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
+                        // 表示モード切り替えドロップダウン
+                        Box {
+                            IconButton(onClick = { viewModeMenuExpanded = true }) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                ) {
+                                    Text(
+                                        text = selectedViewMode,
+                                        fontSize = 16.sp,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                    Icon(
+                                        imageVector = vectorResource(Res.drawable.arrow_drop_down),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+
+                            DropdownMenu(
+                                expanded = viewModeMenuExpanded,
+                                onDismissRequest = { viewModeMenuExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text("日")
+                                            if (selectedViewMode == "日") {
+                                                Text("✓", fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedViewMode = "日"
+                                        viewModeMenuExpanded = false
+                                        onDayScheduleClick()
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text("週")
+                                            if (selectedViewMode == "週") {
+                                                Text("✓", fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedViewMode = "週"
+                                        viewModeMenuExpanded = false
+                                        onWeekScheduleClick()
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text("月")
+                                            if (selectedViewMode == "月") {
+                                                Text("✓", fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedViewMode = "月"
+                                        viewModeMenuExpanded = false
+                                    }
+                                )
+                            }
                         }
+
                         IconButton(onClick = onUserIconClick) {
                             Icon(
                                 imageVector = vectorResource(Res.drawable.user),

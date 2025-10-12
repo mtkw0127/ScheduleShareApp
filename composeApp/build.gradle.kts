@@ -42,6 +42,8 @@ kotlin {
             implementation(libs.androidx.navigation.compose)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.androidx.datastore)
+            implementation(libs.androidx.datastore.preferences)
             implementation(projects.shared)
         }
         commonTest.dependencies {

@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +57,7 @@ import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
+import com.github.mtkw0127.scheduleshare.shared.preferences.UserPreferenceRepository
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
@@ -79,6 +81,7 @@ fun DayScheduleScreen(
     date: LocalDate,
     scheduleRepository: ScheduleRepository,
     userRepository: UserRepository,
+    userPreferenceRepository: UserPreferenceRepository,
     holidayRepository: HolidayRepository = HolidayRepository(),
     onBackClick: () -> Unit,
     onDateChange: (LocalDate) -> Unit = {},
@@ -89,7 +92,14 @@ fun DayScheduleScreen(
     val scope = rememberCoroutineScope()
     var currentDate by remember { mutableStateOf(date) }
     var dragOffset by remember { mutableStateOf(0f) }
-    var isColumnView by remember { mutableStateOf(false) } // 縦並び表示かどうか（一度trueになったら保持）
+
+    // DataStoreから表示モードを取得
+    var isColumnView by remember { mutableStateOf(true) }
+
+    // 初回読み込み時にDataStoreから設定を取得
+    LaunchedEffect(Unit) {
+        isColumnView = userPreferenceRepository.isColumnLayoutEnabled()
+    }
 
     val schedules = remember(currentDate) {
         scheduleRepository.getSchedulesByDate(currentDate)
@@ -148,7 +158,14 @@ fun DayScheduleScreen(
                     // 複数ユーザーの予定がある場合のみ切り替えボタンを表示
                     if (schedulesByUser.size > 1) {
                         IconButton(
-                            onClick = { isColumnView = !isColumnView }
+                            onClick = {
+                                val newValue = !isColumnView
+                                isColumnView = newValue
+                                // DataStoreに保存
+                                scope.launch {
+                                    userPreferenceRepository.setColumnLayoutEnabled(newValue)
+                                }
+                            }
                         ) {
                             Icon(
                                 imageVector = vectorResource(

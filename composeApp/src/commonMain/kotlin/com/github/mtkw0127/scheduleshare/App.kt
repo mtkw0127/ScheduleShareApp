@@ -16,6 +16,8 @@ import com.github.mtkw0127.scheduleshare.navigation.Screen
 import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
+import com.github.mtkw0127.scheduleshare.shared.preferences.UserPreferenceRepository
+import com.github.mtkw0127.scheduleshare.shared.preferences.createDataStore
 import com.github.mtkw0127.scheduleshare.theme.ScheduleShareTheme
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
@@ -33,6 +35,7 @@ fun App() {
         val navController = rememberNavController()
         val userRepository = remember { UserRepository.createWithSampleData() }
         val holidayRepository = remember { HolidayRepository() }
+        val userPreferenceRepository = remember { UserPreferenceRepository(createDataStore()) }
         val scheduleRepository = remember {
             ScheduleRepository(userRepository).apply {
                 val testUser = User.createTest()
@@ -262,6 +265,7 @@ fun App() {
                         date = daySchedule.toLocalDate(),
                         scheduleRepository = scheduleRepository,
                         userRepository = userRepository,
+                        userPreferenceRepository = userPreferenceRepository,
                         onBackClick = {
                             navController.popBackStack()
                         },

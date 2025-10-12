@@ -582,10 +582,23 @@ private fun Week(
             // blockNumをリセット
             blockNum = listOf(0, 0, 0, 0, 0, 0, 0)
 
-            // 全ての予定をまとめて開始日時順にソート
+            // 全ての予定をまとめてソート
+            // 1. 翌週にまたがる予定を優先（開始日が週の最初より前、または終了日が週の最後より後）
+            // 2. その次に開始日時順
+            val lastDayOfWeek = weekDays.last().value
             val allSchedules =
                 (thisWeekMultiSchedules + thisWeekSingleSchedules.flatMap { it.second })
-                    .sortedBy { it.startDateTime }
+                    .sortedWith(
+                        compareByDescending<Schedule> { schedule ->
+                            // 翌週にまたがるかチェック
+                            when (schedule.time) {
+                                is ScheduleTime.MultiDateSchedule -> {
+                                    schedule.endDateTime.date > lastDayOfWeek || schedule.startDateTime.date < firstDateOfWeek
+                                }
+                                else -> false
+                            }
+                        }.thenBy { it.startDateTime }
+                    )
 
             allSchedules.forEach { schedule ->
                 val startDate = schedule.startDateTime.date

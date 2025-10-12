@@ -53,6 +53,7 @@ import com.github.mtkw0127.scheduleshare.extension.toJapanese
 import com.github.mtkw0127.scheduleshare.extension.toYmd
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
+import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import kotlinx.coroutines.launch
@@ -78,6 +79,7 @@ fun DayScheduleScreen(
     date: LocalDate,
     scheduleRepository: ScheduleRepository,
     userRepository: UserRepository,
+    holidayRepository: HolidayRepository = HolidayRepository(),
     onBackClick: () -> Unit,
     onDateChange: (LocalDate) -> Unit = {},
     onAddScheduleClick: () -> Unit = {},
@@ -91,6 +93,12 @@ fun DayScheduleScreen(
 
     val schedules = remember(currentDate) {
         scheduleRepository.getSchedulesByDate(currentDate)
+    }
+
+    // 祝日を取得
+    val holiday = remember(currentDate) {
+        val holidays = holidayRepository.getJapaneseHolidays(currentDate.year)
+        holidays.find { it.date == currentDate }
     }
 
     // 表示対象のユーザー一覧を取得
@@ -251,10 +259,12 @@ fun DayScheduleScreen(
                             }
                     ) {
                         // ユーザーごとに横並び表示（列分割）
-                        // 終日予定の最大数を計算（最低1つは表示）
-                        val maxAllDayCount = schedulesByUser.values.maxOfOrNull { userSchedules ->
+                        // 終日予定の最大数を計算（祝日も含む、最低1つは表示）
+                        val maxAllDayCount = (schedulesByUser.values.maxOfOrNull { userSchedules ->
                             userSchedules.count { it.isAllDay }
-                        }?.coerceAtLeast(1) ?: 1
+                        } ?: 0).let { max ->
+                            if (holiday != null) (max + 1).coerceAtLeast(1) else max.coerceAtLeast(1)
+                        }
 
                         Row(modifier = Modifier.fillMaxWidth()) {
                             // 左側固定: 時刻表示エリア
@@ -319,7 +329,10 @@ fun DayScheduleScreen(
                                         )
                                     }
                             ) {
+                                var index = 0
                                 schedulesByUser.forEach { (user, userSchedules) ->
+                                    val isFirstUser = index == 0
+                                    index++
                                     Column(
                                         modifier = if (useTwoColumnLayout) {
                                             Modifier
@@ -338,12 +351,7 @@ fun DayScheduleScreen(
                                         Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .background(
-                                                    if (allDaySchedules.isNotEmpty())
-                                                        MaterialTheme.colorScheme.surfaceVariant
-                                                    else
-                                                        MaterialTheme.colorScheme.surface
-                                                )
+                                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                                 .padding(8.dp)
                                         ) {
                                             // 全ユーザーで"終日"テキストを表示（高さを統一するため）
@@ -351,12 +359,36 @@ fun DayScheduleScreen(
                                                 text = "終日",
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = if (allDaySchedules.isNotEmpty())
-                                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                                else
-                                                    MaterialTheme.colorScheme.surface // 透明にする
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                             Spacer(modifier = Modifier.height(4.dp))
+
+                                            // 最初のユーザーの列に祝日を表示
+                                            if (isFirstUser && holiday != null) {
+                                                Box(modifier = Modifier.height(64.dp)) {
+                                                    Card(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        colors = CardDefaults.cardColors(
+                                                            containerColor = Color(0xFF4CAF50)
+                                                        ),
+                                                        shape = RoundedCornerShape(4.dp)
+                                                    ) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .padding(8.dp)
+                                                        ) {
+                                                            Text(
+                                                                text = holiday.name,
+                                                                fontSize = 14.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = Color.White
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                            }
 
                                             // 実際の終日予定を表示（固定の高さ）
                                             allDaySchedules.forEach { schedule ->
@@ -371,7 +403,10 @@ fun DayScheduleScreen(
                                             }
 
                                             // 不足分は空のスペースで埋める
-                                            val emptyCount = maxAllDayCount - allDaySchedules.size
+                                            val holidayCount =
+                                                if (isFirstUser && holiday != null) 1 else 0
+                                            val emptyCount =
+                                                maxAllDayCount - allDaySchedules.size - holidayCount
                                             repeat(emptyCount) {
                                                 Spacer(modifier = Modifier.height(68.dp)) // カード1つ分の高さ(64dp) + spacer(4dp)
                                             }
@@ -420,9 +455,9 @@ fun DayScheduleScreen(
                             )
                         }
                 ) {
-                    // 終日の予定を最初に表示
+                    // 終日の予定と祝日を最初に表示
                     val allDaySchedules = schedules.filter { it.isAllDay }
-                    if (allDaySchedules.isNotEmpty()) {
+                    if (allDaySchedules.isNotEmpty() || holiday != null) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -436,6 +471,32 @@ fun DayScheduleScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.height(4.dp))
+
+                            // 祝日を表示
+                            if (holiday != null) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFF4CAF50)
+                                    ),
+                                    shape = RoundedCornerShape(4.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(8.dp)
+                                    ) {
+                                        Text(
+                                            text = holiday.name,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
+
                             allDaySchedules.forEach { schedule ->
                                 ScheduleCard(
                                     schedule = schedule,

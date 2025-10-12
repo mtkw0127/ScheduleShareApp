@@ -35,6 +35,7 @@ import com.github.mtkw0127.scheduleshare.components.TimeLabelsColumn
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.schedule.ScheduleTime
 import com.github.mtkw0127.scheduleshare.model.user.User
+import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import kotlinx.datetime.DatePeriod
@@ -57,6 +58,7 @@ fun WeekScheduleScreen(
     date: LocalDate,
     scheduleRepository: ScheduleRepository,
     userRepository: UserRepository,
+    holidayRepository: HolidayRepository = HolidayRepository(),
     onBackClick: () -> Unit,
     onScheduleClick: (Schedule) -> Unit = {}
 ) {
@@ -76,6 +78,17 @@ fun WeekScheduleScreen(
     val schedulesByDate = remember(weekDays) {
         weekDays.associateWith { day ->
             scheduleRepository.getSchedulesByDate(day)
+        }
+    }
+
+    // 祝日を取得
+    val holidaysByDate = remember(weekDays) {
+        val years = weekDays.map { it.year }.distinct()
+        val allHolidays = years.flatMap { year ->
+            holidayRepository.getJapaneseHolidays(year)
+        }
+        weekDays.associateWith { day ->
+            allHolidays.find { it.date == day }
         }
     }
 
@@ -161,9 +174,12 @@ fun WeekScheduleScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
             ) {
-                // 終日予定の最大数を計算（最低1つは表示）
-                val maxAllDayCount = schedulesByDate.values.maxOfOrNull { daySchedules ->
-                    daySchedules.count { it.isAllDay }
+                // 終日予定の最大数を計算（祝日も含む、最低1つは表示）
+                val maxAllDayCount = weekDays.maxOfOrNull { day ->
+                    val daySchedules = schedulesByDate[day] ?: emptyList()
+                    val allDayCount = daySchedules.count { it.isAllDay }
+                    val holidayCount = if (holidaysByDate[day] != null) 1 else 0
+                    allDayCount + holidayCount
                 }?.coerceAtLeast(1) ?: 1
 
                 Row(modifier = Modifier.fillMaxWidth()) {
@@ -196,6 +212,7 @@ fun WeekScheduleScreen(
                             ) {
                                 // 終日の予定エリア
                                 val allDaySchedules = daySchedules.filter { it.isAllDay }
+                                val holiday = holidaysByDate[day]
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -210,6 +227,33 @@ fun WeekScheduleScreen(
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
 
+                                    // 祝日を表示
+                                    if (holiday != null) {
+                                        Box(modifier = Modifier.height(64.dp)) {
+                                            androidx.compose.material3.Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = androidx.compose.material3.CardDefaults.cardColors(
+                                                    containerColor = Color(0xFF4CAF50)
+                                                ),
+                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(8.dp)
+                                                ) {
+                                                    Text(
+                                                        text = holiday.name,
+                                                        fontSize = 14.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color.White
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                    }
+
                                     allDaySchedules.forEach { schedule ->
                                         Box(modifier = Modifier.height(64.dp)) {
                                             ScheduleCard(
@@ -222,7 +266,8 @@ fun WeekScheduleScreen(
                                     }
 
                                     // 不足分は空のスペースで埋める
-                                    val emptyCount = maxAllDayCount - allDaySchedules.size
+                                    val holidayCount = if (holiday != null) 1 else 0
+                                    val emptyCount = maxAllDayCount - allDaySchedules.size - holidayCount
                                     repeat(emptyCount) {
                                         Spacer(modifier = Modifier.height(68.dp))
                                     }

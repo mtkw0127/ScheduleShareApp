@@ -630,12 +630,19 @@ private fun Week(
                                 }
                             }
 
+                            // 前週から繋がっているか
+                            val continuesFromPrevWeek = startDate < firstDateOfWeek
+                            // 翌週に繋がっているか
+                            val continuesToNextWeek = schedule.endDateTime.date > weekDays.last().value
+
                             ScheduleBar(
                                 schedule = schedule,
                                 userColorMap = userColorMap,
                                 xOffset = dayCellWidth * startDayIndex,
                                 yOffset = dayCellNumHeightDp * (row + 1),
                                 width = dayCellWidth * duration,
+                                continuesFromPrevWeek = continuesFromPrevWeek,
+                                continuesToNextWeek = continuesToNextWeek,
                                 onUpdateHeight = { height ->
                                     with(density) {
                                         scheduleBarHeight = height.toDp()
@@ -687,6 +694,8 @@ private fun ScheduleBar(
     xOffset: Dp,
     yOffset: Dp,
     width: Dp,
+    continuesFromPrevWeek: Boolean = false,
+    continuesToNextWeek: Boolean = false,
     onUpdateHeight: (Int) -> Unit = {}
 ) {
     val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
@@ -705,23 +714,59 @@ private fun ScheduleBar(
                     .fillMaxWidth()
                     .background(
                         color = Color(userColor.value),
-                        shape = RoundedCornerShape(3.dp)
+                        shape = RoundedCornerShape(
+                            topStart = if (continuesFromPrevWeek) 0.dp else 3.dp,
+                            bottomStart = if (continuesFromPrevWeek) 0.dp else 3.dp,
+                            topEnd = if (continuesToNextWeek) 0.dp else 3.dp,
+                            bottomEnd = if (continuesToNextWeek) 0.dp else 3.dp
+                        )
                     )
                     .border(
                         width = 1.dp,
                         color = Color.White.copy(alpha = 0.3f),
-                        shape = RoundedCornerShape(3.dp)
+                        shape = RoundedCornerShape(
+                            topStart = if (continuesFromPrevWeek) 0.dp else 3.dp,
+                            bottomStart = if (continuesFromPrevWeek) 0.dp else 3.dp,
+                            topEnd = if (continuesToNextWeek) 0.dp else 3.dp,
+                            bottomEnd = if (continuesToNextWeek) 0.dp else 3.dp
+                        )
                     )
                     .padding(horizontal = 3.dp, vertical = 1.dp)
             ) {
-                Text(
-                    text = schedule.title,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 前週から繋がっている場合は左側に矢印を表示
+                    if (continuesFromPrevWeek) {
+                        Text(
+                            text = "◀",
+                            fontSize = 7.sp,
+                            color = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(end = 2.dp)
+                        )
+                    }
+
+                    Text(
+                        text = schedule.title,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+
+                    // 翌週に繋がっている場合は右側に矢印を表示
+                    if (continuesToNextWeek) {
+                        Text(
+                            text = "▶",
+                            fontSize = 7.sp,
+                            color = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(start = 2.dp)
+                        )
+                    }
+                }
             }
         }
     }

@@ -104,16 +104,6 @@ fun DayScheduleScreen(
         isColumnView = userPreferenceRepository.isColumnLayoutEnabled()
     }
 
-    val schedules = remember(currentDate) {
-        scheduleRepository.getSchedulesByDate(currentDate)
-    }
-
-    // 祝日を取得
-    val holiday = remember(currentDate) {
-        val holidays = holidayRepository.getJapaneseHolidays(currentDate.year)
-        holidays.find { it.date == currentDate }
-    }
-
     // 表示対象のユーザー一覧を取得（DataStoreから読み込み）
     var visibleUsers by remember { mutableStateOf<List<User>>(emptyList()) }
     var userColorMap by remember { mutableStateOf<Map<User.Id, UserColor>>(emptyMap()) }
@@ -146,6 +136,21 @@ fun DayScheduleScreen(
 
         visibleUsers = listOf(testUser) + filteredUsers
         userColorMap = colorMap
+    }
+
+    val schedules = remember(currentDate, visibleUsers) {
+        val allSchedules = scheduleRepository.getSchedulesByDate(currentDate)
+        // visibleUsersに含まれるユーザーの予定のみをフィルタリング
+        val visibleUserIds = visibleUsers.map { it.id }.toSet()
+        allSchedules.filter { schedule ->
+            visibleUserIds.contains(schedule.user.id)
+        }
+    }
+
+    // 祝日を取得
+    val holiday = remember(currentDate) {
+        val holidays = holidayRepository.getJapaneseHolidays(currentDate.year)
+        holidays.find { it.date == currentDate }
     }
 
     // ユーザーごとにグループ化（visibilityがtrueのユーザーのみ）

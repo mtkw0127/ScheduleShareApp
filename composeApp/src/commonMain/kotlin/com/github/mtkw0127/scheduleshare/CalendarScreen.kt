@@ -543,19 +543,23 @@ private fun Week(
             Box(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                thisWeekMultiSchedules.forEach { schedule ->
+                thisWeekMultiSchedules.forEachIndexed { index, schedule ->
                     Row(modifier = Modifier.fillMaxWidth()) {
                         val startDate = schedule.startDateTime.date
                         val offsetX: Dp = if (startDate <= firstDateOfWeek) {
                             0.dp
                         } else {
-                            dayCellWidth * firstDateOfWeek.until(startDate, DateTimeUnit.DAY).toInt()
+                            dayCellWidth * firstDateOfWeek.until(startDate, DateTimeUnit.DAY)
+                                .toInt()
                         }
                         // 予定バー
                         val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
                         Box(
                             modifier = Modifier
-                                .offset(x = offsetX)
+                                .offset(
+                                    x = offsetX,
+                                    y = 35.dp + (14.dp * index)
+                                )
                                 .padding(horizontal = 2.dp, vertical = 1.dp)
                                 .background(
                                     color = Color(userColor.value).copy(alpha = 0.8f),

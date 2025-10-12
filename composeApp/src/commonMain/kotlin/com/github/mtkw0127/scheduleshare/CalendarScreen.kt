@@ -733,40 +733,14 @@ private fun ScheduleBar(
                     )
                     .padding(horizontal = 3.dp, vertical = 1.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // 前週から繋がっている場合は左側に矢印を表示
-                    if (continuesFromPrevWeek) {
-                        Text(
-                            text = "◀",
-                            fontSize = 7.sp,
-                            color = Color.White.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(end = 2.dp)
-                        )
-                    }
-
-                    Text(
-                        text = schedule.title,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-
-                    // 翌週に繋がっている場合は右側に矢印を表示
-                    if (continuesToNextWeek) {
-                        Text(
-                            text = "▶",
-                            fontSize = 7.sp,
-                            color = Color.White.copy(alpha = 0.7f),
-                            modifier = Modifier.padding(start = 2.dp)
-                        )
-                    }
-                }
+                Text(
+                    text = schedule.title,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }

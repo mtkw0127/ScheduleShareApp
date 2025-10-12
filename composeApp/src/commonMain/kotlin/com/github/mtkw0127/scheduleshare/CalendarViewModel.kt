@@ -83,11 +83,23 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
     }
 
     private fun loadSchedules() {
-        // 表示中の月の予定を取得
-        val schedulesForMonth = scheduleRepository.getSchedulesByMonth(
-            year = focusedMonth.year,
-            month = focusedMonth.month.number
-        )
+        // 表示中の3ヶ月分（前月・当月・翌月）の予定を取得
+        val prevMonth = focusedMonth.minus(1, DateTimeUnit.MONTH)
+        val nextMonth = focusedMonth.plus(1, DateTimeUnit.MONTH)
+
+        val allSchedules = mutableMapOf<LocalDate, List<Schedule>>()
+
+        listOf(prevMonth, focusedMonth, nextMonth).forEach { month ->
+            val monthSchedules = scheduleRepository.getSchedulesByMonth(
+                year = month.year,
+                month = month.month.number
+            )
+            allSchedules.putAll(monthSchedules.groupBy {
+                it.time.startDate
+            })
+        }
+
+        schedules = allSchedules
     }
 
     private fun loadMonths(centerMonth: LocalDate) {

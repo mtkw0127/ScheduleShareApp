@@ -8,26 +8,29 @@ import kotlinx.datetime.LocalTime
 // 予定の日時パターンを表す sealed interface
 sealed interface ScheduleTime {
 
+    val startDate: LocalDate
+
     // 開始と終了が別日（時刻ありで日を跨ぐ）
     data class DateTimeRange(
+        override val startDate: LocalDate,
         val start: LocalDateTime,
         val end: LocalDateTime
     ) : ScheduleTime
 
     // 開始と終了が別日（終日で日を跨ぐ）
     data class AllDayRange(
-        val startDate: LocalDate,
+        override val startDate: LocalDate,
         val endDate: LocalDate
     ) : ScheduleTime
 
     // 同一日（一日終日の予定）
     data class SingleAllDay(
-        val date: LocalDate
+        override val startDate: LocalDate
     ) : ScheduleTime
 
     // 同一日（一日の中で何時から何時の予定）
     data class TimeRange(
-        val date: LocalDate,
+        override val startDate: LocalDate,
         val startTime: LocalTime,
         val endTime: LocalTime
     ) : ScheduleTime
@@ -75,8 +78,8 @@ data class Schedule(
      */
     val startDateTime: DateTime
         get() = when (val t = time) {
-            is ScheduleTime.SingleAllDay -> DateTime.allDay(t.date)
-            is ScheduleTime.TimeRange -> DateTime.timed(t.date, t.startTime)
+            is ScheduleTime.SingleAllDay -> DateTime.allDay(t.startDate)
+            is ScheduleTime.TimeRange -> DateTime.timed(t.startDate, t.startTime)
             is ScheduleTime.AllDayRange -> DateTime.allDay(t.startDate)
             is ScheduleTime.DateTimeRange -> DateTime.timed(t.start.date, t.start.time)
         }
@@ -86,8 +89,8 @@ data class Schedule(
      */
     val endDateTime: DateTime
         get() = when (val t = time) {
-            is ScheduleTime.SingleAllDay -> DateTime.allDay(t.date)
-            is ScheduleTime.TimeRange -> DateTime.timed(t.date, t.endTime)
+            is ScheduleTime.SingleAllDay -> DateTime.allDay(t.startDate)
+            is ScheduleTime.TimeRange -> DateTime.timed(t.startDate, t.endTime)
             is ScheduleTime.AllDayRange -> DateTime.allDay(t.endDate)
             is ScheduleTime.DateTimeRange -> DateTime.timed(t.end.date, t.end.time)
         }
@@ -171,6 +174,7 @@ data class Schedule(
                 title = title,
                 description = description,
                 time = ScheduleTime.DateTimeRange(
+                    startDate = startDate,
                     start = LocalDateTime(startDate, startTime),
                     end = LocalDateTime(endDate, endTime)
                 ),

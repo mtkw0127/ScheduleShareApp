@@ -493,56 +493,96 @@ private fun Week(
     onClickDate: (Day) -> Unit,
     modifier: Modifier,
 ) {
-    Row(modifier = modifier.fillMaxWidth()) {
-        DateCell(
-            day = week.sunday,
-            schedules = schedules,
-            userColorMap = userColorMap,
-            onClickDate = onClickDate,
-            modifier = Modifier.weight(1F)
-        )
-        DateCell(
-            day = week.monday,
-            schedules = schedules,
-            userColorMap = userColorMap,
-            onClickDate = onClickDate,
-            modifier = Modifier.weight(1F)
-        )
-        DateCell(
-            day = week.tuesday,
-            schedules = schedules,
-            userColorMap = userColorMap,
-            onClickDate = onClickDate,
-            modifier = Modifier.weight(1F)
-        )
-        DateCell(
-            day = week.wednesday,
-            schedules = schedules,
-            userColorMap = userColorMap,
-            onClickDate = onClickDate,
-            modifier = Modifier.weight(1F)
-        )
-        DateCell(
-            day = week.thursday,
-            schedules = schedules,
-            userColorMap = userColorMap,
-            onClickDate = onClickDate,
-            modifier = Modifier.weight(1F)
-        )
-        DateCell(
-            day = week.friday,
-            schedules = schedules,
-            userColorMap = userColorMap,
-            onClickDate = onClickDate,
-            modifier = Modifier.weight(1F)
-        )
-        DateCell(
-            day = week.saturday,
-            schedules = schedules,
-            userColorMap = userColorMap,
-            onClickDate = onClickDate,
-            modifier = Modifier.weight(1F)
-        )
+    val weekDays = listOf(
+        week.sunday,
+        week.monday,
+        week.tuesday,
+        week.wednesday,
+        week.thursday,
+        week.friday,
+        week.saturday
+    )
+
+    // 週内の連日予定を抽出
+    val multiDaySchedules = mutableListOf<Pair<Schedule, IntRange>>()
+    schedules.forEach { (date, daySchedules) ->
+        daySchedules.filter { it.isMultiDay }.forEach { schedule ->
+            val startDate = schedule.startDateTime.date
+            val endDate = schedule.endDateTime.date
+
+            // この週の範囲内での表示開始・終了インデックスを計算
+            val startIndex = weekDays.indexOfFirst { it.value >= startDate }.coerceAtLeast(0)
+            val endIndex = weekDays.indexOfLast { it.value <= endDate }.coerceAtLeast(0)
+
+            if (startIndex >= 0 && endIndex >= startIndex) {
+                // この週に表示される部分のみ追加
+                val existingSchedule = multiDaySchedules.find {
+                    it.first.id == schedule.id && it.second.first <= endIndex && it.second.last >= startIndex
+                }
+                if (existingSchedule == null) {
+                    multiDaySchedules.add(schedule to (startIndex..endIndex))
+                }
+            }
+        }
+    }
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        // 日付セル
+        Row(modifier = Modifier.fillMaxWidth()) {
+            weekDays.forEach { day ->
+                DateCell(
+                    day = day,
+                    schedules = schedules,
+                    userColorMap = userColorMap,
+                    onClickDate = onClickDate,
+                    modifier = Modifier.weight(1F),
+                    showMultiDaySchedules = false // 連日予定は別途表示
+                )
+            }
+        }
+
+        // 連日予定を横棒で表示
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 30.dp) // 日付の下にオフセット
+        ) {
+            multiDaySchedules.forEach { (schedule, range) ->
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    // 開始位置までの空白
+                    repeat(range.first) {
+                        Spacer(modifier = Modifier.weight(1F))
+                    }
+
+                    // 予定バー
+                    val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
+                    Box(
+                        modifier = Modifier
+                            .weight((range.last - range.first + 1).toFloat())
+                            .padding(horizontal = 2.dp, vertical = 1.dp)
+                            .background(
+                                color = Color(userColor.value).copy(alpha = 0.8f),
+                                shape = RoundedCornerShape(2.dp)
+                            )
+                            .padding(horizontal = 4.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = schedule.title,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                    }
+
+                    // 終了位置以降の空白
+                    repeat(6 - range.last) {
+                        Spacer(modifier = Modifier.weight(1F))
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -554,10 +594,16 @@ private fun DateCell(
     userColorMap: Map<User.Id, UserColor>,
     onClickDate: (Day) -> Unit,
     modifier: Modifier = Modifier,
+    showMultiDaySchedules: Boolean = true
 ) {
     val daySchedules = schedules[day.value]
         ?.filter {
-            it.isTimed || it.isSingleAllDay
+            if (showMultiDaySchedules) {
+                it.isTimed || it.isSingleAllDay
+            } else {
+                // 連日予定を除外
+                (it.isTimed || it.isSingleAllDay) && !it.isMultiDay
+            }
         } ?: emptyList()
 
     Column(
@@ -595,14 +641,9 @@ private fun DateCell(
             )
         }
 
-        // 予定の表示（最大3件まで）
-        daySchedules.take(3).forEach { schedule ->
+        // 予定の表示（最大2件まで、連日予定のスペースを確保するため）
+        daySchedules.take(2).forEach { schedule ->
             val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
-            val displayTitle = if (schedule.isMultiDay) {
-                "${schedule.title} (${schedule.startDateTime.date.dayOfMonth}日〜${schedule.endDateTime.date.dayOfMonth}日)"
-            } else {
-                schedule.title
-            }
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -611,25 +652,26 @@ private fun DateCell(
                         color = Color(userColor.value),
                         shape = RoundedCornerShape(2.dp)
                     )
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
+                    .padding(horizontal = 2.dp, vertical = 1.dp)
             ) {
                 Text(
-                    text = displayTitle,
-                    fontSize = 10.sp,
+                    text = schedule.title,
+                    fontSize = 8.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Color.White,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
             }
         }
 
-        // 3件以上ある場合は「...」を表示
-        if (daySchedules.size > 3) {
+        // 2件以上ある場合は「+N」を表示
+        if (daySchedules.size > 2) {
             Text(
-                text = "...",
+                text = "+${daySchedules.size - 2}",
                 fontSize = 8.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }

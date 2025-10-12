@@ -13,6 +13,7 @@ import androidx.navigation.toRoute
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.navigation.Screen
+import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import com.github.mtkw0127.scheduleshare.theme.ScheduleShareTheme
@@ -31,6 +32,7 @@ fun App() {
     ScheduleShareTheme {
         val navController = rememberNavController()
         val userRepository = remember { UserRepository.createWithSampleData() }
+        val holidayRepository = remember { HolidayRepository() }
         val scheduleRepository = remember {
             ScheduleRepository(userRepository).apply {
                 val testUser = User.createTest()
@@ -195,13 +197,15 @@ fun App() {
                 }
 
                 composable<Screen.Calendar> {
-                    val calendarState = rememberCalendarState(scheduleRepository, userRepository)
+                    val calendarState =
+                        rememberCalendarState(scheduleRepository, userRepository, holidayRepository)
                     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
                     CalendarScreen(
                         months = calendarState.months,
                         focusedMonth = calendarState.focusedMonth,
                         schedules = calendarState.schedules,
+                        holidays = calendarState.holidays,
                         sharedUsers = calendarState.sharedUsers,
                         userVisibilityMap = calendarState.userVisibilityMap,
                         userColorMap = calendarState.userColorMap,

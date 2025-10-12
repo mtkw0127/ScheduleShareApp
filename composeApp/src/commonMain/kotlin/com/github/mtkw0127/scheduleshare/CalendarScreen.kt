@@ -68,6 +68,7 @@ import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.schedule.ScheduleTime
 import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.model.user.UserColor
+import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -89,6 +90,7 @@ fun CalendarScreen(
     months: List<Month>,
     focusedMonth: LocalDate,
     schedules: Map<LocalDate, List<Schedule>>,
+    holidays: Map<LocalDate, HolidayRepository.Holiday>,
     sharedUsers: List<User>,
     userVisibilityMap: Map<User.Id, Boolean>,
     userColorMap: Map<User.Id, UserColor>,
@@ -410,6 +412,7 @@ fun CalendarScreen(
                             DateView(
                                 month,
                                 schedules,
+                                holidays,
                                 userColorMap,
                                 onClickDate,
                                 screenWidth,
@@ -482,6 +485,7 @@ private fun DayCell(
 private fun DateView(
     month: Month,
     schedules: Map<LocalDate, List<Schedule>>,
+    holidays: Map<LocalDate, HolidayRepository.Holiday>,
     userColorMap: Map<User.Id, UserColor>,
     onClickDate: (Day) -> Unit,
     screenWidth: Dp,
@@ -495,13 +499,13 @@ private fun DateView(
             .width(screenWidth)
             .height(screenHeight)
     ) {
-        Week(month.firstWeek, schedules, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
-        Week(month.secondWeek, schedules, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
-        Week(month.thirdWeek, schedules, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
-        Week(month.fourthWeek, schedules, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
-        Week(month.fifthWeek, schedules, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
+        Week(month.firstWeek, schedules, holidays, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
+        Week(month.secondWeek, schedules, holidays, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
+        Week(month.thirdWeek, schedules, holidays, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
+        Week(month.fourthWeek, schedules, holidays, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
+        Week(month.fifthWeek, schedules, holidays, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
         month.sixthWeek?.let { week ->
-            Week(week, schedules, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
+            Week(week, schedules, holidays, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
         }
     }
 }
@@ -510,6 +514,7 @@ private fun DateView(
 private fun Week(
     week: Week,
     schedules: Map<LocalDate, List<Schedule>>,
+    holidays: Map<LocalDate, HolidayRepository.Holiday>,
     userColorMap: Map<User.Id, UserColor>,
     onClickDate: (Day) -> Unit,
     currentYear: Int,
@@ -602,7 +607,56 @@ private fun Week(
             // blockNumをリセット
             blockNum = listOf(0, 0, 0, 0, 0, 0, 0)
 
-            // 全ての予定をまとめてソート
+            // 1. まず祝日を表示（最優先）
+            weekDays.forEachIndexed { dayIndex, day ->
+                val holiday = holidays[day.value]
+                if (holiday != null) {
+                    val row = blockNum[dayIndex]
+
+                    // 祝日バーを配置
+                    Box(
+                        modifier = Modifier
+                            .offset(
+                                x = dayCellWidth * dayIndex,
+                                y = dayCellNumHeightDp + (scheduleBarHeight * row)
+                            )
+                            .width(dayCellWidth)
+                            .height(scheduleBarHeight)
+                            .padding(horizontal = 1.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = Color.Red.copy(alpha = 0.9f),
+                                    shape = RoundedCornerShape(0.dp)
+                                )
+                                .border(
+                                    width = 0.5.dp,
+                                    color = Color.Red,
+                                    shape = RoundedCornerShape(0.dp)
+                                )
+                                .padding(horizontal = 3.5.dp, vertical = 1.dp)
+                        ) {
+                            Text(
+                                text = holiday.name,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+
+                    // この日のblockNumを更新
+                    blockNum = blockNum.toMutableList().apply {
+                        this[dayIndex] = row + 1
+                    }
+                }
+            }
+
+            // 2. 全ての予定をまとめてソート
             // 1. 翌週にまたがる予定を優先（開始日が週の最初より前、または終了日が週の最後より後）
             // 2. その次に開始日時順
             val lastDayOfWeek = weekDays.last().value

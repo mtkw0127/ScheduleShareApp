@@ -11,6 +11,7 @@ import com.github.mtkw0127.scheduleshare.model.calendar.Month
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.model.user.UserColor
+import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import kotlinx.datetime.DateTimeUnit
@@ -27,6 +28,7 @@ import kotlin.time.ExperimentalTime
 class CalendarState @OptIn(ExperimentalTime::class) constructor(
     private val scheduleRepository: ScheduleRepository,
     private val userRepository: UserRepository,
+    private val holidayRepository: HolidayRepository = HolidayRepository(),
     initialFocusedMonth: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 ) {
     var months by mutableStateOf<List<Month>>(emptyList())
@@ -47,10 +49,14 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
     var userColorMap by mutableStateOf<Map<User.Id, UserColor>>(emptyMap())
         private set
 
+    var holidays by mutableStateOf<Map<LocalDate, HolidayRepository.Holiday>>(emptyMap())
+        private set
+
     init {
         loadMonths(initialFocusedMonth)
         loadSchedules()
         loadSharedUsers()
+        loadHolidays()
     }
 
     private fun loadSharedUsers() {
@@ -102,6 +108,23 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
         schedules = allSchedules
     }
 
+    private fun loadHolidays() {
+        // 表示中の3ヶ月分（前月・当月・翌月）の祝日を取得
+        val prevMonth = focusedMonth.minus(1, DateTimeUnit.MONTH)
+        val nextMonth = focusedMonth.plus(1, DateTimeUnit.MONTH)
+
+        val allHolidays = mutableMapOf<LocalDate, HolidayRepository.Holiday>()
+
+        listOf(prevMonth.year, focusedMonth.year, nextMonth.year).distinct().forEach { year ->
+            val yearHolidays = holidayRepository.getJapaneseHolidays(year)
+            yearHolidays.forEach { holiday ->
+                allHolidays[holiday.date] = holiday
+            }
+        }
+
+        holidays = allHolidays
+    }
+
     private fun loadMonths(centerMonth: LocalDate) {
         val prevMonth = centerMonth.minus(1, DateTimeUnit.MONTH)
         val nextMonth = centerMonth.plus(1, DateTimeUnit.MONTH)
@@ -121,6 +144,7 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
         months = months.drop(1) + newMonth
         focusedMonth = newFocusedMonth
         loadSchedules()
+        loadHolidays()
     }
 
     fun moveToPrevMonth() {
@@ -131,6 +155,7 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
         months = listOf(newMonth) + months.dropLast(1)
         focusedMonth = newFocusedMonth
         loadSchedules()
+        loadHolidays()
     }
 }
 
@@ -139,9 +164,10 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
 fun rememberCalendarState(
     scheduleRepository: ScheduleRepository,
     userRepository: UserRepository,
+    holidayRepository: HolidayRepository,
     initialFocusedMonth: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 ): CalendarState {
     return remember(scheduleRepository, userRepository, initialFocusedMonth) {
-        CalendarState(scheduleRepository, userRepository, initialFocusedMonth)
+        CalendarState(scheduleRepository, userRepository, holidayRepository, initialFocusedMonth)
     }
 }

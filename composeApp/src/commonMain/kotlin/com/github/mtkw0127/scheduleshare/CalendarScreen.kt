@@ -527,6 +527,13 @@ private fun Week(
             }
         }
 
+    // 週内の単日予定を抽出（各日付ごとに）
+    val thisWeekSingleSchedules = weekDays.mapIndexed { dayIndex, day ->
+        dayIndex to (schedules[day.value]?.filter { schedule ->
+            schedule.time is ScheduleTime.SingleDateSchedule
+        } ?: emptyList())
+    }
+
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val density = LocalDensity.current
         val dayCellWidth = maxWidth / 7
@@ -552,18 +559,20 @@ private fun Week(
             }
         }
 
-        // 連日予定を横棒で表示
-        if (thisWeekMultiSchedules.isNotEmpty()) {
+        // 予定を横棒で表示
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
             // blockNumをリセット
             blockNum = listOf(0, 0, 0, 0, 0, 0, 0)
 
-            Box(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                thisWeekMultiSchedules
-                    .sortedBy { it.startDateTime }
-                    .forEach { schedule ->
-                        val time = schedule.time as ScheduleTime.MultiDateSchedule
+            // 全ての予定をまとめて開始日時順にソート
+            val allSchedules = (thisWeekMultiSchedules + thisWeekSingleSchedules.flatMap { it.second })
+                .sortedBy { it.startDateTime }
+
+            allSchedules.forEach { schedule ->
+                when (val time = schedule.time) {
+                    is ScheduleTime.MultiDateSchedule -> {
                         val startDate = schedule.startDateTime.date
 
                         // この予定の開始位置（週の何日目か）
@@ -601,6 +610,7 @@ private fun Week(
                                         color = Color(userColor.value),
                                         shape = RoundedCornerShape(2.dp)
                                     )
+                                    .padding(horizontal = 2.dp, vertical = 1.dp)
                             ) {
                                 Text(
                                     text = schedule.title,
@@ -609,11 +619,51 @@ private fun Week(
                                     color = Color.White,
                                     maxLines = 1,
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                    modifier = Modifier.padding(horizontal = 2.dp)
                                 )
                             }
                         }
                     }
+                    is ScheduleTime.SingleDateSchedule -> {
+                        val startDate = schedule.startDateTime.date
+                        val dayIndex = firstDateOfWeek.daysUntil(startDate)
+
+                        if (dayIndex in 0..6) {
+                            // この日のblockNumを取得
+                            val row = blockNum[dayIndex]
+
+                            // blockNumを更新
+                            blockNum = blockNum.toMutableList().apply {
+                                this[dayIndex] = row + 1
+                            }
+
+                            val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                Box(
+                                    modifier = Modifier
+                                        .offset(
+                                            x = dayCellWidth * dayIndex,
+                                            y = dayScheduleHeightDp * (row + 1),
+                                        )
+                                        .width(dayCellWidth)
+                                        .background(
+                                            color = Color(userColor.value),
+                                            shape = RoundedCornerShape(2.dp)
+                                        )
+                                        .padding(horizontal = 2.dp, vertical = 1.dp)
+                                ) {
+                                    Text(
+                                        text = schedule.title,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

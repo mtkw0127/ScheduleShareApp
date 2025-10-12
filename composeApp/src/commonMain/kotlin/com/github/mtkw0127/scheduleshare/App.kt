@@ -190,6 +190,9 @@ fun App() {
                         onQRShareClick = {
                             navController.navigate(Screen.QRShare)
                         },
+                        onWeekScheduleClick = {
+                            navController.navigate(Screen.WeekSchedule.from(calendarState.focusedMonth))
+                        },
                         onUserVisibilityChange = { userId, visible ->
                             calendarState.updateUserVisibility(userId, visible)
                         },
@@ -274,6 +277,39 @@ fun App() {
                         },
                         onSaveClick = {
                             navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable<Screen.WeekSchedule> { backStackEntry ->
+                    val weekSchedule: Screen.WeekSchedule = backStackEntry.toRoute()
+                    WeekScheduleScreen(
+                        date = weekSchedule.toLocalDate(),
+                        scheduleRepository = scheduleRepository,
+                        userRepository = userRepository,
+                        onBackClick = {
+                            navController.popBackStack()
+                        },
+                        onScheduleClick = { schedule ->
+                            navController.navigate(
+                                Screen.ScheduleAdd.from(
+                                    weekSchedule.toLocalDate(),
+                                    schedule.id.value
+                                )
+                            )
+                        },
+                        onAddScheduleAtTime = { date, time ->
+                            val endTime = LocalTime(
+                                hour = if (time.hour == 23) 23 else time.hour + 1,
+                                minute = if (time.hour == 23) 59 else time.minute
+                            )
+                            navController.navigate(
+                                Screen.ScheduleAdd.from(
+                                    date = date,
+                                    startTime = time,
+                                    endTime = endTime
+                                )
+                            )
                         }
                     )
                 }

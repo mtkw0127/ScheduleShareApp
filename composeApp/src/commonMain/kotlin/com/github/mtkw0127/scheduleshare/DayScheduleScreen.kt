@@ -667,7 +667,7 @@ private fun TimelineView(
 }
 
 @Composable
-private fun ScheduleCard(
+fun ScheduleCard(
     schedule: Schedule,
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.primaryContainer,

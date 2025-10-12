@@ -69,6 +69,7 @@ import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.menu
 import scheduleshare.composeapp.generated.resources.qr_code
 import scheduleshare.composeapp.generated.resources.user
+import scheduleshare.composeapp.generated.resources.view_week
 import kotlin.math.absoluteValue
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -86,6 +87,7 @@ fun CalendarScreen(
     onClickDate: (Day) -> Unit = {},
     onUserIconClick: () -> Unit = {},
     onQRShareClick: () -> Unit = {},
+    onWeekScheduleClick: () -> Unit = {},
     onUserVisibilityChange: (User.Id, Boolean) -> Unit = { _, _ -> },
     onUserColorChange: (User.Id, UserColor) -> Unit = { _, _ -> }
 ) {
@@ -262,6 +264,13 @@ fun CalendarScreen(
                         }
                     },
                     actions = {
+                        IconButton(onClick = onWeekScheduleClick) {
+                            Icon(
+                                imageVector = vectorResource(Res.drawable.view_week),
+                                contentDescription = "週間予定",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
                         IconButton(onClick = onUserIconClick) {
                             Icon(
                                 imageVector = vectorResource(Res.drawable.user),

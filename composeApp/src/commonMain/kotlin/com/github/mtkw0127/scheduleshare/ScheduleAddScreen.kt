@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +23,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,8 +40,12 @@ import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.util.rememberClipboardManager
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_back
@@ -43,7 +53,7 @@ import scheduleshare.composeapp.generated.resources.copy
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
-@OptIn(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleAddScreen(
     date: LocalDate,
@@ -65,8 +75,14 @@ fun ScheduleAddScreen(
 
     var title by remember { mutableStateOf(existingSchedule?.title ?: "") }
     var description by remember { mutableStateOf(existingSchedule?.description ?: "") }
-    var isMultiDay by remember { mutableStateOf(existingSchedule?.isMultiDay ?: false) }
+    var startDate by remember { mutableStateOf(existingSchedule?.startDateTime?.date ?: date) }
     var endDate by remember { mutableStateOf(existingSchedule?.endDateTime?.date ?: date) }
+
+    // DatePicker/TimePicker表示状態
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
+    var showStartTimePicker by remember { mutableStateOf(false) }
+    var showEndTimePicker by remember { mutableStateOf(false) }
 
     // 初期時刻が指定されている場合は時間指定モードで開始
     var isAllDay by remember {
@@ -188,11 +204,12 @@ fun ScheduleAddScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // 終日スイッチ
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { isAllDay = true }
+                    .clickable { isAllDay = !isAllDay }
             ) {
                 Text("終日")
                 Spacer(modifier = Modifier.weight(1F))
@@ -202,17 +219,107 @@ fun ScheduleAddScreen(
                 )
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isAllDay = false }
-            ) {
-                Column {
-                }
-                Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 開始日
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "開始日",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = "${startDate.year}/${startDate.monthNumber}/${startDate.day}",
+                    onValueChange = {},
+                    readOnly = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showStartDatePicker = true },
+                    enabled = false,
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline
+                    )
+                )
             }
 
+            // 開始時刻（終日がOFFの場合のみ表示）
+            if (!isAllDay) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "開始時刻",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = "${startHour.padStart(2, '0')}:${startMinute.padStart(2, '0')}",
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showStartTimePicker = true },
+                        enabled = false,
+                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 終了日
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "終了日",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = "${endDate.year}/${endDate.monthNumber}/${endDate.day}",
+                    onValueChange = {},
+                    readOnly = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showEndDatePicker = true },
+                    enabled = false,
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline
+                    )
+                )
+            }
+
+            // 終了時刻（終日がOFFの場合のみ表示）
+            if (!isAllDay) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "終了時刻",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = "${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}",
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showEndTimePicker = true },
+                        enabled = false,
+                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline
+                        )
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -259,6 +366,7 @@ fun ScheduleAddScreen(
             Button(
                 onClick = {
                     // 予定を作成または更新
+                    val isMultiDay = startDate != endDate
                     val schedule = if (isAllDay) {
                         if (isMultiDay) {
                             Schedule.createMultiDayAllDay(
@@ -267,7 +375,7 @@ fun ScheduleAddScreen(
                                 ),
                                 title = title,
                                 description = description,
-                                startDate = date,
+                                startDate = startDate,
                                 endDate = endDate,
                                 user = existingSchedule?.user ?: User.createTest()
                             )
@@ -278,7 +386,7 @@ fun ScheduleAddScreen(
                                 ),
                                 title = title,
                                 description = description,
-                                date = date,
+                                date = startDate,
                                 user = existingSchedule?.user ?: User.createTest()
                             )
                         }
@@ -295,7 +403,7 @@ fun ScheduleAddScreen(
                                 ),
                                 title = title,
                                 description = description,
-                                startDate = date,
+                                startDate = startDate,
                                 endDate = endDate,
                                 user = existingSchedule?.user ?: User.createTest(),
                                 startTime = LocalTime(startH, startM),
@@ -308,7 +416,7 @@ fun ScheduleAddScreen(
                                 ),
                                 title = title,
                                 description = description,
-                                date = date,
+                                date = startDate,
                                 user = existingSchedule?.user ?: User.createTest(),
                                 startTime = LocalTime(startH, startM),
                                 endTime = LocalTime(endH, endM)
@@ -331,6 +439,121 @@ fun ScheduleAddScreen(
             ) {
                 Text("保存")
             }
+        }
+
+        // DatePicker/TimePickerダイアログ
+        if (showStartDatePicker) {
+            val datePickerState = rememberDatePickerState(
+                initialSelectedDateMillis = startDate.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+            )
+            DatePickerDialog(
+                onDismissRequest = { showStartDatePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            startDate = Instant.fromEpochMilliseconds(millis)
+                                .toLocalDateTime(TimeZone.UTC).date
+                            if (startDate > endDate) {
+                                endDate = startDate
+                            }
+                        }
+                        showStartDatePicker = false
+                    }) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showStartDatePicker = false }) {
+                        Text("キャンセル")
+                    }
+                }
+            ) {
+                DatePicker(state = datePickerState)
+            }
+        }
+
+        if (showEndDatePicker) {
+            val datePickerState = rememberDatePickerState(
+                initialSelectedDateMillis = endDate.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+            )
+            DatePickerDialog(
+                onDismissRequest = { showEndDatePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val selectedDate = Instant.fromEpochMilliseconds(millis)
+                                .toLocalDateTime(TimeZone.UTC).date
+                            if (selectedDate >= startDate) {
+                                endDate = selectedDate
+                            }
+                        }
+                        showEndDatePicker = false
+                    }) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showEndDatePicker = false }) {
+                        Text("キャンセル")
+                    }
+                }
+            ) {
+                DatePicker(state = datePickerState)
+            }
+        }
+
+        if (showStartTimePicker) {
+            val timePickerState = rememberTimePickerState(
+                initialHour = startHour.toIntOrNull() ?: 9,
+                initialMinute = startMinute.toIntOrNull() ?: 0
+            )
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showStartTimePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        startHour = timePickerState.hour.toString().padStart(2, '0')
+                        startMinute = timePickerState.minute.toString().padStart(2, '0')
+                        showStartTimePicker = false
+                    }) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showStartTimePicker = false }) {
+                        Text("キャンセル")
+                    }
+                },
+                text = {
+                    TimePicker(state = timePickerState)
+                }
+            )
+        }
+
+        if (showEndTimePicker) {
+            val timePickerState = rememberTimePickerState(
+                initialHour = endHour.toIntOrNull() ?: 10,
+                initialMinute = endMinute.toIntOrNull() ?: 0
+            )
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showEndTimePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        endHour = timePickerState.hour.toString().padStart(2, '0')
+                        endMinute = timePickerState.minute.toString().padStart(2, '0')
+                        showEndTimePicker = false
+                    }) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showEndTimePicker = false }) {
+                        Text("キャンセル")
+                    }
+                },
+                text = {
+                    TimePicker(state = timePickerState)
+                }
+            )
         }
     }
 }

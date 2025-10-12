@@ -711,6 +711,9 @@ private fun ScheduleBar(
     onUpdateHeight: (Int) -> Unit = {}
 ) {
     val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
+    // 複数日にまたがる予定かどうか
+    val isMultiDay = schedule.time is ScheduleTime.MultiDateSchedule
+
     Row(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -726,22 +729,30 @@ private fun ScheduleBar(
                     .fillMaxWidth()
                     .background(
                         color = Color(userColor.value).copy(alpha = 0.9f),
-                        shape = RoundedCornerShape(
-                            topStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
-                            bottomStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
-                            topEnd = if (continuesToNextWeek) 0.dp else 10.dp,
-                            bottomEnd = if (continuesToNextWeek) 0.dp else 10.dp
-                        )
+                        shape = if (isMultiDay) {
+                            RoundedCornerShape(
+                                topStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
+                                bottomStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
+                                topEnd = if (continuesToNextWeek) 0.dp else 10.dp,
+                                bottomEnd = if (continuesToNextWeek) 0.dp else 10.dp
+                            )
+                        } else {
+                            RoundedCornerShape(0.dp)
+                        }
                     )
                     .border(
                         width = 0.5.dp,
                         color = Color(userColor.value),
-                        shape = RoundedCornerShape(
-                            topStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
-                            bottomStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
-                            topEnd = if (continuesToNextWeek) 0.dp else 10.dp,
-                            bottomEnd = if (continuesToNextWeek) 0.dp else 10.dp
-                        )
+                        shape = if (isMultiDay) {
+                            RoundedCornerShape(
+                                topStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
+                                bottomStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
+                                topEnd = if (continuesToNextWeek) 0.dp else 10.dp,
+                                bottomEnd = if (continuesToNextWeek) 0.dp else 10.dp
+                            )
+                        } else {
+                            RoundedCornerShape(0.dp)
+                        }
                     )
                     .padding(horizontal = 3.5.dp, vertical = 1.dp)
             ) {

@@ -717,7 +717,7 @@ private fun ScheduleBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = Color(userColor.value),
+                        color = Color(userColor.value).copy(alpha = 0.9f),
                         shape = RoundedCornerShape(
                             topStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
                             bottomStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
@@ -726,8 +726,8 @@ private fun ScheduleBar(
                         )
                     )
                     .border(
-                        width = 1.dp,
-                        color = Color.White.copy(alpha = 0.3f),
+                        width = 0.5.dp,
+                        color = Color(userColor.value),
                         shape = RoundedCornerShape(
                             topStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
                             bottomStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
@@ -735,7 +735,7 @@ private fun ScheduleBar(
                             bottomEnd = if (continuesToNextWeek) 0.dp else 10.dp
                         )
                     )
-                    .padding(horizontal = 3.5.dp, vertical = 0.8.dp)
+                    .padding(horizontal = 3.5.dp, vertical = 1.dp)
             ) {
                 Text(
                     text = schedule.title,
@@ -766,7 +766,7 @@ private fun DateCell(
             }
             .fillMaxHeight()
             .fillMaxWidth()
-            .border(0.2.dp, MaterialTheme.colorScheme.surfaceVariant)
+            .border(0.5.dp, MaterialTheme.colorScheme.surfaceVariant)
             .clickable {
                 onClickDate(day)
             },
@@ -780,6 +780,7 @@ private fun DateCell(
                     onUpdateDateCellNumHeight(it.height)
                 }
                 .padding(vertical = 5.dp)
+                .padding(start = 4.dp)
                 .size(20.dp)
                 .drawBehind {
                     if (day.value == today) {
@@ -789,7 +790,7 @@ private fun DateCell(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = day.value.dayOfMonth.toString(),
+                text = day.value.day.toString(),
                 textAlign = TextAlign.Center,
                 fontSize = 12.sp,
                 color = if (day.value == today) {

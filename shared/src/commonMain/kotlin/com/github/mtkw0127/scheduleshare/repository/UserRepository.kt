@@ -110,19 +110,19 @@ class UserRepository {
         fun createWithSampleData(): UserRepository {
             val repository = UserRepository()
 
-            // サンプルユーザーを追加
-            val sharedUser1 = User(User.Id("user_001"), "山田太郎")
-            val sharedUser2 = User(User.Id("user_002"), "佐藤花子")
-            val sharedUser3 = User(User.Id("user_003"), "鈴木一郎")
+            // サンプルユーザーを追加（カップル・家族）
+            val partner = User(User.Id("user_001"), "パートナー")
+            val child1 = User(User.Id("user_002"), "長男")
+            val child2 = User(User.Id("user_003"), "長女")
 
-            repository.addUser(sharedUser1)
-            repository.addUser(sharedUser2)
-            repository.addUser(sharedUser3)
+            repository.addUser(partner)
+            repository.addUser(child1)
+            repository.addUser(child2)
 
             // 共有ユーザーとして追加
-            repository.addSharedUser(sharedUser1.id)
-            repository.addSharedUser(sharedUser2.id)
-            repository.addSharedUser(sharedUser3.id)
+            repository.addSharedUser(partner.id)
+            repository.addSharedUser(child1.id)
+            repository.addSharedUser(child2.id)
 
             return repository
         }

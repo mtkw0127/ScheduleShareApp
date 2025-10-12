@@ -17,7 +17,7 @@ data class User(
         fun createTest(): User {
             return User(
                 id = Id("test_user_001"),
-                name = "テストユーザー",
+                name = "あなた",
                 iconUrl = null
             )
         }

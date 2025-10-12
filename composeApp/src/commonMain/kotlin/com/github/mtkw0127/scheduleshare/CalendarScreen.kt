@@ -595,6 +595,7 @@ private fun Week(
                                 is ScheduleTime.MultiDateSchedule -> {
                                     schedule.endDateTime.date > lastDayOfWeek || schedule.startDateTime.date < firstDateOfWeek
                                 }
+
                                 else -> false
                             }
                         }.thenBy { it.startDateTime }
@@ -625,7 +626,9 @@ private fun Week(
                         if (row < maxVisibleSchedules) {
                             // この予定が占める範囲のblockNumを更新
                             blockNum = blockNum.toMutableList().apply {
-                                for (i in startDayIndex until (startDayIndex + duration).coerceAtMost(7)) {
+                                for (i in startDayIndex until (startDayIndex + duration).coerceAtMost(
+                                    7
+                                )) {
                                     this[i] = row + 1
                                 }
                             }
@@ -633,7 +636,8 @@ private fun Week(
                             // 前週から繋がっているか
                             val continuesFromPrevWeek = startDate < firstDateOfWeek
                             // 翌週に繋がっているか
-                            val continuesToNextWeek = schedule.endDateTime.date > weekDays.last().value
+                            val continuesToNextWeek =
+                                schedule.endDateTime.date > weekDays.last().value
 
                             ScheduleBar(
                                 schedule = schedule,
@@ -715,23 +719,23 @@ private fun ScheduleBar(
                     .background(
                         color = Color(userColor.value),
                         shape = RoundedCornerShape(
-                            topStart = if (continuesFromPrevWeek) 0.dp else 3.dp,
-                            bottomStart = if (continuesFromPrevWeek) 0.dp else 3.dp,
-                            topEnd = if (continuesToNextWeek) 0.dp else 3.dp,
-                            bottomEnd = if (continuesToNextWeek) 0.dp else 3.dp
+                            topStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
+                            bottomStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
+                            topEnd = if (continuesToNextWeek) 0.dp else 10.dp,
+                            bottomEnd = if (continuesToNextWeek) 0.dp else 10.dp
                         )
                     )
                     .border(
                         width = 1.dp,
                         color = Color.White.copy(alpha = 0.3f),
                         shape = RoundedCornerShape(
-                            topStart = if (continuesFromPrevWeek) 0.dp else 3.dp,
-                            bottomStart = if (continuesFromPrevWeek) 0.dp else 3.dp,
-                            topEnd = if (continuesToNextWeek) 0.dp else 3.dp,
-                            bottomEnd = if (continuesToNextWeek) 0.dp else 3.dp
+                            topStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
+                            bottomStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
+                            topEnd = if (continuesToNextWeek) 0.dp else 10.dp,
+                            bottomEnd = if (continuesToNextWeek) 0.dp else 10.dp
                         )
                     )
-                    .padding(horizontal = 3.dp, vertical = 1.dp)
+                    .padding(horizontal = 3.5.dp, vertical = 0.8.dp)
             ) {
                 Text(
                     text = schedule.title,

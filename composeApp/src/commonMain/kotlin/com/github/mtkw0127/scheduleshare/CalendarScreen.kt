@@ -685,20 +685,31 @@ private fun ScheduleBar(
                 }
                 .offset(x = xOffset, y = yOffset)
                 .width(width)
-                .background(
-                    color = Color(userColor.value),
-                    shape = RoundedCornerShape(2.dp)
-                )
-                .padding(horizontal = 2.dp, vertical = 1.dp)
+                .padding(horizontal = 1.dp, vertical = 1.dp)
         ) {
-            Text(
-                text = schedule.title,
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = Color(userColor.value),
+                        shape = RoundedCornerShape(3.dp)
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(3.dp)
+                    )
+                    .padding(horizontal = 3.dp, vertical = 1.dp)
+            ) {
+                Text(
+                    text = schedule.title,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

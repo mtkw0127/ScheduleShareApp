@@ -487,18 +487,21 @@ private fun DateView(
     screenWidth: Dp,
     screenHeight: Dp
 ) {
+    val currentYear = month.firstDay.year
+    val currentMonth = month.firstDay.month
+
     Column(
         modifier = Modifier
             .width(screenWidth)
             .height(screenHeight)
     ) {
-        Week(month.firstWeek, schedules, userColorMap, onClickDate, Modifier.weight(1F))
-        Week(month.secondWeek, schedules, userColorMap, onClickDate, Modifier.weight(1F))
-        Week(month.thirdWeek, schedules, userColorMap, onClickDate, Modifier.weight(1F))
-        Week(month.fourthWeek, schedules, userColorMap, onClickDate, Modifier.weight(1F))
-        Week(month.fifthWeek, schedules, userColorMap, onClickDate, Modifier.weight(1F))
+        Week(month.firstWeek, schedules, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
+        Week(month.secondWeek, schedules, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
+        Week(month.thirdWeek, schedules, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
+        Week(month.fourthWeek, schedules, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
+        Week(month.fifthWeek, schedules, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
         month.sixthWeek?.let { week ->
-            Week(week, schedules, userColorMap, onClickDate, Modifier.weight(1F))
+            Week(week, schedules, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
         }
     }
 }
@@ -509,6 +512,8 @@ private fun Week(
     schedules: Map<LocalDate, List<Schedule>>,
     userColorMap: Map<User.Id, UserColor>,
     onClickDate: (Day) -> Unit,
+    currentYear: Int,
+    currentMonth: kotlinx.datetime.Month,
     modifier: Modifier,
 ) {
     val firstDateOfWeek = week.sunday.value
@@ -583,6 +588,8 @@ private fun Week(
                             dayCellHeight = height.toDp()
                         }
                     },
+                    currentYear = currentYear,
+                    currentMonth = currentMonth,
                     modifier = Modifier.weight(1F),
                 )
             }
@@ -781,6 +788,8 @@ private fun DateCell(
     onClickDate: (Day) -> Unit,
     onUpdateDateCellNumHeight: (Int) -> Unit,
     onUpdateDateCellHeight: (Int) -> Unit,
+    currentYear: Int,
+    currentMonth: kotlinx.datetime.Month,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -798,6 +807,8 @@ private fun DateCell(
     ) {
         val color = MaterialTheme.colorScheme.secondary
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val isCurrentMonth = day.value.year == currentYear && day.value.month == currentMonth
+
         Box(
             modifier = Modifier
                 .onSizeChanged {
@@ -819,8 +830,10 @@ private fun DateCell(
                 fontSize = 12.sp,
                 color = if (day.value == today) {
                     Color.White
-                } else {
+                } else if (isCurrentMonth) {
                     MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 }
             )
         }

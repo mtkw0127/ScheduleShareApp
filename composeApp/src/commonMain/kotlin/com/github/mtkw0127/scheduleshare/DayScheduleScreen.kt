@@ -678,7 +678,7 @@ fun ScheduleCard(
                         text = displayTitle,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = Color.White,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -690,7 +690,7 @@ fun ScheduleCard(
                             text = displayTitle,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            color = Color.White,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -699,7 +699,7 @@ fun ScheduleCard(
                             Text(
                                 text = "${schedule.startDateTime.time} - ${schedule.endDateTime.time}",
                                 fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                                color = Color.White.copy(alpha = 0.7f),
                                 maxLines = 1
                             )
                         }
@@ -712,14 +712,14 @@ fun ScheduleCard(
                             text = displayTitle,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = Color.White
                         )
                         if (schedule.description.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = schedule.description,
                                 fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                color = Color.White,
                                 maxLines = 3,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -729,7 +729,7 @@ fun ScheduleCard(
                             Text(
                                 text = "${schedule.startDateTime.time} - ${schedule.endDateTime.time}",
                                 fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                color = Color.White.copy(alpha = 0.7f)
                             )
                         }
                     }

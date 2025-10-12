@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,7 +35,6 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,20 +60,22 @@ import com.github.mtkw0127.scheduleshare.model.calendar.Day
 import com.github.mtkw0127.scheduleshare.model.calendar.Month
 import com.github.mtkw0127.scheduleshare.model.calendar.Week
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
+import com.github.mtkw0127.scheduleshare.model.schedule.ScheduleTime
 import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.model.user.UserColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import kotlinx.datetime.until
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_drop_down
 import scheduleshare.composeapp.generated.resources.menu
 import scheduleshare.composeapp.generated.resources.qr_code
 import scheduleshare.composeapp.generated.resources.user
-import scheduleshare.composeapp.generated.resources.view_week
 import kotlin.math.absoluteValue
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -493,6 +495,7 @@ private fun Week(
     onClickDate: (Day) -> Unit,
     modifier: Modifier,
 ) {
+    val firstDateOfWeek = week.sunday.value
     val weekDays = listOf(
         week.sunday,
         week.monday,
@@ -504,29 +507,23 @@ private fun Week(
     )
 
     // 週内の連日予定を抽出
-    val multiDaySchedules = mutableListOf<Pair<Schedule, IntRange>>()
-    schedules.forEach { (date, daySchedules) ->
-        daySchedules.filter { it.isMultiDay }.forEach { schedule ->
-            val startDate = schedule.startDateTime.date
-            val endDate = schedule.endDateTime.date
-
-            // この週の範囲内での表示開始・終了インデックスを計算
-            val startIndex = weekDays.indexOfFirst { it.value >= startDate }.coerceAtLeast(0)
-            val endIndex = weekDays.indexOfLast { it.value <= endDate }.coerceAtLeast(0)
-
-            if (startIndex >= 0 && endIndex >= startIndex) {
-                // この週に表示される部分のみ追加
-                val existingSchedule = multiDaySchedules.find {
-                    it.first.id == schedule.id && it.second.first <= endIndex && it.second.last >= startIndex
+    val thisWeekMultiSchedules = schedules.values
+        .flatten()
+        .filter {
+            when (val time = it.time) {
+                is ScheduleTime.SingleDateSchedule -> {
+                    false
                 }
-                if (existingSchedule == null) {
-                    multiDaySchedules.add(schedule to (startIndex..endIndex))
+
+                is ScheduleTime.MultiDateSchedule -> {
+                    time.isThisWeek(firstDateOfWeek)
                 }
             }
         }
-    }
 
-    Box(modifier = modifier.fillMaxWidth()) {
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val dayCellWidth = maxWidth / 7
+
         // 日付セル
         Row(modifier = Modifier.fillMaxWidth()) {
             weekDays.forEach { day ->
@@ -542,43 +539,38 @@ private fun Week(
         }
 
         // 連日予定を横棒で表示
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 30.dp) // 日付の下にオフセット
-        ) {
-            multiDaySchedules.forEach { (schedule, range) ->
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    // 開始位置までの空白
-                    repeat(range.first) {
-                        Spacer(modifier = Modifier.weight(1F))
-                    }
-
-                    // 予定バー
-                    val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
-                    Box(
-                        modifier = Modifier
-                            .weight((range.last - range.first + 1).toFloat())
-                            .padding(horizontal = 2.dp, vertical = 1.dp)
-                            .background(
-                                color = Color(userColor.value).copy(alpha = 0.8f),
-                                shape = RoundedCornerShape(2.dp)
+        if (thisWeekMultiSchedules.isNotEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                thisWeekMultiSchedules.forEach { schedule ->
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        val startDate = schedule.startDateTime.date
+                        val offsetX: Dp = if (startDate <= firstDateOfWeek) {
+                            0.dp
+                        } else {
+                            dayCellWidth * firstDateOfWeek.until(startDate, DateTimeUnit.DAY).toInt()
+                        }
+                        // 予定バー
+                        val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
+                        Box(
+                            modifier = Modifier
+                                .offset(x = offsetX)
+                                .padding(horizontal = 2.dp, vertical = 1.dp)
+                                .background(
+                                    color = Color(userColor.value).copy(alpha = 0.8f),
+                                    shape = RoundedCornerShape(2.dp)
+                                )
+                        ) {
+                            Text(
+                                text = schedule.title,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )
-                            .padding(horizontal = 4.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = schedule.title,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            maxLines = 1,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                        )
-                    }
-
-                    // 終了位置以降の空白
-                    repeat(6 - range.last) {
-                        Spacer(modifier = Modifier.weight(1F))
+                        }
                     }
                 }
             }

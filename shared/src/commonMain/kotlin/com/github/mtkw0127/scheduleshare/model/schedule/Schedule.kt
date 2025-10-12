@@ -1,12 +1,20 @@
 package com.github.mtkw0127.scheduleshare.model.schedule
 
 import com.github.mtkw0127.scheduleshare.model.user.User
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.plus
 
 // 予定の日時パターンを表す sealed interface
 sealed interface ScheduleTime {
+
+    sealed interface MultiDateSchedule {
+        fun isThisWeek(date: LocalDate): Boolean
+    }
+
+    sealed interface SingleDateSchedule
 
     val startDate: LocalDate
 
@@ -15,25 +23,35 @@ sealed interface ScheduleTime {
         override val startDate: LocalDate,
         val start: LocalDateTime,
         val end: LocalDateTime
-    ) : ScheduleTime
+    ) : ScheduleTime, MultiDateSchedule {
+        override fun isThisWeek(date: LocalDate): Boolean {
+            val weekDates = date..date.plus(6, DateTimeUnit.DAY)
+            return start.date in weekDates || end.date in weekDates
+        }
+    }
 
     // 開始と終了が別日（終日で日を跨ぐ）
     data class AllDayRange(
         override val startDate: LocalDate,
         val endDate: LocalDate
-    ) : ScheduleTime
+    ) : ScheduleTime, MultiDateSchedule {
+        override fun isThisWeek(date: LocalDate): Boolean {
+            val weekDates = date..date.plus(6, DateTimeUnit.DAY)
+            return startDate in weekDates || endDate in weekDates
+        }
+    }
 
     // 同一日（一日終日の予定）
     data class SingleAllDay(
         override val startDate: LocalDate
-    ) : ScheduleTime
+    ) : ScheduleTime, SingleDateSchedule
 
     // 同一日（一日の中で何時から何時の予定）
-    data class TimeRange(
+    data class SingleTimeDay(
         override val startDate: LocalDate,
         val startTime: LocalTime,
         val endTime: LocalTime
-    ) : ScheduleTime
+    ) : ScheduleTime, SingleDateSchedule
 }
 
 /**
@@ -59,7 +77,7 @@ data class Schedule(
      * 時間指定かどうか
      */
     val isTimed: Boolean
-        get() = time is ScheduleTime.TimeRange || time is ScheduleTime.DateTimeRange
+        get() = time is ScheduleTime.SingleTimeDay || time is ScheduleTime.DateTimeRange
 
     /**
      * 一日終日の予定かどうか
@@ -79,7 +97,7 @@ data class Schedule(
     val startDateTime: DateTime
         get() = when (val t = time) {
             is ScheduleTime.SingleAllDay -> DateTime.allDay(t.startDate)
-            is ScheduleTime.TimeRange -> DateTime.timed(t.startDate, t.startTime)
+            is ScheduleTime.SingleTimeDay -> DateTime.timed(t.startDate, t.startTime)
             is ScheduleTime.AllDayRange -> DateTime.allDay(t.startDate)
             is ScheduleTime.DateTimeRange -> DateTime.timed(t.start.date, t.start.time)
         }
@@ -90,7 +108,7 @@ data class Schedule(
     val endDateTime: DateTime
         get() = when (val t = time) {
             is ScheduleTime.SingleAllDay -> DateTime.allDay(t.startDate)
-            is ScheduleTime.TimeRange -> DateTime.timed(t.startDate, t.endTime)
+            is ScheduleTime.SingleTimeDay -> DateTime.timed(t.startDate, t.endTime)
             is ScheduleTime.AllDayRange -> DateTime.allDay(t.endDate)
             is ScheduleTime.DateTimeRange -> DateTime.timed(t.end.date, t.end.time)
         }
@@ -151,7 +169,7 @@ data class Schedule(
                 id = id,
                 title = title,
                 description = description,
-                time = ScheduleTime.TimeRange(date, startTime, endTime),
+                time = ScheduleTime.SingleTimeDay(date, startTime, endTime),
                 user = user
             )
         }

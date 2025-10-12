@@ -331,7 +331,7 @@ private fun WeekTimelineView(
         Box(modifier = Modifier.fillMaxWidth()) {
             timedSchedules.forEach { schedule ->
                 when (val time = schedule.time) {
-                    is ScheduleTime.TimeRange -> {
+                    is ScheduleTime.SingleTimeDay -> {
                         val startMinutes = time.startTime.hour * 60 + time.startTime.minute
                         val endMinutes = time.endTime.hour * 60 + time.endTime.minute
                         val durationMinutes = endMinutes - startMinutes

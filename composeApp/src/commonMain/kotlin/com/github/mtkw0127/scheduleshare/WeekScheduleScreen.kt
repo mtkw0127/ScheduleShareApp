@@ -199,23 +199,14 @@ fun WeekScheduleScreen(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(
-                                            if (allDaySchedules.isNotEmpty()) {
-                                                MaterialTheme.colorScheme.surfaceVariant
-                                            } else {
-                                                MaterialTheme.colorScheme.surface
-                                            }
-                                        )
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
                                         .padding(8.dp)
                                 ) {
                                     Text(
                                         text = "終日",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (allDaySchedules.isNotEmpty())
-                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                        else
-                                            MaterialTheme.colorScheme.surface
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
 

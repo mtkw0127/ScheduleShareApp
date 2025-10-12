@@ -509,8 +509,8 @@ private fun Week(
     )
 
     // 先頭が日曜日で末尾が土曜
-    // 日曜日に配置した予定の数を保存する
-    val blockNum = remember { mutableStateOf(listOf(0, 0, 0, 0, 0, 0, 0)) }
+    // 各曜日に配置した予定の行数を保存する
+    var blockNum by remember { mutableStateOf(listOf(0, 0, 0, 0, 0, 0, 0)) }
 
     // 週内の連日予定を抽出
     val thisWeekMultiSchedules = schedules.values
@@ -554,28 +554,49 @@ private fun Week(
 
         // 連日予定を横棒で表示
         if (thisWeekMultiSchedules.isNotEmpty()) {
+            // blockNumをリセット
+            blockNum = listOf(0, 0, 0, 0, 0, 0, 0)
+
             Box(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 thisWeekMultiSchedules
                     .sortedBy { it.startDateTime }
-                    .forEachIndexed { index, schedule ->
+                    .forEach { schedule ->
                         val time = schedule.time as ScheduleTime.MultiDateSchedule
-                        schedule.time.startDate
+                        val startDate = schedule.startDateTime.date
+
+                        // この予定の開始位置（週の何日目か）
+                        val startDayIndex = if (startDate <= firstDateOfWeek) {
+                            0
+                        } else {
+                            firstDateOfWeek.daysUntil(startDate)
+                        }
+
+                        // この予定が占める期間の各曜日のblockNumの最大値を取得
+                        val duration = time.duration()
+                        val maxBlockInRange = (startDayIndex until (startDayIndex + duration).coerceAtMost(7))
+                            .maxOfOrNull { blockNum.getOrNull(it) ?: 0 } ?: 0
+
+                        // この予定を配置する行
+                        val row = maxBlockInRange
+
+                        // この予定が占める範囲のblockNumを更新
+                        blockNum = blockNum.toMutableList().apply {
+                            for (i in startDayIndex until (startDayIndex + duration).coerceAtMost(7)) {
+                                this[i] = row + 1
+                            }
+                        }
+
+                        val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            val startDate = schedule.startDateTime.date
-                            val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
                             Box(
                                 modifier = Modifier
                                     .offset(
-                                        x = if (startDate <= firstDateOfWeek) {
-                                            0.dp
-                                        } else {
-                                            dayCellWidth * firstDateOfWeek.daysUntil(startDate)
-                                        },
-                                        y = dayScheduleHeightDp.times(index + 1),
+                                        x = dayCellWidth * startDayIndex,
+                                        y = dayScheduleHeightDp * (row + 1),
                                     )
-                                    .width(dayCellWidth.times(time.duration()))
+                                    .width(dayCellWidth * duration)
                                     .background(
                                         color = Color(userColor.value),
                                         shape = RoundedCornerShape(2.dp)

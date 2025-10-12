@@ -75,10 +75,8 @@ fun ScheduleShareTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    // 常にライトモードを使用（ダークモードは後回し）
+    val colorScheme = LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,

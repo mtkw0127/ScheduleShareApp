@@ -285,7 +285,8 @@ fun DayScheduleScreen(
                                                 val canNavigate = if (useTwoColumnLayout) {
                                                     true
                                                 } else {
-                                                    val isAtStart = sharedHorizontalScrollState.value == 0
+                                                    val isAtStart =
+                                                        sharedHorizontalScrollState.value == 0
                                                     val isAtEnd =
                                                         sharedHorizontalScrollState.value == sharedHorizontalScrollState.maxValue
                                                     (horizontalDragOffset > 0 && isAtStart) ||
@@ -755,50 +756,6 @@ private fun ScheduleCard(
                             )
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun HourlyScheduleItem(hour: Int, schedules: List<Schedule>) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(60.dp)
-            .border(
-                width = 0.5.dp,
-                color = MaterialTheme.colorScheme.outlineVariant
-            )
-    ) {
-        // 時刻表示部分
-        Box(
-            modifier = Modifier
-                .width(60.dp)
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(8.dp),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            Text(
-                text = "${hour.toString().padStart(2, '0')}:00",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        // 予定表示部分
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxSize()
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Column {
-                schedules.forEach { schedule ->
-                    ScheduleCard(schedule)
-                    Spacer(modifier = Modifier.height(4.dp))
                 }
             }
         }

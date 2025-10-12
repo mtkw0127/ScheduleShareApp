@@ -578,10 +578,10 @@ private fun Week(
                     .sortedBy { it.startDateTime }
 
             allSchedules.forEach { schedule ->
+                val startDate = schedule.startDateTime.date
+
                 when (val time = schedule.time) {
                     is ScheduleTime.MultiDateSchedule -> {
-                        val startDate = schedule.startDateTime.date
-
                         // この予定の開始位置（週の何日目か）
                         val startDayIndex = if (startDate <= firstDateOfWeek) {
                             0
@@ -605,35 +605,16 @@ private fun Week(
                             }
                         }
 
-                        val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            Box(
-                                modifier = Modifier
-                                    .offset(
-                                        x = dayCellWidth * startDayIndex,
-                                        y = dayCellNumHeightDp * (row + 1),
-                                    )
-                                    .width(dayCellWidth * duration)
-                                    .background(
-                                        color = Color(userColor.value),
-                                        shape = RoundedCornerShape(2.dp)
-                                    )
-                                    .padding(horizontal = 2.dp, vertical = 1.dp)
-                            ) {
-                                Text(
-                                    text = schedule.title,
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        }
+                        ScheduleBar(
+                            schedule = schedule,
+                            userColorMap = userColorMap,
+                            xOffset = dayCellWidth * startDayIndex,
+                            yOffset = dayCellNumHeightDp * (row + 1),
+                            width = dayCellWidth * duration
+                        )
                     }
 
                     is ScheduleTime.SingleDateSchedule -> {
-                        val startDate = schedule.startDateTime.date
                         val dayIndex = firstDateOfWeek.daysUntil(startDate)
 
                         if (dayIndex in 0..6) {
@@ -645,35 +626,49 @@ private fun Week(
                                 this[dayIndex] = row + 1
                             }
 
-                            val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
-                            Row(modifier = Modifier.fillMaxWidth()) {
-                                Box(
-                                    modifier = Modifier
-                                        .offset(
-                                            x = dayCellWidth * dayIndex,
-                                            y = dayCellNumHeightDp * (row + 1),
-                                        )
-                                        .width(dayCellWidth)
-                                        .background(
-                                            color = Color(userColor.value),
-                                            shape = RoundedCornerShape(2.dp)
-                                        )
-                                        .padding(horizontal = 2.dp, vertical = 1.dp)
-                                ) {
-                                    Text(
-                                        text = schedule.title,
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White,
-                                        maxLines = 1,
-                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                    )
-                                }
-                            }
+                            ScheduleBar(
+                                schedule = schedule,
+                                userColorMap = userColorMap,
+                                xOffset = dayCellWidth * dayIndex,
+                                yOffset = dayCellNumHeightDp * (row + 1),
+                                width = dayCellWidth
+                            )
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ScheduleBar(
+    schedule: Schedule,
+    userColorMap: Map<User.Id, UserColor>,
+    xOffset: Dp,
+    yOffset: Dp,
+    width: Dp,
+) {
+    val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .offset(x = xOffset, y = yOffset)
+                .width(width)
+                .background(
+                    color = Color(userColor.value),
+                    shape = RoundedCornerShape(2.dp)
+                )
+                .padding(horizontal = 2.dp, vertical = 1.dp)
+        ) {
+            Text(
+                text = schedule.title,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

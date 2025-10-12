@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +50,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -65,11 +68,10 @@ import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.model.user.UserColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
 import kotlinx.datetime.todayIn
-import kotlinx.datetime.until
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_drop_down
@@ -522,7 +524,14 @@ private fun Week(
         }
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val density = LocalDensity.current
         val dayCellWidth = maxWidth / 7
+        var dayScheduleHeight by remember { mutableStateOf(0) }
+        val dayScheduleHeightDp by derivedStateOf {
+            with(density) {
+                dayScheduleHeight.toDp()
+            }
+        }
 
         // 日付セル
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -530,10 +539,11 @@ private fun Week(
                 DateCell(
                     day = day,
                     schedules = schedules,
-                    userColorMap = userColorMap,
                     onClickDate = onClickDate,
+                    onUpdateScheduleHeight = { height ->
+                        dayScheduleHeight = height
+                    },
                     modifier = Modifier.weight(1F),
-                    showMultiDaySchedules = false // 連日予定は別途表示
                 )
             }
         }
@@ -543,40 +553,41 @@ private fun Week(
             Box(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                thisWeekMultiSchedules.forEachIndexed { index, schedule ->
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        val startDate = schedule.startDateTime.date
-                        val offsetX: Dp = if (startDate <= firstDateOfWeek) {
-                            0.dp
-                        } else {
-                            dayCellWidth * firstDateOfWeek.until(startDate, DateTimeUnit.DAY)
-                                .toInt()
-                        }
-                        // 予定バー
-                        val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
-                        Box(
-                            modifier = Modifier
-                                .offset(
-                                    x = offsetX,
-                                    y = 35.dp + (14.dp * index)
+                thisWeekMultiSchedules
+                    .sortedBy { it.startDateTime }
+                    .forEachIndexed { index, schedule ->
+                        val time = schedule.time as ScheduleTime.MultiDateSchedule
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            val startDate = schedule.startDateTime.date
+                            val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
+                            Box(
+                                modifier = Modifier
+                                    .offset(
+                                        x = if (startDate <= firstDateOfWeek) {
+                                            0.dp
+                                        } else {
+                                            dayCellWidth * firstDateOfWeek.daysUntil(startDate)
+                                        },
+                                        y = dayScheduleHeightDp.times(index + 1),
+                                    )
+                                    .width(dayCellWidth.times(time.duration()))
+                                    .background(
+                                        color = Color(userColor.value),
+                                        shape = RoundedCornerShape(2.dp)
+                                    )
+                            ) {
+                                Text(
+                                    text = schedule.title,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(horizontal = 2.dp)
                                 )
-                                .padding(horizontal = 2.dp, vertical = 1.dp)
-                                .background(
-                                    color = Color(userColor.value).copy(alpha = 0.8f),
-                                    shape = RoundedCornerShape(2.dp)
-                                )
-                        ) {
-                            Text(
-                                text = schedule.title,
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                            )
+                            }
                         }
                     }
-                }
             }
         }
     }
@@ -587,21 +598,14 @@ private fun Week(
 private fun DateCell(
     day: Day,
     schedules: Map<LocalDate, List<Schedule>>,
-    userColorMap: Map<User.Id, UserColor>,
     onClickDate: (Day) -> Unit,
+    onUpdateScheduleHeight: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    showMultiDaySchedules: Boolean = true
 ) {
     val daySchedules = schedules[day.value]
-        ?.filter {
-            if (showMultiDaySchedules) {
-                it.isTimed || it.isSingleAllDay
-            } else {
-                // 連日予定を除外
-                (it.isTimed || it.isSingleAllDay) && !it.isMultiDay
-            }
+        ?.filter { schedule ->
+            schedule.time is ScheduleTime.SingleDateSchedule
         } ?: emptyList()
-
     Column(
         modifier = modifier
             .fillMaxHeight()
@@ -616,6 +620,9 @@ private fun DateCell(
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         Box(
             modifier = Modifier
+                .onSizeChanged {
+                    onUpdateScheduleHeight(it.height)
+                }
                 .padding(vertical = 5.dp)
                 .size(20.dp)
                 .drawBehind {
@@ -634,40 +641,6 @@ private fun DateCell(
                 } else {
                     MaterialTheme.colorScheme.onSurface
                 }
-            )
-        }
-
-        // 予定の表示（最大2件まで、連日予定のスペースを確保するため）
-        daySchedules.take(2).forEach { schedule ->
-            val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 2.dp, vertical = 1.dp)
-                    .background(
-                        color = Color(userColor.value),
-                        shape = RoundedCornerShape(2.dp)
-                    )
-                    .padding(horizontal = 2.dp, vertical = 1.dp)
-            ) {
-                Text(
-                    text = schedule.title,
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                )
-            }
-        }
-
-        // 2件以上ある場合は「+N」を表示
-        if (daySchedules.size > 2) {
-            Text(
-                text = "+${daySchedules.size - 2}",
-                fontSize = 8.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
             )
         }
     }

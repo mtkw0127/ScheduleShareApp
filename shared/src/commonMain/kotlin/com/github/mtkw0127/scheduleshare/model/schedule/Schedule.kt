@@ -5,6 +5,7 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
+import kotlinx.datetime.daysUntil
 import kotlinx.datetime.plus
 
 // 予定の日時パターンを表す sealed interface
@@ -12,6 +13,7 @@ sealed interface ScheduleTime {
 
     sealed interface MultiDateSchedule {
         fun isThisWeek(date: LocalDate): Boolean
+        fun duration(): Int
     }
 
     sealed interface SingleDateSchedule
@@ -28,6 +30,10 @@ sealed interface ScheduleTime {
             val weekDates = date..date.plus(6, DateTimeUnit.DAY)
             return start.date in weekDates || end.date in weekDates
         }
+
+        override fun duration(): Int {
+            return start.date.daysUntil(end.date)
+        }
     }
 
     // 開始と終了が別日（終日で日を跨ぐ）
@@ -38,6 +44,10 @@ sealed interface ScheduleTime {
         override fun isThisWeek(date: LocalDate): Boolean {
             val weekDates = date..date.plus(6, DateTimeUnit.DAY)
             return startDate in weekDates || endDate in weekDates
+        }
+
+        override fun duration(): Int {
+            return startDate.daysUntil(endDate)
         }
     }
 

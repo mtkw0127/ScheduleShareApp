@@ -16,6 +16,7 @@ import com.github.mtkw0127.scheduleshare.navigation.Screen
 import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
+import com.github.mtkw0127.scheduleshare.shared.preferences.SharedUserPreferenceRepository
 import com.github.mtkw0127.scheduleshare.shared.preferences.UserPreferenceRepository
 import com.github.mtkw0127.scheduleshare.shared.preferences.createDataStore
 import com.github.mtkw0127.scheduleshare.theme.ScheduleShareTheme
@@ -36,6 +37,7 @@ fun App() {
         val userRepository = remember { UserRepository.createWithSampleData() }
         val holidayRepository = remember { HolidayRepository() }
         val userPreferenceRepository = remember { UserPreferenceRepository(createDataStore()) }
+        val sharedUserPreferenceRepository = remember { SharedUserPreferenceRepository(createDataStore()) }
         val scheduleRepository = remember {
             ScheduleRepository(userRepository).apply {
                 val testUser = User.createTest()
@@ -201,7 +203,12 @@ fun App() {
 
                 composable<Screen.Calendar> {
                     val calendarState =
-                        rememberCalendarState(scheduleRepository, userRepository, holidayRepository)
+                        rememberCalendarState(
+                            scheduleRepository,
+                            userRepository,
+                            sharedUserPreferenceRepository,
+                            holidayRepository
+                        )
                     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
                     CalendarScreen(

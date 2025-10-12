@@ -14,6 +14,10 @@ import com.github.mtkw0127.scheduleshare.model.user.UserColor
 import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
+import com.github.mtkw0127.scheduleshare.shared.preferences.SharedUserPreferenceRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -28,9 +32,11 @@ import kotlin.time.ExperimentalTime
 class CalendarState @OptIn(ExperimentalTime::class) constructor(
     private val scheduleRepository: ScheduleRepository,
     private val userRepository: UserRepository,
+    private val sharedUserPreferenceRepository: SharedUserPreferenceRepository,
     private val holidayRepository: HolidayRepository = HolidayRepository(),
     initialFocusedMonth: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 ) {
+    private val scope = CoroutineScope(Dispatchers.Main)
     var months by mutableStateOf<List<Month>>(emptyList())
         private set
 
@@ -61,18 +67,38 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
 
     private fun loadSharedUsers() {
         sharedUsers = userRepository.getSharedUsers()
-        // 表示状態のマップを更新
-        userVisibilityMap = sharedUsers.associate { user ->
-            user.id to userRepository.getUserVisibility(user.id)
-        }
-        // 色のマップを更新
-        userColorMap = sharedUsers.associate { user ->
-            user.id to userRepository.getUserColor(user.id)
+
+        // DataStoreから保存済みの設定を読み込み
+        scope.launch {
+            val visibilityMap = mutableMapOf<User.Id, Boolean>()
+            val colorMap = mutableMapOf<User.Id, UserColor>()
+
+            sharedUsers.forEach { user ->
+                // DataStoreから取得、なければデフォルト値を使用
+                val visibility = sharedUserPreferenceRepository.getUserVisibility(user.id.value)
+                visibilityMap[user.id] = visibility
+
+                val savedColor = sharedUserPreferenceRepository.getUserColor(user.id.value)
+                val color = if (savedColor != null) {
+                    // 保存されたColorをUserColorに変換
+                    UserColor.fromValue(savedColor)
+                } else {
+                    // デフォルト値を使用
+                    userRepository.getUserColor(user.id)
+                }
+                colorMap[user.id] = color
+            }
+
+            userVisibilityMap = visibilityMap
+            userColorMap = colorMap
         }
     }
 
     fun updateUserVisibility(userId: User.Id, visible: Boolean) {
-        userRepository.setUserVisibility(userId, visible)
+        // DataStoreに保存
+        scope.launch {
+            sharedUserPreferenceRepository.setUserVisibility(userId.value, visible)
+        }
         // 表示状態のマップを更新
         userVisibilityMap = userVisibilityMap.toMutableMap().apply {
             this[userId] = visible
@@ -81,7 +107,10 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
     }
 
     fun updateUserColor(userId: User.Id, color: UserColor) {
-        userRepository.setUserColor(userId, color)
+        // DataStoreに保存
+        scope.launch {
+            sharedUserPreferenceRepository.setUserColor(userId.value, color.value.toLong())
+        }
         // 色のマップを更新
         userColorMap = userColorMap.toMutableMap().apply {
             this[userId] = color
@@ -164,10 +193,22 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
 fun rememberCalendarState(
     scheduleRepository: ScheduleRepository,
     userRepository: UserRepository,
+    sharedUserPreferenceRepository: SharedUserPreferenceRepository,
     holidayRepository: HolidayRepository,
     initialFocusedMonth: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 ): CalendarState {
-    return remember(scheduleRepository, userRepository, initialFocusedMonth) {
-        CalendarState(scheduleRepository, userRepository, holidayRepository, initialFocusedMonth)
+    return remember(
+        scheduleRepository,
+        userRepository,
+        sharedUserPreferenceRepository,
+        initialFocusedMonth
+    ) {
+        CalendarState(
+            scheduleRepository,
+            userRepository,
+            sharedUserPreferenceRepository,
+            holidayRepository,
+            initialFocusedMonth
+        )
     }
 }

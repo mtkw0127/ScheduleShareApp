@@ -358,6 +358,14 @@ fun CalendarScreen(
                             }
                         }
 
+                        IconButton(onClick = onQRShareClick) {
+                            Icon(
+                                imageVector = vectorResource(Res.drawable.qr_code),
+                                contentDescription = "QRコード",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+
                         IconButton(onClick = onUserIconClick) {
                             Icon(
                                 imageVector = vectorResource(Res.drawable.user),

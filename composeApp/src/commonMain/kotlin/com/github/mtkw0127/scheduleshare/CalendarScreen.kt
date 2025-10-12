@@ -766,7 +766,7 @@ private fun DateCell(
             }
             .fillMaxHeight()
             .fillMaxWidth()
-            .border(0.5.dp, MaterialTheme.colorScheme.surfaceVariant)
+            .border(0.2.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.8f))
             .clickable {
                 onClickDate(day)
             },

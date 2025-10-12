@@ -63,12 +63,25 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+
+    signingConfigs {
+        create("develop") {
+            storeFile = file("develop.jks")
+            storePassword = "develop"
+            keyAlias = "develop"
+            keyPassword = "develop"
+        }
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("develop")
+        }
         getByName("release") {
             isMinifyEnabled = false
         }

@@ -508,6 +508,10 @@ private fun Week(
         week.saturday
     )
 
+    // 先頭が日曜日で末尾が土曜
+    // 日曜日に配置した予定の数を保存する
+    val blockNum = remember { mutableStateOf(listOf(0, 0, 0, 0, 0, 0, 0)) }
+
     // 週内の連日予定を抽出
     val thisWeekMultiSchedules = schedules.values
         .flatten()
@@ -557,6 +561,7 @@ private fun Week(
                     .sortedBy { it.startDateTime }
                     .forEachIndexed { index, schedule ->
                         val time = schedule.time as ScheduleTime.MultiDateSchedule
+                        schedule.time.startDate
                         Row(modifier = Modifier.fillMaxWidth()) {
                             val startDate = schedule.startDateTime.date
                             val userColor = userColorMap[schedule.user.id] ?: UserColor.default()

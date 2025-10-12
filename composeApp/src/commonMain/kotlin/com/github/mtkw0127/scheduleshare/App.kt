@@ -170,7 +170,7 @@ fun App() {
                         title = "デートナイト",
                         description = "2人の時間",
                         startDate = LocalDate(2025, 10, 6),
-                        endDate = LocalDate(2025, 10, 6),
+                        endDate = LocalDate(2025, 10, 7),
                         user = testUser,
                         startTime = LocalTime(18, 0),
                         endTime = LocalTime(22, 0)

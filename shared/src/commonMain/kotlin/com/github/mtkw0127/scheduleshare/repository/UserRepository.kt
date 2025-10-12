@@ -124,6 +124,11 @@ class UserRepository {
             repository.addSharedUser(child1.id)
             repository.addSharedUser(child2.id)
 
+            // 各ユーザーに異なる色を設定
+            repository.setUserColor(partner.id, UserColor.PURPLE)
+            repository.setUserColor(child1.id, UserColor.GREEN)
+            repository.setUserColor(child2.id, UserColor.ORANGE)
+
             return repository
         }
     }

@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
+import com.github.mtkw0127.scheduleshare.components.TimeLabelsColumn
 import com.github.mtkw0127.scheduleshare.extension.toJapanese
 import com.github.mtkw0127.scheduleshare.extension.toYmd
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
@@ -453,33 +454,6 @@ fun DayScheduleScreen(
                         getUserColor = getUserColor
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TimeLabelsColumn() {
-    val hourHeight = 60.dp
-    Column {
-        (0..23).forEach { hour ->
-            Box(
-                modifier = Modifier
-                    .width(60.dp)
-                    .height(hourHeight)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .border(
-                        width = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-                    .padding(8.dp),
-                contentAlignment = Alignment.TopCenter
-            ) {
-                Text(
-                    text = "${hour.toString().padStart(2, '0')}:00",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
     }

@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
+import com.github.mtkw0127.scheduleshare.components.TimeLabelsColumn
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.schedule.ScheduleTime
 import com.github.mtkw0127.scheduleshare.model.user.User
@@ -38,7 +39,6 @@ import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
@@ -57,8 +57,7 @@ fun WeekScheduleScreen(
     scheduleRepository: ScheduleRepository,
     userRepository: UserRepository,
     onBackClick: () -> Unit,
-    onScheduleClick: (Schedule) -> Unit = {},
-    onAddScheduleAtTime: (LocalDate, LocalTime) -> Unit = { _, _ -> }
+    onScheduleClick: (Schedule) -> Unit = {}
 ) {
     // 指定された日付を含む週の月曜日を取得
     val startOfWeek = remember(date) {
@@ -198,10 +197,11 @@ fun WeekScheduleScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .background(
-                                            if (allDaySchedules.isNotEmpty())
+                                            if (allDaySchedules.isNotEmpty()) {
                                                 MaterialTheme.colorScheme.surfaceVariant
-                                            else
+                                            } else {
                                                 MaterialTheme.colorScheme.surface
+                                            }
                                         )
                                         .padding(8.dp)
                                 ) {
@@ -240,7 +240,6 @@ fun WeekScheduleScreen(
                                     timedSchedules = timedSchedules,
                                     currentDate = day,
                                     onScheduleClick = onScheduleClick,
-                                    onTimelineClick = { time -> onAddScheduleAtTime(day, time) },
                                     getUserColor = getUserColor
                                 )
                             }
@@ -252,33 +251,12 @@ fun WeekScheduleScreen(
     }
 }
 
-@Composable
-private fun TimeLabelsColumn() {
-    val hourHeight = 60.dp
-
-    Column {
-        (0..23).forEach { hour ->
-            Box(
-                modifier = Modifier.height(hourHeight)
-            ) {
-                Text(
-                    text = "${hour.toString().padStart(2, '0')}:00",
-                    fontSize = 10.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(end = 4.dp)
-                )
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalTime::class)
 @Composable
 private fun WeekTimelineView(
     timedSchedules: List<Schedule>,
     currentDate: LocalDate,
     onScheduleClick: (Schedule) -> Unit,
-    onTimelineClick: (LocalTime) -> Unit,
     getUserColor: (User.Id) -> Color
 ) {
     val hourHeight = 60.dp

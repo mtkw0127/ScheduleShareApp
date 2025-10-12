@@ -320,19 +320,6 @@ fun App() {
                                     schedule.id.value
                                 )
                             )
-                        },
-                        onAddScheduleAtTime = { date, time ->
-                            val endTime = LocalTime(
-                                hour = if (time.hour == 23) 23 else time.hour + 1,
-                                minute = if (time.hour == 23) 59 else time.minute
-                            )
-                            navController.navigate(
-                                Screen.ScheduleAdd.from(
-                                    date = date,
-                                    startTime = time,
-                                    endTime = endTime
-                                )
-                            )
                         }
                     )
                 }

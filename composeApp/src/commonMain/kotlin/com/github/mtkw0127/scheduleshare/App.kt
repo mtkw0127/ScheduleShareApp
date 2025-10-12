@@ -3,6 +3,7 @@ package com.github.mtkw0127.scheduleshare
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -12,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
+import com.github.mtkw0127.scheduleshare.model.user.UserColor
 import com.github.mtkw0127.scheduleshare.navigation.Screen
 import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
@@ -37,7 +39,27 @@ fun App() {
         val userRepository = remember { UserRepository.createWithSampleData() }
         val holidayRepository = remember { HolidayRepository() }
         val userPreferenceRepository = remember { UserPreferenceRepository(createDataStore()) }
-        val sharedUserPreferenceRepository = remember { SharedUserPreferenceRepository(createDataStore()) }
+        val sharedUserPreferenceRepository =
+            remember { SharedUserPreferenceRepository(createDataStore()) }
+
+        // 初回起動時にデフォルトの色を設定
+        LaunchedEffect(Unit) {
+            val partner = User.Id("user_001")
+            val child1 = User.Id("user_002")
+            val child2 = User.Id("user_003")
+
+            // 既に色が設定されていない場合のみデフォルト色を設定
+            if (sharedUserPreferenceRepository.getUserColor(partner.value) == null) {
+                sharedUserPreferenceRepository.setUserColor(partner.value, UserColor.PURPLE.value)
+            }
+            if (sharedUserPreferenceRepository.getUserColor(child1.value) == null) {
+                sharedUserPreferenceRepository.setUserColor(child1.value, UserColor.GREEN.value)
+            }
+            if (sharedUserPreferenceRepository.getUserColor(child2.value) == null) {
+                sharedUserPreferenceRepository.setUserColor(child2.value, UserColor.ORANGE.value)
+            }
+        }
+
         val scheduleRepository = remember {
             ScheduleRepository(userRepository).apply {
                 val testUser = User.createTest()
@@ -273,6 +295,7 @@ fun App() {
                         scheduleRepository = scheduleRepository,
                         userRepository = userRepository,
                         userPreferenceRepository = userPreferenceRepository,
+                        sharedUserPreferenceRepository = sharedUserPreferenceRepository,
                         onBackClick = {
                             navController.popBackStack()
                         },
@@ -331,6 +354,7 @@ fun App() {
                         date = weekSchedule.toLocalDate(),
                         scheduleRepository = scheduleRepository,
                         userRepository = userRepository,
+                        sharedUserPreferenceRepository = sharedUserPreferenceRepository,
                         onBackClick = {
                             navController.popBackStack()
                         },

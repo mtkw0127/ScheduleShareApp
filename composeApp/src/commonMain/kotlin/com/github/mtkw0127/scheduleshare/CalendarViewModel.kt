@@ -84,7 +84,7 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
                     UserColor.fromValue(savedColor)
                 } else {
                     // デフォルト値を使用
-                    userRepository.getUserColor(user.id)
+                    UserColor.default()
                 }
                 colorMap[user.id] = color
             }
@@ -129,7 +129,13 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
                 year = month.year,
                 month = month.month.number
             )
-            allSchedules.putAll(monthSchedules.groupBy {
+
+            // visibilityがtrueのユーザーのスケジュールのみをフィルタリング
+            val visibleSchedules = monthSchedules.filter { schedule ->
+                userVisibilityMap[schedule.user.id] ?: true
+            }
+
+            allSchedules.putAll(visibleSchedules.groupBy {
                 it.time.startDate
             })
         }

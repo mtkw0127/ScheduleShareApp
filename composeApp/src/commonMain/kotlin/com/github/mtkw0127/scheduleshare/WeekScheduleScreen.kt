@@ -24,7 +24,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -35,9 +39,11 @@ import com.github.mtkw0127.scheduleshare.components.TimeLabelsColumn
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.schedule.ScheduleTime
 import com.github.mtkw0127.scheduleshare.model.user.User
+import com.github.mtkw0127.scheduleshare.model.user.UserColor
 import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
+import com.github.mtkw0127.scheduleshare.shared.preferences.SharedUserPreferenceRepository
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
@@ -58,6 +64,7 @@ fun WeekScheduleScreen(
     date: LocalDate,
     scheduleRepository: ScheduleRepository,
     userRepository: UserRepository,
+    sharedUserPreferenceRepository: SharedUserPreferenceRepository,
     holidayRepository: HolidayRepository = HolidayRepository(),
     onBackClick: () -> Unit,
     onScheduleClick: (Schedule) -> Unit = {}
@@ -74,10 +81,45 @@ fun WeekScheduleScreen(
         (0..6).map { startOfWeek.plus(DatePeriod(days = it)) }
     }
 
-    // 各日の予定を取得
-    val schedulesByDate = remember(weekDays) {
+    // visibilityがtrueのユーザーIDを取得
+    var visibleUserIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var userColorMap by remember { mutableStateOf<Map<User.Id, UserColor>>(emptyMap()) }
+
+    LaunchedEffect(Unit) {
+        val testUser = User.createTest()
+        val allSharedUsers = userRepository.getSharedUsers()
+        val visibleIds = mutableSetOf(testUser.id.value)
+        val colorMap = mutableMapOf<User.Id, UserColor>()
+
+        // testユーザーの色を設定
+        colorMap[testUser.id] = UserColor.default()
+
+        for (user in allSharedUsers) {
+            val isVisible = sharedUserPreferenceRepository.getUserVisibility(user.id.value)
+            if (isVisible) {
+                visibleIds.add(user.id.value)
+            }
+
+            // 色を取得
+            val savedColor = sharedUserPreferenceRepository.getUserColor(user.id.value)
+            val color = if (savedColor != null) {
+                UserColor.fromValue(savedColor)
+            } else {
+                UserColor.default()
+            }
+            colorMap[user.id] = color
+        }
+
+        visibleUserIds = visibleIds
+        userColorMap = colorMap
+    }
+
+    // 各日の予定を取得（visibilityでフィルタリング）
+    val schedulesByDate = remember(weekDays, visibleUserIds) {
         weekDays.associateWith { day ->
-            scheduleRepository.getSchedulesByDate(day)
+            scheduleRepository.getSchedulesByDate(day).filter { schedule ->
+                visibleUserIds.contains(schedule.user.id.value)
+            }
         }
     }
 
@@ -94,7 +136,7 @@ fun WeekScheduleScreen(
 
     // ユーザーの色を取得する関数
     val getUserColor: (User.Id) -> Color = { userId ->
-        Color(userRepository.getUserColor(userId).value)
+        Color((userColorMap[userId] ?: UserColor.default()).value)
     }
 
     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())

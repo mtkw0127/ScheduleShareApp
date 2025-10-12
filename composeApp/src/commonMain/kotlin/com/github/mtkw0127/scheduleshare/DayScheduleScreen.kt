@@ -54,9 +54,11 @@ import com.github.mtkw0127.scheduleshare.extension.toJapanese
 import com.github.mtkw0127.scheduleshare.extension.toYmd
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
+import com.github.mtkw0127.scheduleshare.model.user.UserColor
 import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
+import com.github.mtkw0127.scheduleshare.shared.preferences.SharedUserPreferenceRepository
 import com.github.mtkw0127.scheduleshare.shared.preferences.UserPreferenceRepository
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
@@ -82,6 +84,7 @@ fun DayScheduleScreen(
     scheduleRepository: ScheduleRepository,
     userRepository: UserRepository,
     userPreferenceRepository: UserPreferenceRepository,
+    sharedUserPreferenceRepository: SharedUserPreferenceRepository,
     holidayRepository: HolidayRepository = HolidayRepository(),
     onBackClick: () -> Unit,
     onDateChange: (LocalDate) -> Unit = {},
@@ -111,13 +114,38 @@ fun DayScheduleScreen(
         holidays.find { it.date == currentDate }
     }
 
-    // 表示対象のユーザー一覧を取得
-    val visibleUsers = remember {
+    // 表示対象のユーザー一覧を取得（DataStoreから読み込み）
+    var visibleUsers by remember { mutableStateOf<List<User>>(emptyList()) }
+    var userColorMap by remember { mutableStateOf<Map<User.Id, UserColor>>(emptyMap()) }
+
+    LaunchedEffect(Unit) {
         val testUser = User.createTest()
-        val sharedUsers = userRepository.getSharedUsers().filter { user ->
-            userRepository.getUserVisibility(user.id)
+        val allSharedUsers = userRepository.getSharedUsers()
+        val filteredUsers = mutableListOf<User>()
+        val colorMap = mutableMapOf<User.Id, UserColor>()
+
+        // testユーザーの色を設定
+        colorMap[testUser.id] = UserColor.default()
+
+        // 各ユーザーのvisibilityとcolorをDataStoreから取得
+        for (user in allSharedUsers) {
+            val isVisible = sharedUserPreferenceRepository.getUserVisibility(user.id.value)
+            if (isVisible) {
+                filteredUsers.add(user)
+            }
+
+            // 色を取得
+            val savedColor = sharedUserPreferenceRepository.getUserColor(user.id.value)
+            val color = if (savedColor != null) {
+                UserColor.fromValue(savedColor)
+            } else {
+                UserColor.default()
+            }
+            colorMap[user.id] = color
         }
-        listOf(testUser) + sharedUsers
+
+        visibleUsers = listOf(testUser) + filteredUsers
+        userColorMap = colorMap
     }
 
     // ユーザーごとにグループ化（visibilityがtrueのユーザーのみ）
@@ -130,7 +158,7 @@ fun DayScheduleScreen(
 
     // ユーザーの色を取得する関数
     val getUserColor: (User.Id) -> Color = { userId ->
-        Color(userRepository.getUserColor(userId).value)
+        Color((userColorMap[userId] ?: UserColor.default()).value)
     }
 
     Scaffold(

@@ -391,18 +391,20 @@ fun CalendarScreen(
                     items(months.size) { index ->
                         val month = months[index]
                         Column(
-                            modifier = Modifier.pointerInput(Unit) {
-                                detectHorizontalDragGestures { _, dragAmount ->
-                                    if (dragAmount.absoluteValue > 20 && changingFocus.not()) {
-                                        changingFocus = true
-                                        if (dragAmount > 0) {
-                                            moveToPrev()
-                                        } else {
-                                            moveToNext()
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.surface)
+                                .pointerInput(Unit) {
+                                    detectHorizontalDragGestures { _, dragAmount ->
+                                        if (dragAmount.absoluteValue > 20 && changingFocus.not()) {
+                                            changingFocus = true
+                                            if (dragAmount > 0) {
+                                                moveToPrev()
+                                            } else {
+                                                moveToNext()
+                                            }
                                         }
                                     }
                                 }
-                            }
                         ) {
                             DayView(screenWidth)
                             DateView(

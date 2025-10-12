@@ -54,6 +54,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -537,11 +538,10 @@ private fun Week(
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val density = LocalDensity.current
         val dayCellWidth = maxWidth / 7
-        var dayScheduleHeight by remember { mutableStateOf(0) }
-        val dayScheduleHeightDp by derivedStateOf {
-            with(density) {
-                dayScheduleHeight.toDp()
-            }
+        var dayCellHeight by remember { mutableStateOf(0.dp) }
+        var dayCellNumHeightDp by remember { mutableStateOf(0.dp) }
+        val dayCellContentHeight by derivedStateOf {
+            dayCellHeight - dayCellNumHeightDp
         }
 
         // 日付セル
@@ -549,10 +549,16 @@ private fun Week(
             weekDays.forEach { day ->
                 DateCell(
                     day = day,
-                    schedules = schedules,
                     onClickDate = onClickDate,
-                    onUpdateScheduleHeight = { height ->
-                        dayScheduleHeight = height
+                    onUpdateDateCellNumHeight = { height ->
+                        with(density) {
+                            dayCellNumHeightDp = height.toDp()
+                        }
+                    },
+                    onUpdateDateCellHeight = { height ->
+                        with(density) {
+                            dayCellHeight = height.toDp()
+                        }
                     },
                     modifier = Modifier.weight(1F),
                 )
@@ -567,8 +573,9 @@ private fun Week(
             blockNum = listOf(0, 0, 0, 0, 0, 0, 0)
 
             // 全ての予定をまとめて開始日時順にソート
-            val allSchedules = (thisWeekMultiSchedules + thisWeekSingleSchedules.flatMap { it.second })
-                .sortedBy { it.startDateTime }
+            val allSchedules =
+                (thisWeekMultiSchedules + thisWeekSingleSchedules.flatMap { it.second })
+                    .sortedBy { it.startDateTime }
 
             allSchedules.forEach { schedule ->
                 when (val time = schedule.time) {
@@ -584,8 +591,9 @@ private fun Week(
 
                         // この予定が占める期間の各曜日のblockNumの最大値を取得
                         val duration = time.duration()
-                        val maxBlockInRange = (startDayIndex until (startDayIndex + duration).coerceAtMost(7))
-                            .maxOfOrNull { blockNum.getOrNull(it) ?: 0 } ?: 0
+                        val maxBlockInRange =
+                            (startDayIndex until (startDayIndex + duration).coerceAtMost(7))
+                                .maxOfOrNull { blockNum.getOrNull(it) ?: 0 } ?: 0
 
                         // この予定を配置する行
                         val row = maxBlockInRange
@@ -603,7 +611,7 @@ private fun Week(
                                 modifier = Modifier
                                     .offset(
                                         x = dayCellWidth * startDayIndex,
-                                        y = dayScheduleHeightDp * (row + 1),
+                                        y = dayCellNumHeightDp * (row + 1),
                                     )
                                     .width(dayCellWidth * duration)
                                     .background(
@@ -618,11 +626,12 @@ private fun Week(
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                     maxLines = 1,
-                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                             }
                         }
                     }
+
                     is ScheduleTime.SingleDateSchedule -> {
                         val startDate = schedule.startDateTime.date
                         val dayIndex = firstDateOfWeek.daysUntil(startDate)
@@ -642,7 +651,7 @@ private fun Week(
                                     modifier = Modifier
                                         .offset(
                                             x = dayCellWidth * dayIndex,
-                                            y = dayScheduleHeightDp * (row + 1),
+                                            y = dayCellNumHeightDp * (row + 1),
                                         )
                                         .width(dayCellWidth)
                                         .background(
@@ -673,17 +682,16 @@ private fun Week(
 @Composable
 private fun DateCell(
     day: Day,
-    schedules: Map<LocalDate, List<Schedule>>,
     onClickDate: (Day) -> Unit,
-    onUpdateScheduleHeight: (Int) -> Unit,
+    onUpdateDateCellNumHeight: (Int) -> Unit,
+    onUpdateDateCellHeight: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val daySchedules = schedules[day.value]
-        ?.filter { schedule ->
-            schedule.time is ScheduleTime.SingleDateSchedule
-        } ?: emptyList()
     Column(
         modifier = modifier
+            .onSizeChanged {
+                onUpdateDateCellHeight(it.height)
+            }
             .fillMaxHeight()
             .fillMaxWidth()
             .border(0.2.dp, MaterialTheme.colorScheme.surfaceVariant)
@@ -697,7 +705,7 @@ private fun DateCell(
         Box(
             modifier = Modifier
                 .onSizeChanged {
-                    onUpdateScheduleHeight(it.height)
+                    onUpdateDateCellNumHeight(it.height)
                 }
                 .padding(vertical = 5.dp)
                 .size(20.dp)

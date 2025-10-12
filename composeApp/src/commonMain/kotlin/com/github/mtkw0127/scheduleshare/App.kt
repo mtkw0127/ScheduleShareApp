@@ -150,6 +150,20 @@ fun App() {
                         user = sharedUser1
                     )
                 )
+
+                // パターン4: DateTimeRange（連日・時間指定の予定）
+                addSchedule(
+                    Schedule.createMultiDayTimed(
+                        id = Schedule.Id("10"),
+                        title = "${testUser.name}: 出張プロジェクト",
+                        description = "大阪での開発プロジェクト",
+                        startDate = LocalDate(2025, 10, 6),
+                        endDate = LocalDate(2025, 10, 8),
+                        user = testUser,
+                        startTime = LocalTime(9, 0),
+                        endTime = LocalTime(18, 0)
+                    )
+                )
             }
         }
 

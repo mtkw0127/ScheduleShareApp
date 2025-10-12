@@ -32,7 +32,7 @@ sealed interface ScheduleTime {
         }
 
         override fun duration(): Int {
-            return start.date.daysUntil(end.date)
+            return start.date.daysUntil(end.date) + 1
         }
     }
 
@@ -47,7 +47,7 @@ sealed interface ScheduleTime {
         }
 
         override fun duration(): Int {
-            return startDate.daysUntil(endDate)
+            return startDate.daysUntil(endDate) + 1
         }
     }
 

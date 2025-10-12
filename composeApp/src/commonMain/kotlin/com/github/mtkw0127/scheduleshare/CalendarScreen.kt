@@ -628,12 +628,12 @@ private fun Week(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(
-                                    color = Color.Red.copy(alpha = 0.9f),
+                                    color = Color(0xFF4CAF50).copy(alpha = 0.9f), // 緑色
                                     shape = RoundedCornerShape(0.dp)
                                 )
                                 .border(
                                     width = 0.5.dp,
-                                    color = Color.Red,
+                                    color = Color(0xFF4CAF50),
                                     shape = RoundedCornerShape(0.dp)
                                 )
                                 .padding(horizontal = 3.5.dp, vertical = 1.dp)

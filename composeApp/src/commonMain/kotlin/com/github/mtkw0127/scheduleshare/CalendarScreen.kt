@@ -540,8 +540,18 @@ private fun Week(
         val dayCellWidth = maxWidth / 7
         var dayCellHeight by remember { mutableStateOf(0.dp) }
         var dayCellNumHeightDp by remember { mutableStateOf(0.dp) }
+        var scheduleBarHeight by remember { mutableStateOf(0.dp) }
         val dayCellContentHeight by derivedStateOf {
             dayCellHeight - dayCellNumHeightDp
+        }
+
+        // 表示可能な最大スケジュール数を計算
+        val maxVisibleSchedules by derivedStateOf {
+            if (scheduleBarHeight > 0.dp && dayCellContentHeight > 0.dp) {
+                (dayCellContentHeight / scheduleBarHeight).toInt()
+            } else {
+                Int.MAX_VALUE
+            }
         }
 
         // 日付セル
@@ -598,20 +608,28 @@ private fun Week(
                         // この予定を配置する行
                         val row = maxBlockInRange
 
-                        // この予定が占める範囲のblockNumを更新
-                        blockNum = blockNum.toMutableList().apply {
-                            for (i in startDayIndex until (startDayIndex + duration).coerceAtMost(7)) {
-                                this[i] = row + 1
+                        // 表示範囲内かチェック
+                        if (row < maxVisibleSchedules) {
+                            // この予定が占める範囲のblockNumを更新
+                            blockNum = blockNum.toMutableList().apply {
+                                for (i in startDayIndex until (startDayIndex + duration).coerceAtMost(7)) {
+                                    this[i] = row + 1
+                                }
                             }
-                        }
 
-                        ScheduleBar(
-                            schedule = schedule,
-                            userColorMap = userColorMap,
-                            xOffset = dayCellWidth * startDayIndex,
-                            yOffset = dayCellNumHeightDp * (row + 1),
-                            width = dayCellWidth * duration
-                        )
+                            ScheduleBar(
+                                schedule = schedule,
+                                userColorMap = userColorMap,
+                                xOffset = dayCellWidth * startDayIndex,
+                                yOffset = dayCellNumHeightDp * (row + 1),
+                                width = dayCellWidth * duration,
+                                onUpdateHeight = { height ->
+                                    with(density) {
+                                        scheduleBarHeight = height.toDp()
+                                    }
+                                }
+                            )
+                        }
                     }
 
                     is ScheduleTime.SingleDateSchedule -> {
@@ -621,18 +639,26 @@ private fun Week(
                             // この日のblockNumを取得
                             val row = blockNum[dayIndex]
 
-                            // blockNumを更新
-                            blockNum = blockNum.toMutableList().apply {
-                                this[dayIndex] = row + 1
-                            }
+                            // 表示範囲内かチェック
+                            if (row < maxVisibleSchedules) {
+                                // blockNumを更新
+                                blockNum = blockNum.toMutableList().apply {
+                                    this[dayIndex] = row + 1
+                                }
 
-                            ScheduleBar(
-                                schedule = schedule,
-                                userColorMap = userColorMap,
-                                xOffset = dayCellWidth * dayIndex,
-                                yOffset = dayCellNumHeightDp * (row + 1),
-                                width = dayCellWidth
-                            )
+                                ScheduleBar(
+                                    schedule = schedule,
+                                    userColorMap = userColorMap,
+                                    xOffset = dayCellWidth * dayIndex,
+                                    yOffset = dayCellNumHeightDp * (row + 1),
+                                    width = dayCellWidth,
+                                    onUpdateHeight = { height ->
+                                        with(density) {
+                                            scheduleBarHeight = height.toDp()
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -648,11 +674,15 @@ private fun ScheduleBar(
     xOffset: Dp,
     yOffset: Dp,
     width: Dp,
+    onUpdateHeight: (Int) -> Unit = {}
 ) {
     val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
     Row(modifier = Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
+                .onSizeChanged {
+                    onUpdateHeight(it.height)
+                }
                 .offset(x = xOffset, y = yOffset)
                 .width(width)
                 .background(

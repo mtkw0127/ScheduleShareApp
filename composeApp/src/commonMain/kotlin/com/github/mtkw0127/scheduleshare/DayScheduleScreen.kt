@@ -172,6 +172,10 @@ fun DayScheduleScreen(
                 // 横スクロール状態を共有
                 val sharedHorizontalScrollState = rememberScrollState()
 
+                // 2人の場合は均等分割、3人以上の場合は固定幅
+                val userCount = schedulesByUser.size
+                val useTwoColumnLayout = userCount == 2
+
                 Column(modifier = Modifier.fillMaxSize()) {
                     // ユーザー名ヘッダー（固定）
                     Row(modifier = Modifier.fillMaxWidth()) {
@@ -182,14 +186,23 @@ fun DayScheduleScreen(
                         Row(
                             modifier = Modifier
                                 .weight(1f)
-                                .horizontalScroll(sharedHorizontalScrollState)
+                                .then(
+                                    if (useTwoColumnLayout) Modifier
+                                    else Modifier.horizontalScroll(sharedHorizontalScrollState)
+                                )
                                 .background(MaterialTheme.colorScheme.surface)
                         ) {
                             schedulesByUser.keys.forEach { user ->
                                 Column(
-                                    modifier = Modifier
-                                        .width(150.dp)
-                                        .padding(horizontal = 2.dp)
+                                    modifier = if (useTwoColumnLayout) {
+                                        Modifier
+                                            .weight(1f)
+                                            .padding(horizontal = 2.dp)
+                                    } else {
+                                        Modifier
+                                            .width(150.dp)
+                                            .padding(horizontal = 2.dp)
+                                    }
                                 ) {
                                     Text(
                                         text = user.name,
@@ -260,37 +273,42 @@ fun DayScheduleScreen(
                             Row(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .horizontalScroll(sharedHorizontalScrollState)
-                                    .pointerInput(Unit) {
+                                    .then(
+                                        if (useTwoColumnLayout) Modifier
+                                        else Modifier.horizontalScroll(sharedHorizontalScrollState)
+                                    )
+                                    .pointerInput(useTwoColumnLayout, sharedHorizontalScrollState) {
                                         detectHorizontalDragGestures(
                                             onDragEnd = {
-                                                // スクロールが端に到達している場合のみ日付移動
                                                 val threshold = 100f
-                                                val isAtStart = sharedHorizontalScrollState.value == 0
-                                                val isAtEnd =
-                                                    sharedHorizontalScrollState.value == sharedHorizontalScrollState.maxValue
+                                                // 2人の場合は常に日付移動、3人以上の場合はスクロール端のみ
+                                                val canNavigate = if (useTwoColumnLayout) {
+                                                    true
+                                                } else {
+                                                    val isAtStart = sharedHorizontalScrollState.value == 0
+                                                    val isAtEnd =
+                                                        sharedHorizontalScrollState.value == sharedHorizontalScrollState.maxValue
+                                                    (horizontalDragOffset > 0 && isAtStart) ||
+                                                            (horizontalDragOffset < 0 && isAtEnd)
+                                                }
 
-                                                if (horizontalDragOffset.absoluteValue > threshold) {
-                                                    if (horizontalDragOffset > 0 && isAtStart) {
-                                                        // 右スワイプ & 左端: 前日へ
-                                                        val newDate =
-                                                            currentDate.plus(DatePeriod(days = -1))
-                                                        currentDate = newDate
-                                                        onDateChange(newDate)
-                                                    } else if (horizontalDragOffset < 0 && isAtEnd) {
-                                                        // 左スワイプ & 右端: 翌日へ
-                                                        val newDate =
-                                                            currentDate.plus(DatePeriod(days = 1))
-                                                        currentDate = newDate
-                                                        onDateChange(newDate)
+                                                if (horizontalDragOffset.absoluteValue > threshold && canNavigate) {
+                                                    val newDate = if (horizontalDragOffset > 0) {
+                                                        currentDate.plus(DatePeriod(days = -1))
+                                                    } else {
+                                                        currentDate.plus(DatePeriod(days = 1))
                                                     }
+                                                    currentDate = newDate
+                                                    onDateChange(newDate)
                                                 }
                                                 horizontalDragOffset = 0f
                                             },
                                             onHorizontalDrag = { _, dragAmount ->
                                                 horizontalDragOffset += dragAmount
-                                                scope.launch {
-                                                    sharedHorizontalScrollState.scrollBy(-dragAmount)
+                                                if (!useTwoColumnLayout) {
+                                                    scope.launch {
+                                                        sharedHorizontalScrollState.scrollBy(-dragAmount)
+                                                    }
                                                 }
                                             }
                                         )
@@ -298,10 +316,17 @@ fun DayScheduleScreen(
                             ) {
                                 schedulesByUser.forEach { (user, userSchedules) ->
                                     Column(
-                                        modifier = Modifier
-                                            .width(150.dp)
-                                            .fillMaxHeight()
-                                            .padding(horizontal = 2.dp)
+                                        modifier = if (useTwoColumnLayout) {
+                                            Modifier
+                                                .weight(1f)
+                                                .fillMaxHeight()
+                                                .padding(horizontal = 2.dp)
+                                        } else {
+                                            Modifier
+                                                .width(150.dp)
+                                                .fillMaxHeight()
+                                                .padding(horizontal = 2.dp)
+                                        }
                                     ) {
                                         // 終日の予定エリア（高さを統一、常に表示）
                                         val allDaySchedules = userSchedules.filter { it.isAllDay }

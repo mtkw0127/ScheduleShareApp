@@ -76,7 +76,8 @@ fun App() {
                         title = "仕事",
                         description = "リモートワーク",
                         date = LocalDate(2025, 10, 8),
-                        user = testUser,
+                        createUser = testUser,
+                        assignedUsers = listOf(partner),
                         startTime = LocalTime(9, 0),
                         endTime = LocalTime(18, 0)
                     )
@@ -88,7 +89,8 @@ fun App() {
                         title = "家族で夕食",
                         description = "お気に入りのレストラン",
                         date = LocalDate(2025, 10, 8),
-                        user = testUser,
+                        createUser = testUser,
+                        assignedUsers = listOf(partner, child1, child2),
                         startTime = LocalTime(19, 0),
                         endTime = LocalTime(21, 0)
                     )
@@ -101,7 +103,8 @@ fun App() {
                         description = "沖縄旅行",
                         startDate = LocalDate(2025, 10, 10),
                         endDate = LocalDate(2025, 10, 12),
-                        user = testUser
+                        createUser = testUser,
+                        assignedUsers = listOf(partner, child1, child2),
                     )
                 )
 
@@ -112,9 +115,10 @@ fun App() {
                         title = "美容院",
                         description = "カット＆カラー",
                         date = LocalDate(2025, 10, 8),
-                        user = partner,
+                        createUser = partner,
+                        assignedUsers = emptyList(),
                         startTime = LocalTime(10, 0),
-                        endTime = LocalTime(12, 0)
+                        endTime = LocalTime(12, 0),
                     )
                 )
 
@@ -124,7 +128,8 @@ fun App() {
                         title = "友達とランチ",
                         description = "久しぶりの再会",
                         date = LocalDate(2025, 10, 8),
-                        user = partner,
+                        createUser = partner,
+                        assignedUsers = emptyList(),
                         startTime = LocalTime(12, 30),
                         endTime = LocalTime(14, 0)
                     )
@@ -137,7 +142,8 @@ fun App() {
                         description = "両親に会いに行く",
                         startDate = LocalDate(2025, 10, 13),
                         endDate = LocalDate(2025, 10, 14),
-                        user = partner
+                        createUser = partner,
+                        assignedUsers = emptyList(),
                     )
                 )
 
@@ -148,9 +154,10 @@ fun App() {
                         title = "サッカー教室",
                         description = "週末の練習",
                         date = LocalDate(2025, 10, 8),
-                        user = child1,
+                        createUser = child1,
+                        assignedUsers = emptyList(),
                         startTime = LocalTime(10, 0),
-                        endTime = LocalTime(12, 0)
+                        endTime = LocalTime(12, 0),
                     )
                 )
 
@@ -160,7 +167,8 @@ fun App() {
                         title = "遠足",
                         description = "動物園へ",
                         date = LocalDate(2025, 10, 9),
-                        user = child1
+                        createUser = child1,
+                        assignedUsers = emptyList(),
                     )
                 )
 
@@ -171,9 +179,10 @@ fun App() {
                         title = "ピアノレッスン",
                         description = "発表会の練習",
                         date = LocalDate(2025, 10, 8),
-                        user = child2,
+                        createUser = child2,
                         startTime = LocalTime(14, 0),
-                        endTime = LocalTime(15, 0)
+                        endTime = LocalTime(15, 0),
+                        assignedUsers = emptyList(),
                     )
                 )
 
@@ -183,9 +192,10 @@ fun App() {
                         title = "ピアノ発表会",
                         description = "市民ホール",
                         date = LocalDate(2025, 10, 15),
-                        user = child2,
+                        createUser = child2,
                         startTime = LocalTime(13, 0),
-                        endTime = LocalTime(16, 0)
+                        endTime = LocalTime(16, 0),
+                        assignedUsers = emptyList(),
                     )
                 )
 
@@ -197,9 +207,10 @@ fun App() {
                         description = "2人の時間",
                         startDate = LocalDate(2025, 10, 6),
                         endDate = LocalDate(2025, 10, 7),
-                        user = testUser,
+                        createUser = testUser,
                         startTime = LocalTime(18, 0),
-                        endTime = LocalTime(22, 0)
+                        endTime = LocalTime(22, 0),
+                        assignedUsers = emptyList(),
                     )
                 )
             }

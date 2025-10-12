@@ -72,7 +72,8 @@ data class Schedule(
     val title: String,
     val description: String,
     val time: ScheduleTime,
-    val user: User
+    val createUser: User,
+    val assignedUsers: List<User>,
 ) {
 
     data class Id(val value: String)
@@ -132,14 +133,16 @@ data class Schedule(
             title: String,
             description: String,
             date: LocalDate,
-            user: User
+            createUser: User,
+            assignedUsers: List<User>,
         ): Schedule {
             return Schedule(
                 id = id,
                 title = title,
                 description = description,
                 time = ScheduleTime.SingleAllDay(date),
-                user = user
+                createUser = createUser,
+                assignedUsers = assignedUsers,
             )
         }
 
@@ -152,14 +155,16 @@ data class Schedule(
             description: String,
             startDate: LocalDate,
             endDate: LocalDate,
-            user: User
+            createUser: User,
+            assignedUsers: List<User>,
         ): Schedule {
             return Schedule(
                 id = id,
                 title = title,
                 description = description,
                 time = ScheduleTime.AllDayRange(startDate, endDate),
-                user = user
+                createUser = createUser,
+                assignedUsers = assignedUsers,
             )
         }
 
@@ -171,16 +176,18 @@ data class Schedule(
             title: String,
             description: String,
             date: LocalDate,
-            user: User,
+            createUser: User,
+            assignedUsers: List<User>,
             startTime: LocalTime,
-            endTime: LocalTime
+            endTime: LocalTime,
         ): Schedule {
             return Schedule(
                 id = id,
                 title = title,
                 description = description,
                 time = ScheduleTime.SingleTimeDay(date, startTime, endTime),
-                user = user
+                createUser = createUser,
+                assignedUsers,
             )
         }
 
@@ -193,7 +200,8 @@ data class Schedule(
             description: String,
             startDate: LocalDate,
             endDate: LocalDate,
-            user: User,
+            createUser: User,
+            assignedUsers: List<User>,
             startTime: LocalTime,
             endTime: LocalTime
         ): Schedule {
@@ -206,7 +214,8 @@ data class Schedule(
                     start = LocalDateTime(startDate, startTime),
                     end = LocalDateTime(endDate, endTime)
                 ),
-                user = user
+                createUser = createUser,
+                assignedUsers = assignedUsers
             )
         }
     }

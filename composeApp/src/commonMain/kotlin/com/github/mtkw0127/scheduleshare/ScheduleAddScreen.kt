@@ -377,7 +377,8 @@ fun ScheduleAddScreen(
                                 description = description,
                                 startDate = startDate,
                                 endDate = endDate,
-                                user = existingSchedule?.user ?: User.createTest()
+                                createUser = existingSchedule?.createUser ?: User.createTest(),
+                                assignedUsers = emptyList(),
                             )
                         } else {
                             Schedule.createAllDay(
@@ -387,7 +388,8 @@ fun ScheduleAddScreen(
                                 title = title,
                                 description = description,
                                 date = startDate,
-                                user = existingSchedule?.user ?: User.createTest()
+                                createUser = existingSchedule?.createUser ?: User.createTest(),
+                                assignedUsers = emptyList(),
                             )
                         }
                     } else {
@@ -405,9 +407,10 @@ fun ScheduleAddScreen(
                                 description = description,
                                 startDate = startDate,
                                 endDate = endDate,
-                                user = existingSchedule?.user ?: User.createTest(),
+                                createUser = existingSchedule?.createUser ?: User.createTest(),
+                                assignedUsers = emptyList(),
                                 startTime = LocalTime(startH, startM),
-                                endTime = LocalTime(endH, endM)
+                                endTime = LocalTime(endH, endM),
                             )
                         } else {
                             Schedule.createTimed(
@@ -417,7 +420,8 @@ fun ScheduleAddScreen(
                                 title = title,
                                 description = description,
                                 date = startDate,
-                                user = existingSchedule?.user ?: User.createTest(),
+                                createUser = existingSchedule?.createUser ?: User.createTest(),
+                                assignedUsers = emptyList(),
                                 startTime = LocalTime(startH, startM),
                                 endTime = LocalTime(endH, endM)
                             )
@@ -444,7 +448,8 @@ fun ScheduleAddScreen(
         // DatePicker/TimePickerダイアログ
         if (showStartDatePicker) {
             val datePickerState = rememberDatePickerState(
-                initialSelectedDateMillis = startDate.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+                initialSelectedDateMillis = startDate.atStartOfDayIn(TimeZone.UTC)
+                    .toEpochMilliseconds()
             )
             DatePickerDialog(
                 onDismissRequest = { showStartDatePicker = false },
@@ -474,7 +479,8 @@ fun ScheduleAddScreen(
 
         if (showEndDatePicker) {
             val datePickerState = rememberDatePickerState(
-                initialSelectedDateMillis = endDate.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+                initialSelectedDateMillis = endDate.atStartOfDayIn(TimeZone.UTC)
+                    .toEpochMilliseconds()
             )
             DatePickerDialog(
                 onDismissRequest = { showEndDatePicker = false },

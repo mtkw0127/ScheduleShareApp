@@ -132,7 +132,7 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
 
             // visibilityがtrueのユーザーのスケジュールのみをフィルタリング
             val visibleSchedules = monthSchedules.filter { schedule ->
-                userVisibilityMap[schedule.user.id] ?: true
+                userVisibilityMap[schedule.createUser.id] ?: true
             }
 
             allSchedules.putAll(visibleSchedules.groupBy {

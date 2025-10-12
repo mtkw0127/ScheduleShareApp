@@ -24,14 +24,18 @@ class ScheduleRepository(
     fun getSchedulesByMonth(year: Int, month: Int): List<Schedule> {
         val sharedUserIds = userRepository.getSharedUserIds()
         return schedules.filter { schedule ->
-            val isUserVisible = schedule.user.id == User.createTest().id || sharedUserIds.contains(schedule.user.id)
+            val isUserVisible =
+                schedule.createUser.id == User.createTest().id || sharedUserIds.contains(schedule.createUser.id)
             if (!isUserVisible) return@filter false
 
             // 開始日または終了日がその月に含まれるか、その月をまたいでいる場合
-            val scheduleStartInMonth = schedule.startDateTime.date.year == year && schedule.startDateTime.date.month.number == month
-            val scheduleEndInMonth = schedule.endDateTime.date.year == year && schedule.endDateTime.date.month.number == month
-            val scheduleSpansMonth = schedule.startDateTime.date.year <= year && schedule.startDateTime.date.month.number <= month &&
-                    schedule.endDateTime.date.year >= year && schedule.endDateTime.date.month.number >= month
+            val scheduleStartInMonth =
+                schedule.startDateTime.date.year == year && schedule.startDateTime.date.month.number == month
+            val scheduleEndInMonth =
+                schedule.endDateTime.date.year == year && schedule.endDateTime.date.month.number == month
+            val scheduleSpansMonth =
+                schedule.startDateTime.date.year <= year && schedule.startDateTime.date.month.number <= month &&
+                        schedule.endDateTime.date.year >= year && schedule.endDateTime.date.month.number >= month
             scheduleStartInMonth || scheduleEndInMonth || scheduleSpansMonth
         }
     }
@@ -44,7 +48,8 @@ class ScheduleRepository(
     fun getSchedulesByDate(date: LocalDate): List<Schedule> {
         val sharedUserIds = userRepository.getSharedUserIds()
         return schedules.filter { schedule ->
-            val isUserVisible = schedule.user.id == User.createTest().id || sharedUserIds.contains(schedule.user.id)
+            val isUserVisible =
+                schedule.createUser.id == User.createTest().id || sharedUserIds.contains(schedule.createUser.id)
             if (!isUserVisible) return@filter false
 
             // 指定日が開始日と終了日の間にあるかチェック
@@ -111,7 +116,8 @@ class ScheduleRepository(
                     title = "終日イベント",
                     description = "終日のサンプル予定",
                     date = LocalDate(2025, 10, 8),
-                    user = testUser
+                    createUser = testUser,
+                    assignedUsers = emptyList(),
                 )
             )
 
@@ -121,9 +127,10 @@ class ScheduleRepository(
                     title = "ミーティング",
                     description = "プロジェクト定例会議",
                     date = LocalDate(2025, 10, 8),
-                    user = testUser,
+                    createUser = testUser,
+                    assignedUsers = emptyList(),
                     startTime = LocalTime(10, 0),
-                    endTime = LocalTime(11, 0)
+                    endTime = LocalTime(11, 0),
                 )
             )
 
@@ -133,7 +140,8 @@ class ScheduleRepository(
                     title = "ランチ",
                     description = "チームランチ",
                     date = LocalDate(2025, 10, 8),
-                    user = testUser,
+                    createUser = testUser,
+                    assignedUsers = emptyList(),
                     startTime = LocalTime(12, 0),
                     endTime = LocalTime(13, 0)
                 )
@@ -146,7 +154,8 @@ class ScheduleRepository(
                     title = "山田さんの会議",
                     description = "営業部ミーティング",
                     date = LocalDate(2025, 10, 8),
-                    user = sharedUser1,
+                    createUser = sharedUser1,
+                    assignedUsers = emptyList(),
                     startTime = LocalTime(14, 0),
                     endTime = LocalTime(15, 0)
                 )
@@ -158,7 +167,8 @@ class ScheduleRepository(
                     title = "佐藤さんの打ち合わせ",
                     description = "クライアントとの打ち合わせ",
                     date = LocalDate(2025, 10, 8),
-                    user = sharedUser2,
+                    createUser = sharedUser2,
+                    assignedUsers = emptyList(),
                     startTime = LocalTime(15, 30),
                     endTime = LocalTime(17, 0)
                 )
@@ -170,7 +180,8 @@ class ScheduleRepository(
                     title = "鈴木さんの出張",
                     description = "大阪出張",
                     date = LocalDate(2025, 10, 8),
-                    user = sharedUser3
+                    createUser = sharedUser3,
+                    assignedUsers = emptyList(),
                 )
             )
 

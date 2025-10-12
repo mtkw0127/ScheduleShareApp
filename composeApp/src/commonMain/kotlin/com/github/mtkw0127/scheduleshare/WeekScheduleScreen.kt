@@ -118,7 +118,7 @@ fun WeekScheduleScreen(
     val schedulesByDate = remember(weekDays, visibleUserIds) {
         weekDays.associateWith { day ->
             scheduleRepository.getSchedulesByDate(day).filter { schedule ->
-                visibleUserIds.contains(schedule.user.id.value)
+                visibleUserIds.contains(schedule.createUser.id.value)
             }
         }
     }
@@ -277,7 +277,9 @@ fun WeekScheduleScreen(
                                                 colors = androidx.compose.material3.CardDefaults.cardColors(
                                                     containerColor = Color(0xFF4CAF50)
                                                 ),
-                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                                                    4.dp
+                                                )
                                             ) {
                                                 Box(
                                                     modifier = Modifier
@@ -300,7 +302,7 @@ fun WeekScheduleScreen(
                                         Box(modifier = Modifier.height(64.dp)) {
                                             ScheduleCard(
                                                 schedule = schedule,
-                                                containerColor = getUserColor(schedule.user.id),
+                                                containerColor = getUserColor(schedule.createUser.id),
                                                 onClick = { onScheduleClick(schedule) }
                                             )
                                         }
@@ -309,7 +311,8 @@ fun WeekScheduleScreen(
 
                                     // 不足分は空のスペースで埋める
                                     val holidayCount = if (holiday != null) 1 else 0
-                                    val emptyCount = maxAllDayCount - allDaySchedules.size - holidayCount
+                                    val emptyCount =
+                                        maxAllDayCount - allDaySchedules.size - holidayCount
                                     repeat(emptyCount) {
                                         Spacer(modifier = Modifier.height(68.dp))
                                     }
@@ -407,7 +410,7 @@ private fun WeekTimelineView(
                         ) {
                             ScheduleCard(
                                 schedule = schedule,
-                                containerColor = getUserColor(schedule.user.id),
+                                containerColor = getUserColor(schedule.createUser.id),
                                 onClick = { onScheduleClick(schedule) }
                             )
                         }
@@ -443,7 +446,7 @@ private fun WeekTimelineView(
                         ) {
                             ScheduleCard(
                                 schedule = schedule,
-                                containerColor = getUserColor(schedule.user.id),
+                                containerColor = getUserColor(schedule.createUser.id),
                                 onClick = { onScheduleClick(schedule) }
                             )
                         }

@@ -143,7 +143,7 @@ fun DayScheduleScreen(
         // visibleUsersに含まれるユーザーの予定のみをフィルタリング
         val visibleUserIds = visibleUsers.map { it.id }.toSet()
         allSchedules.filter { schedule ->
-            visibleUserIds.contains(schedule.user.id)
+            visibleUserIds.contains(schedule.createUser.id)
         }
     }
 
@@ -157,7 +157,7 @@ fun DayScheduleScreen(
     val schedulesByUser = remember(schedules, visibleUsers) {
         // 列表示の場合は予定がなくてもユーザーを表示するため、全ユーザーをマップに含める
         visibleUsers.associateWith { user ->
-            schedules.filter { it.user.id == user.id }
+            schedules.filter { it.createUser.id == user.id }
         }
     }
 
@@ -445,7 +445,7 @@ fun DayScheduleScreen(
                                                 Box(modifier = Modifier.height(64.dp)) {
                                                     ScheduleCard(
                                                         schedule = schedule,
-                                                        containerColor = getUserColor(schedule.user.id),
+                                                        containerColor = getUserColor(schedule.createUser.id),
                                                         onClick = { onScheduleClick(schedule) }
                                                     )
                                                 }
@@ -550,7 +550,7 @@ fun DayScheduleScreen(
                             allDaySchedules.forEach { schedule ->
                                 ScheduleCard(
                                     schedule = schedule,
-                                    containerColor = getUserColor(schedule.user.id),
+                                    containerColor = getUserColor(schedule.createUser.id),
                                     onClick = { onScheduleClick(schedule) }
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -660,7 +660,7 @@ private fun TimelineView(
                     if (schedule.isTimed) {
                         ScheduleCard(
                             schedule = schedule,
-                            containerColor = getUserColor(schedule.user.id),
+                            containerColor = getUserColor(schedule.createUser.id),
                             onClick = { onScheduleClick(schedule) }
                         )
                     }

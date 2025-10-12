@@ -499,13 +499,67 @@ private fun DateView(
             .width(screenWidth)
             .height(screenHeight)
     ) {
-        Week(month.firstWeek, schedules, holidays, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
-        Week(month.secondWeek, schedules, holidays, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
-        Week(month.thirdWeek, schedules, holidays, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
-        Week(month.fourthWeek, schedules, holidays, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
-        Week(month.fifthWeek, schedules, holidays, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
+        Week(
+            month.firstWeek,
+            schedules,
+            holidays,
+            userColorMap,
+            onClickDate,
+            currentYear,
+            currentMonth,
+            Modifier.weight(1F)
+        )
+        Week(
+            month.secondWeek,
+            schedules,
+            holidays,
+            userColorMap,
+            onClickDate,
+            currentYear,
+            currentMonth,
+            Modifier.weight(1F)
+        )
+        Week(
+            month.thirdWeek,
+            schedules,
+            holidays,
+            userColorMap,
+            onClickDate,
+            currentYear,
+            currentMonth,
+            Modifier.weight(1F)
+        )
+        Week(
+            month.fourthWeek,
+            schedules,
+            holidays,
+            userColorMap,
+            onClickDate,
+            currentYear,
+            currentMonth,
+            Modifier.weight(1F)
+        )
+        Week(
+            month.fifthWeek,
+            schedules,
+            holidays,
+            userColorMap,
+            onClickDate,
+            currentYear,
+            currentMonth,
+            Modifier.weight(1F)
+        )
         month.sixthWeek?.let { week ->
-            Week(week, schedules, holidays, userColorMap, onClickDate, currentYear, currentMonth, Modifier.weight(1F))
+            Week(
+                week,
+                schedules,
+                holidays,
+                userColorMap,
+                onClickDate,
+                currentYear,
+                currentMonth,
+                Modifier.weight(1F)
+            )
         }
     }
 }
@@ -776,7 +830,7 @@ private fun ScheduleBar(
     continuesToNextWeek: Boolean = false,
     onUpdateHeight: (Int) -> Unit = {}
 ) {
-    val userColor = userColorMap[schedule.user.id] ?: UserColor.default()
+    val userColor = userColorMap[schedule.createUser.id] ?: UserColor.default()
     // 複数日にまたがる予定かどうか
     val isMultiDay = schedule.time is ScheduleTime.MultiDateSchedule
 

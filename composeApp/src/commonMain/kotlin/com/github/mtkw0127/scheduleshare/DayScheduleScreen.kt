@@ -720,12 +720,17 @@ private fun TimelineView(
             // 重なりを検出して列を割り当て
             val scheduleInfos = mutableListOf<ScheduleInfo>()
             timedSchedules.forEach { schedule ->
-                val startMinutes =
+                // 開始時刻の計算（前日から跨ぐ場合は00:00=0分から）
+                val startMinutes = if (schedule.startDateTime.date < currentDate) {
+                    // 前日から跨ぐ場合は00:00（0分）から
+                    0
+                } else {
                     checkNotNull(schedule.startDateTime.time).hour * 60 + checkNotNull(schedule.startDateTime.time).minute
+                }
 
-                // 終了時刻の計算（日を跨ぐ場合は24:00=1440分に制限）
+                // 終了時刻の計算（翌日に跨ぐ場合は24:00=1440分に制限）
                 val endMinutes = if (schedule.endDateTime.date > currentDate) {
-                    // 日を跨ぐ場合は24:00（1440分）まで
+                    // 翌日に跨ぐ場合は24:00（1440分）まで
                     1440
                 } else {
                     checkNotNull(schedule.endDateTime.time).hour * 60 + checkNotNull(schedule.endDateTime.time).minute

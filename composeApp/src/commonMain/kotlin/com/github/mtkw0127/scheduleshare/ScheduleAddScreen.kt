@@ -139,6 +139,10 @@ fun ScheduleAddScreen(
     var assignedUsers by remember(existingSchedule) {
         mutableStateOf(existingSchedule?.assignedUsers ?: listOf(userRepository.getLoginUser()))
     }
+    val allUsers = remember {
+        listOf(userRepository.getLoginUser()) + userRepository.getSharedUsers()
+    }
+
 
     // 保存ボタンの有効/無効を判定
     val isSaveEnabled = remember(title, isAllDay, startHour, startMinute, endHour, endMinute) {
@@ -347,33 +351,22 @@ fun ScheduleAddScreen(
                 FlowRow(
                     horizontalArrangement = Arrangement.Start
                 ) {
-                    InputChip(
-                        selected = true,
-                        onClick = {},
-                        label = {
-                            Text(
-                                text = assignedUsers.firstOrNull()?.name ?: "名無し",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                    )
-                    sharedUsers.forEach { sharedUser ->
+                    allUsers.forEach { user ->
                         Spacer(Modifier.width(4.dp))
                         InputChip(
-                            selected = assignedUsers.contains(sharedUser),
+                            selected = assignedUsers.contains(user),
                             onClick = {
-                                if (assignedUsers.contains(sharedUser)) {
-                                    assignedUsers = assignedUsers.filterNot { it == sharedUser }
+                                assignedUsers = if (assignedUsers.contains(user)) {
+                                    assignedUsers.filterNot { it == user }
                                 } else {
-                                    assignedUsers = assignedUsers.toMutableList().apply {
-                                        add(sharedUser)
+                                    assignedUsers.toMutableList().apply {
+                                        add(user)
                                     }
                                 }
                             },
                             label = {
                                 Text(
-                                    text = sharedUser.name,
+                                    text = user.name,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

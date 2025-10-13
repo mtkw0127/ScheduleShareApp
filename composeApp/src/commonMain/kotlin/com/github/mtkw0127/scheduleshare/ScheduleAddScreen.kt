@@ -136,8 +136,8 @@ fun ScheduleAddScreen(
                 ?: "00"
         )
     }
-    var assignedUsers by remember {
-        mutableStateOf(listOf(userRepository.getLoginUser()))
+    var assignedUsers by remember(existingSchedule) {
+        mutableStateOf(existingSchedule?.assignedUsers ?: listOf(userRepository.getLoginUser()))
     }
 
     // 保存ボタンの有効/無効を判定

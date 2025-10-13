@@ -43,6 +43,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
@@ -225,6 +227,8 @@ fun DayScheduleScreen(
             }
         }
     ) { paddingValues ->
+        val density = LocalDensity.current
+        var allDayHeight by remember { mutableStateOf(0.dp) }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -259,12 +263,10 @@ fun DayScheduleScreen(
                                     modifier = if (useTwoColumnLayout) {
                                         Modifier
                                             .weight(1f)
-                                            .padding(horizontal = 2.dp)
                                     } else {
                                         Modifier
                                             .width(150.dp)
-                                            .padding(horizontal = 2.dp)
-                                    }
+                                    }.padding(2.dp)
                                 ) {
                                     Text(
                                         text = user.name,
@@ -322,10 +324,7 @@ fun DayScheduleScreen(
                                 modifier = Modifier.width(60.dp)
                             ) {
                                 // 終日エリアの高さを合わせる（常に表示）
-                                // padding 8.dp * 2 + "終日" text 12.sp (~16.dp) + spacer 4.dp + (maxAllDayCount * (64.dp card + 4.dp spacer))
-                                val allDayAreaHeight =
-                                    16.dp + 16.dp + 4.dp + (68.dp * maxAllDayCount)
-                                Spacer(modifier = Modifier.height(allDayAreaHeight))
+                                Spacer(modifier = Modifier.height(allDayHeight))
 
                                 // 時刻ラベル
                                 TimeLabelsColumn()
@@ -387,22 +386,26 @@ fun DayScheduleScreen(
                                         modifier = if (useTwoColumnLayout) {
                                             Modifier
                                                 .weight(1f)
-                                                .fillMaxHeight()
-                                                .padding(horizontal = 2.dp)
                                         } else {
                                             Modifier
                                                 .width(150.dp)
-                                                .fillMaxHeight()
-                                                .padding(horizontal = 2.dp)
                                         }
+                                            .fillMaxHeight()
+                                            .padding(horizontal = 2.dp)
                                     ) {
                                         // 終日の予定エリア（高さを統一、常に表示）
                                         val allDaySchedules = userSchedules.filter { it.isAllDay }
                                         Column(
                                             modifier = Modifier
+                                                .onSizeChanged {
+                                                    allDayHeight = with(density) {
+                                                        it.height.toDp()
+                                                    }
+                                                }
                                                 .fillMaxWidth()
                                                 .background(MaterialTheme.colorScheme.surfaceVariant)
                                                 .padding(8.dp)
+
                                         ) {
                                             // 全ユーザーで"終日"テキストを表示（高さを統一するため）
                                             Text(

@@ -77,7 +77,7 @@ fun App() {
                         description = "リモートワーク",
                         date = LocalDate(2025, 10, 8),
                         createUser = testUser,
-                        assignedUsers = listOf(partner),
+                        assignedUsers = listOf(testUser),
                         startTime = LocalTime(9, 0),
                         endTime = LocalTime(18, 0)
                     )
@@ -90,7 +90,7 @@ fun App() {
                         description = "お気に入りのレストラン",
                         date = LocalDate(2025, 10, 8),
                         createUser = testUser,
-                        assignedUsers = listOf(partner, child1, child2),
+                        assignedUsers = listOf(testUser, partner, child1, child2),
                         startTime = LocalTime(19, 0),
                         endTime = LocalTime(21, 0)
                     )
@@ -104,7 +104,7 @@ fun App() {
                         startDate = LocalDate(2025, 10, 10),
                         endDate = LocalDate(2025, 10, 12),
                         createUser = testUser,
-                        assignedUsers = listOf(partner, child1, child2),
+                        assignedUsers = listOf(testUser, partner, child1, child2),
                     )
                 )
 

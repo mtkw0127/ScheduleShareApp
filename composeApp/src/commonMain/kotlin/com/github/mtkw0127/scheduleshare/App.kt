@@ -345,6 +345,7 @@ fun App() {
                     ScheduleAddScreen(
                         date = scheduleAdd.toLocalDate(),
                         scheduleRepository = scheduleRepository,
+                        userRepository = userRepository,
                         scheduleId = scheduleAdd.scheduleId,
                         initialStartHour = scheduleAdd.startHour,
                         initialStartMinute = scheduleAdd.startMinute,

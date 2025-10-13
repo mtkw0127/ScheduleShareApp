@@ -3,6 +3,7 @@ package com.github.mtkw0127.scheduleshare
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -18,7 +20,9 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -39,6 +43,7 @@ import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
+import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import com.github.mtkw0127.scheduleshare.util.rememberClipboardManager
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -57,6 +62,7 @@ import kotlin.time.TimeSource
 @Composable
 fun ScheduleAddScreen(
     date: LocalDate,
+    userRepository: UserRepository,
     scheduleRepository: ScheduleRepository,
     scheduleId: String? = null,
     initialStartHour: Int? = null,
@@ -70,6 +76,10 @@ fun ScheduleAddScreen(
     val existingSchedule = remember(scheduleId) {
         scheduleId?.let { scheduleRepository.getScheduleById(Schedule.Id(it)) }
     }
+    val sharedUsers = remember(existingSchedule) {
+        userRepository.getSharedUsers()
+    }
+
 
     val clipboardManager = rememberClipboardManager()
 
@@ -125,6 +135,9 @@ fun ScheduleAddScreen(
                 ?: initialEndTime?.minute?.toString()?.padStart(2, '0')
                 ?: "00"
         )
+    }
+    var assignedUsers by remember {
+        mutableStateOf(listOf(userRepository.getLoginUser()))
     }
 
     // 保存ボタンの有効/無効を判定
@@ -321,6 +334,70 @@ fun ScheduleAddScreen(
                 }
             }
 
+            var openedBottomSheet by remember { mutableStateOf(false) }
+            Spacer(modifier = Modifier.height(16.dp))
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "参加者",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                FlowRow(
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    InputChip(
+                        selected = true,
+                        onClick = {},
+                        label = {
+                            Text(
+                                text = assignedUsers.first().name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                    )
+                    sharedUsers.forEach { sharedUser ->
+                        Spacer(Modifier.width(4.dp))
+                        InputChip(
+                            selected = assignedUsers.contains(sharedUser),
+                            onClick = {
+                                if (assignedUsers.contains(sharedUser)) {
+                                    assignedUsers = assignedUsers.filterNot { it == sharedUser }
+                                } else {
+                                    assignedUsers = assignedUsers.toMutableList().apply {
+                                        add(sharedUser)
+                                    }
+                                }
+                            },
+                            label = {
+                                Text(
+                                    text = sharedUser.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                        )
+                    }
+                }
+
+                if (openedBottomSheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = {
+                            openedBottomSheet = false
+                        },
+                        content = {
+                            Column {
+                                sharedUsers.forEach { user ->
+                                    Text(text = user.name)
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // 詳細入力欄（既存の予定の場合はコピーアイコン付き）
@@ -359,6 +436,7 @@ fun ScheduleAddScreen(
                         .height(200.dp),
                     maxLines = 10
                 )
+
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -378,7 +456,7 @@ fun ScheduleAddScreen(
                                 startDate = startDate,
                                 endDate = endDate,
                                 createUser = existingSchedule?.createUser ?: User.createTest(),
-                                assignedUsers = emptyList(),
+                                assignedUsers = assignedUsers,
                             )
                         } else {
                             Schedule.createAllDay(
@@ -389,7 +467,7 @@ fun ScheduleAddScreen(
                                 description = description,
                                 date = startDate,
                                 createUser = existingSchedule?.createUser ?: User.createTest(),
-                                assignedUsers = emptyList(),
+                                assignedUsers = assignedUsers,
                             )
                         }
                     } else {
@@ -408,7 +486,7 @@ fun ScheduleAddScreen(
                                 startDate = startDate,
                                 endDate = endDate,
                                 createUser = existingSchedule?.createUser ?: User.createTest(),
-                                assignedUsers = emptyList(),
+                                assignedUsers = assignedUsers,
                                 startTime = LocalTime(startH, startM),
                                 endTime = LocalTime(endH, endM),
                             )
@@ -421,7 +499,7 @@ fun ScheduleAddScreen(
                                 description = description,
                                 date = startDate,
                                 createUser = existingSchedule?.createUser ?: User.createTest(),
-                                assignedUsers = emptyList(),
+                                assignedUsers = assignedUsers,
                                 startTime = LocalTime(startH, startM),
                                 endTime = LocalTime(endH, endM)
                             )

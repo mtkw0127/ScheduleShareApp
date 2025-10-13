@@ -13,6 +13,14 @@ class UserRepository {
     private val sharedUserIds = mutableSetOf<User.Id>()
 
     /**
+     * ログイン中のユーザーを取得
+     * @return ログイン中のユーザー
+     */
+    fun getLoginUser(): User {
+        return User.createTest()
+    }
+
+    /**
      * 共有中のユーザー一覧を取得
      * @return 共有中のユーザーリスト
      */

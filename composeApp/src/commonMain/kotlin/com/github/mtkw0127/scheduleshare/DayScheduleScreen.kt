@@ -3,8 +3,10 @@ package com.github.mtkw0127.scheduleshare
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -331,7 +333,7 @@ fun DayScheduleScreen(
                             }
 
                             // 右側スクロール: ユーザーの列
-                            var horizontalDragOffset by remember { mutableStateOf(0f) }
+                            var overScrollOffset by remember { mutableStateOf(0f) }
 
                             Row(
                                 modifier = Modifier
@@ -342,20 +344,12 @@ fun DayScheduleScreen(
                                                 useTwoColumnLayout,
                                                 sharedHorizontalScrollState
                                             ) {
+                                                var horizontalDragOffset = 0f
                                                 detectHorizontalDragGestures(
                                                     onDragEnd = {
                                                         val threshold = 100f
-                                                        // 2人の場合は常に日付移動、3人以上の場合はスクロール端のみ
-                                                        val canNavigate = if (useTwoColumnLayout) {
-                                                            true
-                                                        } else {
-                                                            val isAtStart =
-                                                                sharedHorizontalScrollState.value == 0
-                                                            val isAtEnd =
-                                                                sharedHorizontalScrollState.value == sharedHorizontalScrollState.maxValue
-                                                            (horizontalDragOffset > 0 && isAtStart) ||
-                                                                    (horizontalDragOffset < 0 && isAtEnd)
-                                                        }
+                                                        // 2人の場合は常に日付移動
+                                                        val canNavigate = useTwoColumnLayout
 
                                                         if (horizontalDragOffset.absoluteValue > threshold && canNavigate) {
                                                             val newDate =
@@ -371,18 +365,52 @@ fun DayScheduleScreen(
                                                     },
                                                     onHorizontalDrag = { _, dragAmount ->
                                                         horizontalDragOffset += dragAmount
-                                                        if (!useTwoColumnLayout) {
-                                                            scope.launch {
-                                                                sharedHorizontalScrollState.scrollBy(
-                                                                    -dragAmount
-                                                                )
-                                                            }
-                                                        }
                                                     }
                                                 )
                                             }
                                         } else {
                                             Modifier.horizontalScroll(sharedHorizontalScrollState)
+                                        }
+                                    )
+                                    .then(
+                                        if (userCount > 2) {
+                                            Modifier.pointerInput(sharedHorizontalScrollState) {
+                                                awaitEachGesture {
+                                                    awaitFirstDown(requireUnconsumed = false)
+
+                                                    do {
+                                                        val event = awaitPointerEvent()
+                                                        event.changes.firstOrNull()?.let { change ->
+                                                            val dragAmount = change.positionChange().x
+
+                                                            // スクロールが端にある場合のみover-scrollを検出
+                                                            val isAtStart = sharedHorizontalScrollState.value == 0
+                                                            val isAtEnd = sharedHorizontalScrollState.value >= sharedHorizontalScrollState.maxValue
+
+                                                            if ((isAtStart && dragAmount > 0) || (isAtEnd && dragAmount < 0)) {
+                                                                overScrollOffset += dragAmount
+                                                            } else {
+                                                                overScrollOffset = 0f
+                                                            }
+                                                        }
+                                                    } while (event.changes.any { it.pressed })
+
+                                                    // ドラッグ終了時の処理
+                                                    val threshold = 100f
+                                                    if (overScrollOffset.absoluteValue > threshold) {
+                                                        val newDate = if (overScrollOffset > 0) {
+                                                            currentDate.plus(DatePeriod(days = -1))
+                                                        } else {
+                                                            currentDate.plus(DatePeriod(days = 1))
+                                                        }
+                                                        currentDate = newDate
+                                                        onDateChange(newDate)
+                                                    }
+                                                    overScrollOffset = 0f
+                                                }
+                                            }
+                                        } else {
+                                            Modifier
                                         }
                                     )
                             ) {

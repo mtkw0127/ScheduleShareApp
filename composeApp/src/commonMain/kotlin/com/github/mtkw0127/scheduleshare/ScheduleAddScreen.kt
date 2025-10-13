@@ -170,6 +170,7 @@ fun ScheduleAddScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CommonTopAppBar(
                 title = {},

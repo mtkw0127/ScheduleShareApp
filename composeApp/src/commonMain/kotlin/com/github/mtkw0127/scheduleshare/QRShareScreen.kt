@@ -32,6 +32,7 @@ fun QRShareScreen(
     val userId = User.createTest().id.value
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CommonTopAppBar(
                 title = {

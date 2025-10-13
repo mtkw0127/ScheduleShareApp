@@ -31,6 +31,7 @@ fun SettingsScreen(
     onLogoutClick: () -> Unit = {}
 ) {
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CommonTopAppBar(
                 title = {

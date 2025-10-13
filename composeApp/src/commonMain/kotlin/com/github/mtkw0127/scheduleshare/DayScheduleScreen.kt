@@ -337,46 +337,54 @@ fun DayScheduleScreen(
                                 modifier = Modifier
                                     .weight(1f)
                                     .then(
-                                        if (useTwoColumnLayout) Modifier
-                                        else Modifier.horizontalScroll(sharedHorizontalScrollState)
-                                    )
-                                    .pointerInput(useTwoColumnLayout, sharedHorizontalScrollState) {
-                                        detectHorizontalDragGestures(
-                                            onDragEnd = {
-                                                val threshold = 100f
-                                                // 2人の場合は常に日付移動、3人以上の場合はスクロール端のみ
-                                                val canNavigate = if (useTwoColumnLayout) {
-                                                    true
-                                                } else {
-                                                    val isAtStart =
-                                                        sharedHorizontalScrollState.value == 0
-                                                    val isAtEnd =
-                                                        sharedHorizontalScrollState.value == sharedHorizontalScrollState.maxValue
-                                                    (horizontalDragOffset > 0 && isAtStart) ||
-                                                            (horizontalDragOffset < 0 && isAtEnd)
-                                                }
+                                        if (userCount <= 2) {
+                                            Modifier.pointerInput(
+                                                useTwoColumnLayout,
+                                                sharedHorizontalScrollState
+                                            ) {
+                                                detectHorizontalDragGestures(
+                                                    onDragEnd = {
+                                                        val threshold = 100f
+                                                        // 2人の場合は常に日付移動、3人以上の場合はスクロール端のみ
+                                                        val canNavigate = if (useTwoColumnLayout) {
+                                                            true
+                                                        } else {
+                                                            val isAtStart =
+                                                                sharedHorizontalScrollState.value == 0
+                                                            val isAtEnd =
+                                                                sharedHorizontalScrollState.value == sharedHorizontalScrollState.maxValue
+                                                            (horizontalDragOffset > 0 && isAtStart) ||
+                                                                    (horizontalDragOffset < 0 && isAtEnd)
+                                                        }
 
-                                                if (horizontalDragOffset.absoluteValue > threshold && canNavigate) {
-                                                    val newDate = if (horizontalDragOffset > 0) {
-                                                        currentDate.plus(DatePeriod(days = -1))
-                                                    } else {
-                                                        currentDate.plus(DatePeriod(days = 1))
+                                                        if (horizontalDragOffset.absoluteValue > threshold && canNavigate) {
+                                                            val newDate =
+                                                                if (horizontalDragOffset > 0) {
+                                                                    currentDate.plus(DatePeriod(days = -1))
+                                                                } else {
+                                                                    currentDate.plus(DatePeriod(days = 1))
+                                                                }
+                                                            currentDate = newDate
+                                                            onDateChange(newDate)
+                                                        }
+                                                        horizontalDragOffset = 0f
+                                                    },
+                                                    onHorizontalDrag = { _, dragAmount ->
+                                                        horizontalDragOffset += dragAmount
+                                                        if (!useTwoColumnLayout) {
+                                                            scope.launch {
+                                                                sharedHorizontalScrollState.scrollBy(
+                                                                    -dragAmount
+                                                                )
+                                                            }
+                                                        }
                                                     }
-                                                    currentDate = newDate
-                                                    onDateChange(newDate)
-                                                }
-                                                horizontalDragOffset = 0f
-                                            },
-                                            onHorizontalDrag = { _, dragAmount ->
-                                                horizontalDragOffset += dragAmount
-                                                if (!useTwoColumnLayout) {
-                                                    scope.launch {
-                                                        sharedHorizontalScrollState.scrollBy(-dragAmount)
-                                                    }
-                                                }
+                                                )
                                             }
-                                        )
-                                    }
+                                        } else {
+                                            Modifier.horizontalScroll(sharedHorizontalScrollState)
+                                        }
+                                    )
                             ) {
                                 var index = 0
                                 schedulesByUser.forEach { (user, userSchedules) ->

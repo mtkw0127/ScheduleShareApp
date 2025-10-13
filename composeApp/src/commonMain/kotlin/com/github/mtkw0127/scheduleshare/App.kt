@@ -114,9 +114,9 @@ fun App() {
                         id = Schedule.Id("4"),
                         title = "美容院",
                         description = "カット＆カラー",
-                        date = LocalDate(2025, 10, 8),
                         createUser = partner,
-                        assignedUsers = emptyList(),
+                        assignedUsers = listOf(partner),
+                        date = LocalDate(2025, 10, 8),
                         startTime = LocalTime(10, 0),
                         endTime = LocalTime(12, 0),
                     )
@@ -127,9 +127,9 @@ fun App() {
                         id = Schedule.Id("5"),
                         title = "友達とランチ",
                         description = "久しぶりの再会",
-                        date = LocalDate(2025, 10, 8),
                         createUser = partner,
-                        assignedUsers = emptyList(),
+                        assignedUsers = listOf(partner),
+                        date = LocalDate(2025, 10, 8),
                         startTime = LocalTime(12, 30),
                         endTime = LocalTime(14, 0)
                     )
@@ -140,10 +140,10 @@ fun App() {
                         id = Schedule.Id("6"),
                         title = "実家帰省",
                         description = "両親に会いに行く",
+                        createUser = partner,
+                        assignedUsers = listOf(partner),
                         startDate = LocalDate(2025, 10, 13),
                         endDate = LocalDate(2025, 10, 14),
-                        createUser = partner,
-                        assignedUsers = emptyList(),
                     )
                 )
 
@@ -153,9 +153,9 @@ fun App() {
                         id = Schedule.Id("7"),
                         title = "サッカー教室",
                         description = "週末の練習",
-                        date = LocalDate(2025, 10, 8),
                         createUser = child1,
-                        assignedUsers = emptyList(),
+                        assignedUsers = listOf(child1),
+                        date = LocalDate(2025, 10, 8),
                         startTime = LocalTime(10, 0),
                         endTime = LocalTime(12, 0),
                     )
@@ -166,9 +166,9 @@ fun App() {
                         id = Schedule.Id("8"),
                         title = "遠足",
                         description = "動物園へ",
-                        date = LocalDate(2025, 10, 9),
                         createUser = child1,
-                        assignedUsers = emptyList(),
+                        assignedUsers = listOf(child1),
+                        date = LocalDate(2025, 10, 9),
                     )
                 )
 
@@ -178,11 +178,11 @@ fun App() {
                         id = Schedule.Id("9"),
                         title = "ピアノレッスン",
                         description = "発表会の練習",
-                        date = LocalDate(2025, 10, 8),
                         createUser = child2,
+                        assignedUsers = listOf(child2),
+                        date = LocalDate(2025, 10, 8),
                         startTime = LocalTime(14, 0),
                         endTime = LocalTime(15, 0),
-                        assignedUsers = emptyList(),
                     )
                 )
 
@@ -193,9 +193,9 @@ fun App() {
                         description = "市民ホール",
                         date = LocalDate(2025, 10, 15),
                         createUser = child2,
+                        assignedUsers = listOf(child2),
                         startTime = LocalTime(13, 0),
                         endTime = LocalTime(16, 0),
-                        assignedUsers = emptyList(),
                     )
                 )
 
@@ -205,12 +205,12 @@ fun App() {
                         id = Schedule.Id("11"),
                         title = "デートナイト",
                         description = "2人の時間",
+                        createUser = testUser,
+                        assignedUsers = listOf(testUser, partner),
                         startDate = LocalDate(2025, 10, 6),
                         endDate = LocalDate(2025, 10, 7),
-                        createUser = testUser,
                         startTime = LocalTime(18, 0),
                         endTime = LocalTime(22, 0),
-                        assignedUsers = emptyList(),
                     )
                 )
             }

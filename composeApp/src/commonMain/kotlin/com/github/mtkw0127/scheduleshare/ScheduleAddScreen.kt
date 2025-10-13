@@ -352,7 +352,7 @@ fun ScheduleAddScreen(
                         onClick = {},
                         label = {
                             Text(
-                                text = assignedUsers.first().name,
+                                text = assignedUsers.firstOrNull()?.name ?: "名無し",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

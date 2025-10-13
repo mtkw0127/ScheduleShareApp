@@ -11,11 +11,11 @@ import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 
 /**
- * iOS用のDataStoreインスタンスを作成
+ * iOS用のDataStoreインスタンスを作成（シングルトン）
  */
 @OptIn(ExperimentalForeignApi::class)
-actual fun createDataStore(): DataStore<Preferences> {
-    return PreferenceDataStoreFactory.createWithPath(
+private val dataStoreInstance: DataStore<Preferences> by lazy {
+    PreferenceDataStoreFactory.createWithPath(
         produceFile = {
             val documentDirectory: NSURL? = NSFileManager.defaultManager.URLForDirectory(
                 directory = NSDocumentDirectory,
@@ -28,4 +28,8 @@ actual fun createDataStore(): DataStore<Preferences> {
             path.toPath()
         }
     )
+}
+
+actual fun createDataStore(): DataStore<Preferences> {
+    return dataStoreInstance
 }

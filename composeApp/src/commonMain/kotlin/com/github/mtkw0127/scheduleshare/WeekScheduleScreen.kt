@@ -31,6 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -165,6 +167,8 @@ fun WeekScheduleScreen(
             )
         }
     ) { paddingValues ->
+        val density = LocalDensity.current
+        var allDayScheduleHeight by remember { mutableStateOf(0.dp) }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -230,8 +234,7 @@ fun WeekScheduleScreen(
                         modifier = Modifier.width(60.dp)
                     ) {
                         // 終日エリアの高さを合わせる
-                        val allDayAreaHeight = 16.dp + 16.dp + 4.dp + (68.dp * maxAllDayCount)
-                        Spacer(modifier = Modifier.height(allDayAreaHeight))
+                        Spacer(modifier = Modifier.height(allDayScheduleHeight))
 
                         // 時刻ラベル
                         TimeLabelsColumn()
@@ -257,6 +260,11 @@ fun WeekScheduleScreen(
                                 val holiday = holidaysByDate[day]
                                 Column(
                                     modifier = Modifier
+                                        .onSizeChanged {
+                                            with(density) {
+                                                allDayScheduleHeight = it.height.toDp()
+                                            }
+                                        }
                                         .fillMaxWidth()
                                         .background(MaterialTheme.colorScheme.surfaceVariant)
                                         .padding(8.dp)

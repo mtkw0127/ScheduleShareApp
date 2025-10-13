@@ -287,10 +287,13 @@ fun DayScheduleScreen(
                     }
 
                     // スクロール可能なコンテンツ
+                    val verticalScrollState = rememberScrollState()
+                    var verticalOverScrollOffset by remember { mutableStateOf(0f) }
+
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
+                            .verticalScroll(verticalScrollState)
                             .pointerInput(Unit) {
                                 detectHorizontalDragGestures(
                                     onDragEnd = {
@@ -310,6 +313,43 @@ fun DayScheduleScreen(
                                         dragOffset += dragAmount
                                     }
                                 )
+                            }
+                            .pointerInput(verticalScrollState) {
+                                awaitEachGesture {
+                                    awaitFirstDown(requireUnconsumed = false)
+
+                                    do {
+                                        val event = awaitPointerEvent()
+                                        event.changes.firstOrNull()?.let { change ->
+                                            val dragAmount = change.positionChange().y
+
+                                            // スクロールが端にある場合のみover-scrollを検出
+                                            val isAtTop = verticalScrollState.value == 0
+                                            val isAtBottom = verticalScrollState.value >= verticalScrollState.maxValue
+
+                                            if ((isAtTop && dragAmount > 0) || (isAtBottom && dragAmount < 0)) {
+                                                verticalOverScrollOffset += dragAmount
+                                            } else {
+                                                verticalOverScrollOffset = 0f
+                                            }
+                                        }
+                                    } while (event.changes.any { it.pressed })
+
+                                    // ドラッグ終了時の処理
+                                    val threshold = 100f
+                                    if (verticalOverScrollOffset.absoluteValue > threshold) {
+                                        val newDate = if (verticalOverScrollOffset > 0) {
+                                            // 上に引っ張る → 前日
+                                            currentDate.plus(DatePeriod(days = -1))
+                                        } else {
+                                            // 下に引っ張る → 翌日
+                                            currentDate.plus(DatePeriod(days = 1))
+                                        }
+                                        currentDate = newDate
+                                        onDateChange(newDate)
+                                    }
+                                    verticalOverScrollOffset = 0f
+                                }
                             }
                     ) {
                         // ユーザーごとに横並び表示（列分割）

@@ -13,10 +13,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
 import androidx.compose.ui.unit.dp
@@ -43,7 +41,7 @@ actual fun DatePickerDialog(
     onDateSelected: (LocalDate) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var selectedDate by remember { mutableStateOf(initialDate) }
+    val pickerRef = remember { mutableStateOf<UIDatePicker?>(null) }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -71,20 +69,11 @@ actual fun DatePickerDialog(
                             // 初期日付を設定
                             date = localDateToNSDate(initialDate)
 
-                            // 日付変更リスナー
-                            addTarget(
-                                target = null,
-                                action = null,
-                                forControlEvents = platform.UIKit.UIControlEventValueChanged
-                            )
-
                             backgroundColor = platform.UIKit.UIColor.whiteColor
+
+                            // ピッカーのインスタンスを保存
+                            pickerRef.value = this
                         }
-                    },
-                    update = { picker ->
-                        // 日付が変更されたときにselectedDateを更新
-                        val nsDate = picker.date
-                        selectedDate = nsDateToLocalDate(nsDate)
                     },
                     background = MaterialTheme.colorScheme.surface,
                     modifier = Modifier
@@ -103,7 +92,11 @@ actual fun DatePickerDialog(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(onClick = {
-                        onDateSelected(selectedDate)
+                        // OKボタンが押されたときにピッカーから直接値を取得
+                        pickerRef.value?.date?.let { nsDate ->
+                            val selectedDate = nsDateToLocalDate(nsDate)
+                            onDateSelected(selectedDate)
+                        }
                     }) {
                         Text("OK")
                     }
@@ -120,7 +113,7 @@ actual fun TimePickerDialog(
     onTimeSelected: (LocalTime) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var selectedTime by remember { mutableStateOf(initialTime) }
+    val pickerRef = remember { mutableStateOf<UIDatePicker?>(null) }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -148,20 +141,11 @@ actual fun TimePickerDialog(
                             // 初期時刻を設定
                             date = localTimeToNSDate(initialTime)
 
-                            // 時刻変更リスナー
-                            addTarget(
-                                target = null,
-                                action = null,
-                                forControlEvents = platform.UIKit.UIControlEventValueChanged
-                            )
-
                             backgroundColor = platform.UIKit.UIColor.whiteColor
+
+                            // ピッカーのインスタンスを保存
+                            pickerRef.value = this
                         }
-                    },
-                    update = { picker ->
-                        // 時刻が変更されたときにselectedTimeを更新
-                        val nsDate = picker.date
-                        selectedTime = nsDateToLocalTime(nsDate)
                     },
                     background = MaterialTheme.colorScheme.surface,
                     modifier = Modifier
@@ -180,7 +164,11 @@ actual fun TimePickerDialog(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     TextButton(onClick = {
-                        onTimeSelected(selectedTime)
+                        // OKボタンが押されたときにピッカーから直接値を取得
+                        pickerRef.value?.date?.let { nsDate ->
+                            val selectedTime = nsDateToLocalTime(nsDate)
+                            onTimeSelected(selectedTime)
+                        }
                     }) {
                         Text("OK")
                     }

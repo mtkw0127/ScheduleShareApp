@@ -94,5 +94,9 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+
+    // Compose BOM for Android
+    implementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
 }
 

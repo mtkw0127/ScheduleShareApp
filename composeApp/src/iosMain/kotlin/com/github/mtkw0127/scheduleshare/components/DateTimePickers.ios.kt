@@ -21,16 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atTime
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.toNSDateComponents
 import platform.Foundation.NSDate
-import platform.Foundation.timeIntervalSince1970
 import platform.UIKit.UIDatePicker
 import platform.UIKit.UIDatePickerMode
 import kotlin.time.ExperimentalTime
@@ -68,7 +61,7 @@ actual fun DatePickerDialog(
                                 platform.UIKit.UIDatePickerStyle.UIDatePickerStyleWheels
 
                             // 初期日付を設定
-                            date = initialDate.toNSDateComponents().date ?: NSDate()
+                            date = localDateToNSDate(initialDate)
 
                             backgroundColor = platform.UIKit.UIColor.whiteColor
 
@@ -181,16 +174,36 @@ actual fun TimePickerDialog(
 }
 
 // Helper functions for converting between LocalDate/LocalTime and NSDate
-// NSDate reference date is 2001-01-01 00:00:00 UTC
-// Unix epoch is 1970-01-01 00:00:00 UTC
-// Difference = 978307200 seconds
-private const val TIME_INTERVAL_BETWEEN_1970_AND_2001 = 978307200.0
+
+@OptIn(ExperimentalForeignApi::class, ExperimentalTime::class)
+private fun localDateToNSDate(localDate: LocalDate): NSDate {
+    // NSCalendarを使用してローカルタイムゾーンで日付を構築
+    val calendar = platform.Foundation.NSCalendar.currentCalendar
+    val components = platform.Foundation.NSDateComponents()
+    components.year = localDate.year.toLong()
+    components.month = (localDate.month.ordinal + 1).toLong()
+    components.day = localDate.day.toLong()
+    components.hour = 0L
+    components.minute = 0L
+    components.second = 0L
+    return calendar.dateFromComponents(components) ?: NSDate()
+}
 
 @OptIn(ExperimentalForeignApi::class, ExperimentalTime::class)
 private fun nsDateToLocalDate(nsDate: NSDate): LocalDate {
-    val timeInterval = nsDate.timeIntervalSince1970
-    val instant = Instant.fromEpochMilliseconds((timeInterval * 1000).toLong())
-    return instant.toLocalDateTime(TimeZone.UTC).date
+    // NSCalendarを使用してローカルタイムゾーンで日付を取得
+    val calendar = platform.Foundation.NSCalendar.currentCalendar
+    val components = calendar.components(
+        platform.Foundation.NSCalendarUnitYear or
+        platform.Foundation.NSCalendarUnitMonth or
+        platform.Foundation.NSCalendarUnitDay,
+        nsDate
+    )
+    return LocalDate(
+        year = components.year.toInt(),
+        month = kotlinx.datetime.Month(components.month.toInt()),
+        day = components.day.toInt()
+    )
 }
 
 @OptIn(ExperimentalForeignApi::class, ExperimentalTime::class)

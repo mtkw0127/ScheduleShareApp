@@ -31,6 +31,7 @@ import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
+@androidx.compose.material3.ExperimentalMaterial3Api
 @Composable
 @Preview
 fun App() {

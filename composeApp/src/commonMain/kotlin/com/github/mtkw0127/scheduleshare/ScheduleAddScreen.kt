@@ -15,9 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
@@ -27,10 +24,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,17 +33,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
+import com.github.mtkw0127.scheduleshare.components.DatePickerDialog
+import com.github.mtkw0127.scheduleshare.components.TimePickerDialog
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import com.github.mtkw0127.scheduleshare.util.rememberClipboardManager
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_back
@@ -58,7 +49,8 @@ import scheduleshare.composeapp.generated.resources.copy
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 
-@OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalTime::class)
+@androidx.compose.material3.ExperimentalMaterial3Api
 @Composable
 fun ScheduleAddScreen(
     date: LocalDate,
@@ -519,118 +511,59 @@ fun ScheduleAddScreen(
 
         // DatePicker/TimePickerダイアログ
         if (showStartDatePicker) {
-            val datePickerState = rememberDatePickerState(
-                initialSelectedDateMillis = startDate.atStartOfDayIn(TimeZone.UTC)
-                    .toEpochMilliseconds()
-            )
             DatePickerDialog(
-                onDismissRequest = { showStartDatePicker = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        datePickerState.selectedDateMillis?.let { millis ->
-                            startDate = Instant.fromEpochMilliseconds(millis)
-                                .toLocalDateTime(TimeZone.UTC).date
-                            if (startDate > endDate) {
-                                endDate = startDate
-                            }
-                        }
-                        showStartDatePicker = false
-                    }) {
-                        Text("OK")
+                initialDate = startDate,
+                onDateSelected = { selectedDate ->
+                    startDate = selectedDate
+                    if (startDate > endDate) {
+                        endDate = startDate
                     }
+                    showStartDatePicker = false
                 },
-                dismissButton = {
-                    TextButton(onClick = { showStartDatePicker = false }) {
-                        Text("キャンセル")
-                    }
-                }
-            ) {
-                DatePicker(state = datePickerState)
-            }
+                onDismiss = { showStartDatePicker = false }
+            )
         }
 
         if (showEndDatePicker) {
-            val datePickerState = rememberDatePickerState(
-                initialSelectedDateMillis = endDate.atStartOfDayIn(TimeZone.UTC)
-                    .toEpochMilliseconds()
-            )
             DatePickerDialog(
-                onDismissRequest = { showEndDatePicker = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        datePickerState.selectedDateMillis?.let { millis ->
-                            val selectedDate = Instant.fromEpochMilliseconds(millis)
-                                .toLocalDateTime(TimeZone.UTC).date
-                            if (selectedDate >= startDate) {
-                                endDate = selectedDate
-                            }
-                        }
-                        showEndDatePicker = false
-                    }) {
-                        Text("OK")
+                initialDate = endDate,
+                onDateSelected = { selectedDate ->
+                    if (selectedDate >= startDate) {
+                        endDate = selectedDate
                     }
+                    showEndDatePicker = false
                 },
-                dismissButton = {
-                    TextButton(onClick = { showEndDatePicker = false }) {
-                        Text("キャンセル")
-                    }
-                }
-            ) {
-                DatePicker(state = datePickerState)
-            }
+                onDismiss = { showEndDatePicker = false }
+            )
         }
 
         if (showStartTimePicker) {
-            val timePickerState = rememberTimePickerState(
-                initialHour = startHour.toIntOrNull() ?: 9,
-                initialMinute = startMinute.toIntOrNull() ?: 0
-            )
-            androidx.compose.material3.AlertDialog(
-                onDismissRequest = { showStartTimePicker = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        startHour = timePickerState.hour.toString().padStart(2, '0')
-                        startMinute = timePickerState.minute.toString().padStart(2, '0')
-                        showStartTimePicker = false
-                    }) {
-                        Text("OK")
-                    }
+            TimePickerDialog(
+                initialTime = LocalTime(
+                    hour = startHour.toIntOrNull() ?: 9,
+                    minute = startMinute.toIntOrNull() ?: 0
+                ),
+                onTimeSelected = { selectedTime ->
+                    startHour = selectedTime.hour.toString().padStart(2, '0')
+                    startMinute = selectedTime.minute.toString().padStart(2, '0')
+                    showStartTimePicker = false
                 },
-                dismissButton = {
-                    TextButton(onClick = { showStartTimePicker = false }) {
-                        Text("キャンセル")
-                    }
-                },
-                text = {
-                    TimePicker(state = timePickerState)
-                }
+                onDismiss = { showStartTimePicker = false }
             )
         }
 
         if (showEndTimePicker) {
-            val timePickerState = rememberTimePickerState(
-                initialHour = endHour.toIntOrNull() ?: 10,
-                initialMinute = endMinute.toIntOrNull() ?: 0
-            )
-            androidx.compose.material3.AlertDialog(
-                onDismissRequest = { showEndTimePicker = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        endHour = timePickerState.hour.toString().padStart(2, '0')
-                        endMinute = timePickerState.minute.toString().padStart(2, '0')
-                        showEndTimePicker = false
-                    }) {
-                        Text("OK")
-                    }
+            TimePickerDialog(
+                initialTime = LocalTime(
+                    hour = endHour.toIntOrNull() ?: 10,
+                    minute = endMinute.toIntOrNull() ?: 0
+                ),
+                onTimeSelected = { selectedTime ->
+                    endHour = selectedTime.hour.toString().padStart(2, '0')
+                    endMinute = selectedTime.minute.toString().padStart(2, '0')
+                    showEndTimePicker = false
                 },
-                dismissButton = {
-                    TextButton(onClick = { showEndTimePicker = false }) {
-                        Text("キャンセル")
-                    }
-                },
-                text = {
-                    TimePicker(state = timePickerState)
-                }
+                onDismiss = { showEndTimePicker = false }
             )
         }
     }

@@ -28,6 +28,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.toNSDateComponents
 import platform.Foundation.NSDate
 import platform.Foundation.timeIntervalSince1970
 import platform.UIKit.UIDatePicker
@@ -67,7 +68,7 @@ actual fun DatePickerDialog(
                                 platform.UIKit.UIDatePickerStyle.UIDatePickerStyleWheels
 
                             // 初期日付を設定
-                            date = localDateToNSDate(initialDate)
+                            date = initialDate.toNSDateComponents().date ?: NSDate()
 
                             backgroundColor = platform.UIKit.UIColor.whiteColor
 
@@ -96,6 +97,7 @@ actual fun DatePickerDialog(
                         pickerRef.value?.date?.let { nsDate ->
                             val selectedDate = nsDateToLocalDate(nsDate)
                             onDateSelected(selectedDate)
+                            nsDate
                         }
                     }) {
                         Text("OK")
@@ -179,12 +181,10 @@ actual fun TimePickerDialog(
 }
 
 // Helper functions for converting between LocalDate/LocalTime and NSDate
-@OptIn(ExperimentalForeignApi::class, ExperimentalTime::class)
-private fun localDateToNSDate(localDate: LocalDate): NSDate {
-    val instant = localDate.atTime(0, 0).toInstant(TimeZone.UTC)
-    val timeInterval = instant.toEpochMilliseconds() / 1000.0
-    return NSDate(timeInterval)
-}
+// NSDate reference date is 2001-01-01 00:00:00 UTC
+// Unix epoch is 1970-01-01 00:00:00 UTC
+// Difference = 978307200 seconds
+private const val TIME_INTERVAL_BETWEEN_1970_AND_2001 = 978307200.0
 
 @OptIn(ExperimentalForeignApi::class, ExperimentalTime::class)
 private fun nsDateToLocalDate(nsDate: NSDate): LocalDate {
@@ -198,8 +198,9 @@ private fun localTimeToNSDate(localTime: LocalTime): NSDate {
     // 基準日 (2000-01-01) に時刻を設定
     val referenceDate = LocalDate(2000, 1, 1)
     val instant = referenceDate.atTime(localTime).toInstant(TimeZone.UTC)
-    val timeInterval = instant.toEpochMilliseconds() / 1000.0
-    return NSDate(timeInterval)
+    val timeIntervalSince1970 = instant.toEpochMilliseconds() / 1000.0
+    val timeIntervalSinceReferenceDate = timeIntervalSince1970 - TIME_INTERVAL_BETWEEN_1970_AND_2001
+    return NSDate(timeIntervalSinceReferenceDate = timeIntervalSinceReferenceDate)
 }
 
 @OptIn(ExperimentalForeignApi::class, ExperimentalTime::class)

@@ -63,8 +63,6 @@ actual fun DatePickerDialog(
                             // 初期日付を設定
                             date = localDateToNSDate(initialDate)
 
-                            backgroundColor = platform.UIKit.UIColor.whiteColor
-
                             // ピッカーのインスタンスを保存
                             pickerRef.value = this
                         }
@@ -135,8 +133,6 @@ actual fun TimePickerDialog(
 
                             // 初期時刻を設定
                             date = localTimeToNSDate(initialTime)
-
-                            backgroundColor = platform.UIKit.UIColor.whiteColor
 
                             // ピッカーのインスタンスを保存
                             pickerRef.value = this

@@ -195,18 +195,39 @@ private fun nsDateToLocalDate(nsDate: NSDate): LocalDate {
 
 @OptIn(ExperimentalForeignApi::class, ExperimentalTime::class)
 private fun localTimeToNSDate(localTime: LocalTime): NSDate {
-    // 基準日 (2000-01-01) に時刻を設定
-    val referenceDate = LocalDate(2000, 1, 1)
-    val instant = referenceDate.atTime(localTime).toInstant(TimeZone.UTC)
-    val timeIntervalSince1970 = instant.toEpochMilliseconds() / 1000.0
-    val timeIntervalSinceReferenceDate = timeIntervalSince1970 - TIME_INTERVAL_BETWEEN_1970_AND_2001
-    return NSDate(timeIntervalSinceReferenceDate = timeIntervalSinceReferenceDate)
+    // NSCalendarを使用してローカルタイムゾーンで日時を構築
+    val calendar = platform.Foundation.NSCalendar.currentCalendar
+    val components = platform.Foundation.NSDateComponents()
+    components.hour = localTime.hour.toLong()
+    components.minute = localTime.minute.toLong()
+    components.second = localTime.second.toLong()
+    // 現在の日付を使用
+    val now = NSDate()
+    val nowComponents = calendar.components(
+        platform.Foundation.NSCalendarUnitYear or
+        platform.Foundation.NSCalendarUnitMonth or
+        platform.Foundation.NSCalendarUnitDay,
+        now
+    )
+    components.year = nowComponents.year
+    components.month = nowComponents.month
+    components.day = nowComponents.day
+    return calendar.dateFromComponents(components) ?: NSDate()
 }
 
 @OptIn(ExperimentalForeignApi::class, ExperimentalTime::class)
 private fun nsDateToLocalTime(nsDate: NSDate): LocalTime {
-    val timeInterval = nsDate.timeIntervalSince1970
-    val instant = Instant.fromEpochMilliseconds((timeInterval * 1000).toLong())
-    val dateTime = instant.toLocalDateTime(TimeZone.UTC)
-    return dateTime.time
+    // NSCalendarを使用してローカルタイムゾーンで時刻を取得
+    val calendar = platform.Foundation.NSCalendar.currentCalendar
+    val components = calendar.components(
+        platform.Foundation.NSCalendarUnitHour or
+        platform.Foundation.NSCalendarUnitMinute or
+        platform.Foundation.NSCalendarUnitSecond,
+        nsDate
+    )
+    return LocalTime(
+        hour = components.hour.toInt(),
+        minute = components.minute.toInt(),
+        second = components.second.toInt()
+    )
 }

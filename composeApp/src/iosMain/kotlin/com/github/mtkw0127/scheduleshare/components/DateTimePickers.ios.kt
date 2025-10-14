@@ -77,6 +77,8 @@ actual fun DatePickerDialog(
                                 action = null,
                                 forControlEvents = platform.UIKit.UIControlEventValueChanged
                             )
+
+                            backgroundColor = platform.UIKit.UIColor.whiteColor
                         }
                     },
                     update = { picker ->
@@ -84,6 +86,7 @@ actual fun DatePickerDialog(
                         val nsDate = picker.date
                         selectedDate = nsDateToLocalDate(nsDate)
                     },
+                    background = MaterialTheme.colorScheme.surface,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp)

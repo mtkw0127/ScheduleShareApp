@@ -63,6 +63,9 @@ actual fun DatePickerDialog(
                             // 初期日付を設定
                             date = localDateToNSDate(initialDate)
 
+                            // テキスト色を常に黒色にする（ライトモードスタイルを強制）
+                            overrideUserInterfaceStyle = platform.UIKit.UIUserInterfaceStyle.UIUserInterfaceStyleLight
+
                             // ピッカーのインスタンスを保存
                             pickerRef.value = this
                         }
@@ -133,6 +136,9 @@ actual fun TimePickerDialog(
 
                             // 初期時刻を設定
                             date = localTimeToNSDate(initialTime)
+
+                            // テキスト色を常に黒色にする（ライトモードスタイルを強制）
+                            overrideUserInterfaceStyle = platform.UIKit.UIUserInterfaceStyle.UIUserInterfaceStyleLight
 
                             // ピッカーのインスタンスを保存
                             pickerRef.value = this

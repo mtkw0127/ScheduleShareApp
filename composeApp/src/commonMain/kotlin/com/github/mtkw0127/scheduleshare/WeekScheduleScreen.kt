@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
+import com.github.mtkw0127.scheduleshare.components.ScheduleCard
 import com.github.mtkw0127.scheduleshare.components.TimeLabelsColumn
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.schedule.ScheduleTime

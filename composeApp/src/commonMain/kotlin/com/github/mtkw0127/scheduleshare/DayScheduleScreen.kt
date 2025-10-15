@@ -1,5 +1,7 @@
 package com.github.mtkw0127.scheduleshare
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,8 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -294,7 +294,6 @@ fun DayScheduleScreen(
 
                     // スクロール可能なコンテンツ
                     val verticalScrollState = rememberScrollState()
-                    var verticalOverScrollOffset by remember { mutableStateOf(0f) }
 
                     // 日付が変更されたらスクロール位置を先頭にリセット（アニメーション付き）
                     LaunchedEffect(currentDate) {
@@ -306,7 +305,7 @@ fun DayScheduleScreen(
                                 easing = FastOutSlowInEasing
                             )
                         )
-                        delay(1.seconds)
+                        delay(0.2.seconds)
                         isNavigating = false
                     }
 
@@ -314,66 +313,6 @@ fun DayScheduleScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(verticalScrollState)
-                            .pointerInput(Unit) {
-                                detectHorizontalDragGestures(
-                                    onDragEnd = {
-                                        val threshold = 100f
-                                        if (dragOffset.absoluteValue > threshold) {
-                                            val newDate = if (dragOffset > 0) {
-                                                currentDate.plus(DatePeriod(days = -1))
-                                            } else {
-                                                currentDate.plus(DatePeriod(days = 1))
-                                            }
-                                            isNavigating = true
-                                            currentDate = newDate
-                                            onDateChange(newDate)
-                                        }
-                                        dragOffset = 0f
-                                    },
-                                    onHorizontalDrag = { _, dragAmount ->
-                                        dragOffset += dragAmount
-                                    }
-                                )
-                            }
-                            .pointerInput(verticalScrollState) {
-                                awaitEachGesture {
-                                    awaitFirstDown(requireUnconsumed = false)
-
-                                    do {
-                                        val event = awaitPointerEvent()
-                                        event.changes.firstOrNull()?.let { change ->
-                                            val dragAmount = change.positionChange().y
-
-                                            // スクロールが端にある場合のみover-scrollを検出
-                                            val isAtTop = verticalScrollState.value == 0
-                                            val isAtBottom =
-                                                verticalScrollState.value >= verticalScrollState.maxValue
-
-                                            if ((isAtTop && dragAmount > 0) || (isAtBottom && dragAmount < 0)) {
-                                                verticalOverScrollOffset += dragAmount
-                                            } else {
-                                                verticalOverScrollOffset = 0f
-                                            }
-                                        }
-                                    } while (event.changes.any { it.pressed })
-
-                                    // ドラッグ終了時の処理
-                                    val threshold = 100f
-                                    if (verticalOverScrollOffset.absoluteValue > threshold) {
-                                        val newDate = if (verticalOverScrollOffset > 0) {
-                                            // 上に引っ張る → 前日
-                                            currentDate.plus(DatePeriod(days = -1))
-                                        } else {
-                                            // 下に引っ張る → 翌日
-                                            currentDate.plus(DatePeriod(days = 1))
-                                        }
-                                        isNavigating = true
-                                        currentDate = newDate
-                                        onDateChange(newDate)
-                                    }
-                                    verticalOverScrollOffset = 0f
-                                }
-                            }
                     ) {
                         // ユーザーごとに横並び表示（列分割）
                         // 終日予定の最大数を計算（祝日も含む、最低1つは表示）
@@ -421,7 +360,6 @@ fun DayScheduleScreen(
                                                                 } else {
                                                                     currentDate.plus(DatePeriod(days = 1))
                                                                 }
-                                                            isNavigating = true
                                                             currentDate = newDate
                                                             onDateChange(newDate)
                                                         }
@@ -470,7 +408,6 @@ fun DayScheduleScreen(
                                                         } else {
                                                             currentDate.plus(DatePeriod(days = 1))
                                                         }
-                                                        isNavigating = true
                                                         currentDate = newDate
                                                         onDateChange(newDate)
                                                     }
@@ -601,7 +538,6 @@ fun DayScheduleScreen(
                                         } else {
                                             currentDate.plus(DatePeriod(days = 1))
                                         }
-                                        isNavigating = true
                                         currentDate = newDate
                                         onDateChange(newDate)
                                     }

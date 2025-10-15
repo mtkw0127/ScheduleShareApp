@@ -326,6 +326,7 @@ private fun ColumnScheduleView(
 ) {
     // 横スクロール状態を共有
     val sharedHorizontalScrollState = rememberScrollState()
+    var currentDate by remember { mutableStateOf(currentDate) }
 
     // 2人の場合は均等分割、3人以上の場合は固定幅
     val userCount = schedulesByUser.size
@@ -418,13 +419,12 @@ private fun ColumnScheduleView(
                                             val canNavigate = useTwoColumnLayout
 
                                             if (horizontalDragOffset.absoluteValue > threshold && canNavigate) {
-                                                val newDate =
-                                                    if (horizontalDragOffset > 0) {
-                                                        currentDate.plus(DatePeriod(days = -1))
-                                                    } else {
-                                                        currentDate.plus(DatePeriod(days = 1))
-                                                    }
-                                                onDateChange(newDate)
+                                                currentDate = if (horizontalDragOffset > 0) {
+                                                    currentDate.plus(DatePeriod(days = -1))
+                                                } else {
+                                                    currentDate.plus(DatePeriod(days = 1))
+                                                }
+                                                onDateChange(currentDate)
                                             }
                                             horizontalDragOffset = 0f
                                         },
@@ -464,12 +464,12 @@ private fun ColumnScheduleView(
                                         // ドラッグ終了時の処理
                                         val threshold = 100f
                                         if (overScrollOffset.absoluteValue > threshold) {
-                                            val newDate = if (overScrollOffset > 0) {
+                                            currentDate = if (overScrollOffset > 0) {
                                                 currentDate.plus(DatePeriod(days = -1))
                                             } else {
                                                 currentDate.plus(DatePeriod(days = 1))
                                             }
-                                            onDateChange(newDate)
+                                            onDateChange(currentDate)
                                         }
                                         overScrollOffset = 0f
                                     }
@@ -596,6 +596,7 @@ private fun OverlayScheduleView(
     verticalScrollState: androidx.compose.foundation.ScrollState
 ) {
     var dragOffset by remember { mutableStateOf(0f) }
+    var currentDate by remember { mutableStateOf(currentDate) }
 
     // 従来通りの重ねて表示
     Column(
@@ -612,6 +613,7 @@ private fun OverlayScheduleView(
                             } else {
                                 currentDate.plus(DatePeriod(days = 1))
                             }
+                            currentDate = newDate
                             onDateChange(newDate)
                         }
                         dragOffset = 0f

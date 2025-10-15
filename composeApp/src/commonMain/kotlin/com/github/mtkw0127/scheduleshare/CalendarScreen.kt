@@ -912,7 +912,6 @@ private fun DateCell(
                     onUpdateDateCellNumHeight(it.height)
                 }
                 .padding(vertical = 5.dp)
-                .padding(start = 4.dp)
                 .size(20.dp)
                 .drawBehind {
                     if (day.value == today) {

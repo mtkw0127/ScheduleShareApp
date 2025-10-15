@@ -467,7 +467,7 @@ private fun DayCell(
                     color = lineColor,
                     start = Offset(size.width, size.height),
                     end = Offset(size.width, size.height + 100),
-                    strokeWidth = 2.0f
+                    strokeWidth = 0.5f
                 )
             },
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -675,7 +675,7 @@ private fun Week(
                             )
                             .width(dayCellWidth)
                             .height(scheduleBarHeight)
-                            .padding(horizontal = 1.dp)
+                            .padding(horizontal = 1.dp, vertical = 0.5.dp)
                     ) {
                         Box(
                             modifier = Modifier
@@ -689,7 +689,7 @@ private fun Week(
                                     color = Color(0xFF4CAF50),
                                     shape = RoundedCornerShape(10.dp)
                                 )
-                                .padding(horizontal = 3.5.dp, vertical = 1.dp)
+                                .padding(horizontal = 3.5.dp, vertical = 2.dp)
                         ) {
                             Text(
                                 text = holiday.name,
@@ -840,7 +840,7 @@ private fun ScheduleBar(
                 }
                 .offset(x = xOffset, y = yOffset)
                 .width(width)
-                .padding(horizontal = 1.dp, vertical = 1.dp)
+                .padding(horizontal = 1.dp, vertical = 0.5.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -864,7 +864,7 @@ private fun ScheduleBar(
                             bottomEnd = if (continuesToNextWeek) 0.dp else 10.dp
                         )
                     )
-                    .padding(horizontal = 3.5.dp, vertical = 1.dp)
+                    .padding(horizontal = 3.5.dp, vertical = 2.dp)
             ) {
                 Text(
                     text = schedule.title,
@@ -927,9 +927,17 @@ private fun DateCell(
                 color = if (day.value == today) {
                     Color.White
                 } else if (isCurrentMonth) {
-                    MaterialTheme.colorScheme.onSurface
+                    when (day.value.dayOfWeek) {
+                        kotlinx.datetime.DayOfWeek.SUNDAY -> Color.Red
+                        kotlinx.datetime.DayOfWeek.SATURDAY -> Color.Blue
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
                 } else {
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    when (day.value.dayOfWeek) {
+                        kotlinx.datetime.DayOfWeek.SUNDAY -> Color.Red.copy(alpha = 0.4f)
+                        kotlinx.datetime.DayOfWeek.SATURDAY -> Color.Blue.copy(alpha = 0.4f)
+                        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    }
                 }
             )
         }

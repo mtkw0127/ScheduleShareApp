@@ -407,7 +407,10 @@ fun CalendarScreen(
                                     }
                                 }
                         ) {
-                            DayView(screenWidth)
+                            DayView(
+                                screenWidth = screenWidth,
+                                focusedMonth = month.firstDay
+                            )
                             DateView(
                                 month,
                                 schedules,
@@ -425,8 +428,18 @@ fun CalendarScreen(
     }
 }
 
+@OptIn(ExperimentalTime::class)
 @Composable
-private fun DayView(screenWidth: Dp) {
+private fun DayView(
+    screenWidth: Dp,
+    focusedMonth: LocalDate
+) {
+    val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+    val todayDayOfWeek = today.dayOfWeek
+
+    // 表示されている月が今月かどうかをチェック
+    val isCurrentMonth = focusedMonth.year == today.year && focusedMonth.month == today.month
+
     Row(
         modifier = Modifier
             .width(screenWidth)
@@ -437,17 +450,39 @@ private fun DayView(screenWidth: Dp) {
         DayCell(
             day = "日",
             modifier = Modifier.weight(1F),
-            textColor = Color.Red
+            textColor = Color.Red,
+            isBold = isCurrentMonth && todayDayOfWeek == kotlinx.datetime.DayOfWeek.SUNDAY
         )
-        DayCell(day = "月", modifier = Modifier.weight(1F))
-        DayCell(day = "火", modifier = Modifier.weight(1F))
-        DayCell(day = "水", modifier = Modifier.weight(1F))
-        DayCell(day = "木", modifier = Modifier.weight(1F))
-        DayCell(day = "金", modifier = Modifier.weight(1F))
+        DayCell(
+            day = "月",
+            modifier = Modifier.weight(1F),
+            isBold = isCurrentMonth && todayDayOfWeek == kotlinx.datetime.DayOfWeek.MONDAY
+        )
+        DayCell(
+            day = "火",
+            modifier = Modifier.weight(1F),
+            isBold = isCurrentMonth && todayDayOfWeek == kotlinx.datetime.DayOfWeek.TUESDAY
+        )
+        DayCell(
+            day = "水",
+            modifier = Modifier.weight(1F),
+            isBold = isCurrentMonth && todayDayOfWeek == kotlinx.datetime.DayOfWeek.WEDNESDAY
+        )
+        DayCell(
+            day = "木",
+            modifier = Modifier.weight(1F),
+            isBold = isCurrentMonth && todayDayOfWeek == kotlinx.datetime.DayOfWeek.THURSDAY
+        )
+        DayCell(
+            day = "金",
+            modifier = Modifier.weight(1F),
+            isBold = isCurrentMonth && todayDayOfWeek == kotlinx.datetime.DayOfWeek.FRIDAY
+        )
         DayCell(
             day = "土",
             modifier = Modifier.weight(1F),
-            textColor = Color.Blue
+            textColor = Color.Blue,
+            isBold = isCurrentMonth && todayDayOfWeek == kotlinx.datetime.DayOfWeek.SATURDAY
         )
     }
 }
@@ -456,7 +491,8 @@ private fun DayView(screenWidth: Dp) {
 private fun DayCell(
     day: String,
     modifier: Modifier = Modifier,
-    textColor: Color = MaterialTheme.colorScheme.onSurface
+    textColor: Color = MaterialTheme.colorScheme.onSurface,
+    isBold: Boolean = false
 ) {
     val lineColor = MaterialTheme.colorScheme.surfaceVariant
     Column(
@@ -475,7 +511,8 @@ private fun DayCell(
         Text(
             text = day,
             fontSize = 12.sp,
-            color = textColor
+            color = textColor,
+            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal
         )
     }
 }
@@ -829,8 +866,6 @@ private fun ScheduleBar(
     onUpdateHeight: (Int) -> Unit = {}
 ) {
     val userColor = userColorMap[schedule.createUser.id] ?: UserColor.default()
-    // 複数日にまたがる予定かどうか
-    val isMultiDay = schedule.time is ScheduleTime.MultiDateSchedule
 
     Row(modifier = Modifier.fillMaxWidth()) {
         Box(

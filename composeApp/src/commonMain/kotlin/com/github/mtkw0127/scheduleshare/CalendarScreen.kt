@@ -430,7 +430,7 @@ private fun DayView(screenWidth: Dp) {
     Row(
         modifier = Modifier
             .width(screenWidth)
-            .height(40.dp),
+            .wrapContentHeight(),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically,
     ) {

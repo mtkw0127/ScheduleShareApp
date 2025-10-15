@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -31,6 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
 import com.github.mtkw0127.scheduleshare.components.DatePickerDialog
@@ -64,6 +68,8 @@ fun ScheduleAddScreen(
     onBackClick: () -> Unit = {},
     onSaveClick: () -> Unit = {}
 ) {
+    val focusManager = LocalFocusManager.current
+
     // 既存の予定を取得
     val existingSchedule = remember(scheduleId) {
         scheduleId?.let { scheduleRepository.getScheduleById(Schedule.Id(it)) }
@@ -194,7 +200,12 @@ fun ScheduleAddScreen(
                     value = title,
                     onValueChange = { title = it },
                     label = { Text("タイトル") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = { focusManager.clearFocus() }
+                    ),
+                    singleLine = true
                 )
                 if (existingSchedule != null && title.isNotEmpty()) {
                     IconButton(
@@ -250,7 +261,7 @@ fun ScheduleAddScreen(
                     colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                         disabledTextColor = MaterialTheme.colorScheme.onSurface,
                         disabledBorderColor = MaterialTheme.colorScheme.outline
-                    )
+                    ),
                 )
             }
 
@@ -420,7 +431,11 @@ fun ScheduleAddScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp),
-                    maxLines = 10
+                    maxLines = 10,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
+                    keyboardActions = KeyboardActions(
+                        onDone = { focusManager.clearFocus() }
+                    )
                 )
 
             }

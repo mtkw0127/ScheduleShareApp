@@ -297,15 +297,18 @@ fun DayScheduleScreen(
                     // 日付が変更されたらスクロール位置を先頭にリセット（アニメーション付き）
                     LaunchedEffect(currentDate) {
                         isNavigating = true
-                        verticalScrollState.animateScrollTo(
-                            value = 0,
-                            animationSpec = tween(
-                                durationMillis = 500,
-                                easing = FastOutSlowInEasing
+                        delay(0.25.seconds)
+                        try {
+                            verticalScrollState.animateScrollTo(
+                                value = 0,
+                                animationSpec = tween(
+                                    durationMillis = 500,
+                                    easing = FastOutSlowInEasing
+                                )
                             )
-                        )
-                        delay(0.2.seconds)
-                        isNavigating = false
+                        } finally {
+                            isNavigating = false
+                        }
                     }
 
                     Column(
@@ -393,8 +396,6 @@ fun DayScheduleScreen(
 
                                                             if ((isAtStart && dragAmount > 0) || (isAtEnd && dragAmount < 0)) {
                                                                 overScrollOffset += dragAmount
-                                                            } else {
-                                                                overScrollOffset = 0f
                                                             }
                                                         }
                                                     } while (event.changes.any { it.pressed })

@@ -55,7 +55,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -683,12 +682,12 @@ private fun Week(
                                 .fillMaxWidth()
                                 .background(
                                     color = Color(0xFF4CAF50).copy(alpha = 0.9f), // 緑色
-                                    shape = RoundedCornerShape(0.dp)
+                                    shape = RoundedCornerShape(10.dp)
                                 )
                                 .border(
                                     width = 0.5.dp,
                                     color = Color(0xFF4CAF50),
-                                    shape = RoundedCornerShape(0.dp)
+                                    shape = RoundedCornerShape(10.dp)
                                 )
                                 .padding(horizontal = 3.5.dp, vertical = 1.dp)
                         ) {
@@ -697,8 +696,7 @@ private fun Week(
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1
                             )
                         }
                     }
@@ -849,30 +847,22 @@ private fun ScheduleBar(
                     .fillMaxWidth()
                     .background(
                         color = Color(userColor.value).copy(alpha = 0.9f),
-                        shape = if (isMultiDay) {
-                            RoundedCornerShape(
-                                topStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
-                                bottomStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
-                                topEnd = if (continuesToNextWeek) 0.dp else 10.dp,
-                                bottomEnd = if (continuesToNextWeek) 0.dp else 10.dp
-                            )
-                        } else {
-                            RoundedCornerShape(0.dp)
-                        }
+                        shape = RoundedCornerShape(
+                            topStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
+                            bottomStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
+                            topEnd = if (continuesToNextWeek) 0.dp else 10.dp,
+                            bottomEnd = if (continuesToNextWeek) 0.dp else 10.dp
+                        )
                     )
                     .border(
                         width = 0.5.dp,
                         color = Color(userColor.value),
-                        shape = if (isMultiDay) {
-                            RoundedCornerShape(
-                                topStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
-                                bottomStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
-                                topEnd = if (continuesToNextWeek) 0.dp else 10.dp,
-                                bottomEnd = if (continuesToNextWeek) 0.dp else 10.dp
-                            )
-                        } else {
-                            RoundedCornerShape(0.dp)
-                        }
+                        shape = RoundedCornerShape(
+                            topStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
+                            bottomStart = if (continuesFromPrevWeek) 0.dp else 10.dp,
+                            topEnd = if (continuesToNextWeek) 0.dp else 10.dp,
+                            bottomEnd = if (continuesToNextWeek) 0.dp else 10.dp
+                        )
                     )
                     .padding(horizontal = 3.5.dp, vertical = 1.dp)
             ) {
@@ -881,8 +871,7 @@ private fun ScheduleBar(
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1
                 )
             }
         }

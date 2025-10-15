@@ -624,56 +624,54 @@ private fun OverlayScheduleView(
                 )
             }
     ) {
-        // 終日の予定と祝日を最初に表示
+        // 終日の予定と祝日を最初に表示（常に表示）
         val allDaySchedules = schedules.filter { it.isAllDay }
-        if (allDaySchedules.isNotEmpty() || holiday != null) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(8.dp)
-            ) {
-                Text(
-                    text = "終日",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(8.dp)
+        ) {
+            Text(
+                text = "終日",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // 祝日を表示
+            if (holiday != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF4CAF50)
+                    ),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            text = holiday.name,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            allDaySchedules.forEach { schedule ->
+                ScheduleCard(
+                    schedule = schedule,
+                    containerColor = getUserColor(schedule.createUser.id),
+                    onClick = { onScheduleClick(schedule) }
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-
-                // 祝日を表示
-                if (holiday != null) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFF4CAF50)
-                        ),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                        ) {
-                            Text(
-                                text = holiday.name,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-
-                allDaySchedules.forEach { schedule ->
-                    ScheduleCard(
-                        schedule = schedule,
-                        containerColor = getUserColor(schedule.createUser.id),
-                        onClick = { onScheduleClick(schedule) }
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
             }
         }
 

@@ -144,7 +144,7 @@ fun WeekScheduleScreen(
     val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
     Scaffold(
-        containerColor = Color.Transparent,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0.dp),
         topBar = {
             CommonTopAppBar(
@@ -187,7 +187,7 @@ fun WeekScheduleScreen(
                     modifier = Modifier
                         .weight(1f)
                         .horizontalScroll(sharedHorizontalScrollState)
-                        .background(MaterialTheme.colorScheme.surface)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     weekDays.forEach { day ->
                         Column(

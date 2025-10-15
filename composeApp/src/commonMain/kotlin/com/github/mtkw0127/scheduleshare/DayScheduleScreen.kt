@@ -175,6 +175,26 @@ fun DayScheduleScreen(
         Color((userColorMap[userId] ?: UserColor.default()).value)
     }
 
+    // スクロール可能なコンテンツ
+    val verticalScrollState = rememberScrollState()
+
+    // 日付が変更されたらスクロール位置を先頭にリセット（アニメーション付き）
+    LaunchedEffect(currentDate) {
+        isNavigating = true
+        delay(0.25.seconds)
+        try {
+            verticalScrollState.animateScrollTo(
+                value = 0,
+                animationSpec = tween(
+                    durationMillis = 500,
+                    easing = FastOutSlowInEasing
+                )
+            )
+        } finally {
+            isNavigating = false
+        }
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0.dp),
@@ -288,26 +308,6 @@ fun DayScheduleScreen(
                                     HorizontalDivider()
                                 }
                             }
-                        }
-                    }
-
-                    // スクロール可能なコンテンツ
-                    val verticalScrollState = rememberScrollState()
-
-                    // 日付が変更されたらスクロール位置を先頭にリセット（アニメーション付き）
-                    LaunchedEffect(currentDate) {
-                        isNavigating = true
-                        delay(0.25.seconds)
-                        try {
-                            verticalScrollState.animateScrollTo(
-                                value = 0,
-                                animationSpec = tween(
-                                    durationMillis = 500,
-                                    easing = FastOutSlowInEasing
-                                )
-                            )
-                        } finally {
-                            isNavigating = false
                         }
                     }
 
@@ -527,7 +527,7 @@ fun DayScheduleScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(verticalScrollState)
                         .pointerInput(Unit) {
                             detectHorizontalDragGestures(
                                 onDragEnd = {

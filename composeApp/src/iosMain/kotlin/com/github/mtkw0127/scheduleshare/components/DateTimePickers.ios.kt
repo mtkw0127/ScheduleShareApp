@@ -24,6 +24,8 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import platform.Foundation.NSDate
+import platform.Foundation.NSLocale
+import platform.Foundation.preferredLanguages
 import platform.UIKit.UIDatePicker
 import platform.UIKit.UIDatePickerMode
 import kotlin.time.ExperimentalTime
@@ -56,6 +58,8 @@ actual fun DatePickerDialog(
                 UIKitView(
                     factory = {
                         UIDatePicker().apply {
+                            val lang = (NSLocale.preferredLanguages.first() as? String) ?: "ja_JP"
+                            locale = NSLocale(lang)
                             datePickerMode = UIDatePickerMode.UIDatePickerModeDate
                             preferredDatePickerStyle =
                                 platform.UIKit.UIDatePickerStyle.UIDatePickerStyleWheels
@@ -64,7 +68,8 @@ actual fun DatePickerDialog(
                             date = localDateToNSDate(initialDate)
 
                             // テキスト色を常に黒色にする（ライトモードスタイルを強制）
-                            overrideUserInterfaceStyle = platform.UIKit.UIUserInterfaceStyle.UIUserInterfaceStyleLight
+                            overrideUserInterfaceStyle =
+                                platform.UIKit.UIUserInterfaceStyle.UIUserInterfaceStyleLight
 
                             // ピッカーのインスタンスを保存
                             pickerRef.value = this
@@ -138,7 +143,8 @@ actual fun TimePickerDialog(
                             date = localTimeToNSDate(initialTime)
 
                             // テキスト色を常に黒色にする（ライトモードスタイルを強制）
-                            overrideUserInterfaceStyle = platform.UIKit.UIUserInterfaceStyle.UIUserInterfaceStyleLight
+                            overrideUserInterfaceStyle =
+                                platform.UIKit.UIUserInterfaceStyle.UIUserInterfaceStyleLight
 
                             // ピッカーのインスタンスを保存
                             pickerRef.value = this
@@ -197,8 +203,8 @@ private fun nsDateToLocalDate(nsDate: NSDate): LocalDate {
     val calendar = platform.Foundation.NSCalendar.currentCalendar
     val components = calendar.components(
         platform.Foundation.NSCalendarUnitYear or
-        platform.Foundation.NSCalendarUnitMonth or
-        platform.Foundation.NSCalendarUnitDay,
+                platform.Foundation.NSCalendarUnitMonth or
+                platform.Foundation.NSCalendarUnitDay,
         nsDate
     )
     return LocalDate(
@@ -220,8 +226,8 @@ private fun localTimeToNSDate(localTime: LocalTime): NSDate {
     val now = NSDate()
     val nowComponents = calendar.components(
         platform.Foundation.NSCalendarUnitYear or
-        platform.Foundation.NSCalendarUnitMonth or
-        platform.Foundation.NSCalendarUnitDay,
+                platform.Foundation.NSCalendarUnitMonth or
+                platform.Foundation.NSCalendarUnitDay,
         now
     )
     components.year = nowComponents.year
@@ -236,8 +242,8 @@ private fun nsDateToLocalTime(nsDate: NSDate): LocalTime {
     val calendar = platform.Foundation.NSCalendar.currentCalendar
     val components = calendar.components(
         platform.Foundation.NSCalendarUnitHour or
-        platform.Foundation.NSCalendarUnitMinute or
-        platform.Foundation.NSCalendarUnitSecond,
+                platform.Foundation.NSCalendarUnitMinute or
+                platform.Foundation.NSCalendarUnitSecond,
         nsDate
     )
     return LocalTime(

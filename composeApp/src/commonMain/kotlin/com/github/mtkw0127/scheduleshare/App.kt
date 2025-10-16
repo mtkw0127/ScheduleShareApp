@@ -247,14 +247,17 @@ fun App() {
 
                     CalendarScreen(
                         months = calendarState.months,
+                        initialMonthIndex = calendarState.initialMonthIndex,
                         focusedMonth = calendarState.focusedMonth,
                         schedules = calendarState.schedules,
                         holidays = calendarState.holidays,
                         sharedUsers = calendarState.sharedUsers,
                         userVisibilityMap = calendarState.userVisibilityMap,
                         userColorMap = calendarState.userColorMap,
-                        moveToNext = calendarState::moveToNextMonth,
-                        moveToPrev = calendarState::moveToPrevMonth,
+                        onPageChanged = { pageIndex ->
+                            val newMonth = calendarState.getMonthForPage(pageIndex)
+                            calendarState.updateFocusedMonth(newMonth)
+                        },
                         onClickDate = { day ->
                             navController.navigate(Screen.DaySchedule.from(day.value))
                         },

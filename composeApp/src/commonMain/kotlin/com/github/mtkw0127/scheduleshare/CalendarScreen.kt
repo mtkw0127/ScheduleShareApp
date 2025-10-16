@@ -3,7 +3,6 @@ package com.github.mtkw0127.scheduleshare
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -20,8 +19,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -51,7 +50,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -81,21 +79,21 @@ import scheduleshare.composeapp.generated.resources.arrow_drop_down
 import scheduleshare.composeapp.generated.resources.menu
 import scheduleshare.composeapp.generated.resources.qr_code
 import scheduleshare.composeapp.generated.resources.user
-import kotlin.math.absoluteValue
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun CalendarScreen(
     months: List<Month>,
+    initialMonthIndex: Int,
     focusedMonth: LocalDate,
     schedules: Map<LocalDate, List<Schedule>>,
     holidays: Map<LocalDate, HolidayRepository.Holiday>,
     sharedUsers: List<User>,
     userVisibilityMap: Map<User.Id, Boolean>,
     userColorMap: Map<User.Id, UserColor>,
-    moveToPrev: () -> Unit,
-    moveToNext: () -> Unit,
+    onPageChanged: (Int) -> Unit,
     onClickDate: (Day) -> Unit = {},
     onUserIconClick: () -> Unit = {},
     onQRShareClick: () -> Unit = {},
@@ -104,9 +102,10 @@ fun CalendarScreen(
     onUserVisibilityChange: (User.Id, Boolean) -> Unit = { _, _ -> },
     onUserColorChange: (User.Id, UserColor) -> Unit = { _, _ -> }
 ) {
-    val state = rememberLazyListState()
-    var changingFocus by remember { mutableStateOf(false) }
-    var initialized by remember { mutableStateOf(false) }
+    val pagerState = rememberPagerState(
+        initialPage = initialMonthIndex,
+        pageCount = { months.size }
+    )
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var viewModeMenuExpanded by remember { mutableStateOf(false) }
@@ -119,27 +118,10 @@ fun CalendarScreen(
         }.toMutableMap())
     }
 
-    LaunchedEffect(key1 = focusedMonth) {
-        if (initialized) {
-            val index = months.indexOfFirst { it.firstDay == focusedMonth }
-            if (index >= 0) {
-                state.animateScrollToItem(index)
-            }
-        }
-    }
-
-    LaunchedEffect(changingFocus) {
-        if (changingFocus) {
-            delay(200)
-            changingFocus = false
-        }
-    }
-
-    LaunchedEffect(months.isNotEmpty()) {
-        if (initialized.not() && months.isNotEmpty()) {
-            delay(200)
-            state.animateScrollToItem(1)
-            initialized = true
+    // ページ変更を監視してfocusedMonthを更新
+    LaunchedEffect(pagerState.currentPage) {
+        if (months.isNotEmpty() && pagerState.currentPage in months.indices) {
+            onPageChanged(pagerState.currentPage)
         }
     }
 
@@ -386,42 +368,29 @@ fun CalendarScreen(
                 val screenWidth = maxWidth
                 val screenHeight = maxHeight
 
-                LazyRow(
-                    state = state,
-                    userScrollEnabled = false,
-                ) {
-                    items(months.size) { index ->
-                        val month = months[index]
-                        Column(
-                            modifier = Modifier
-                                .background(MaterialTheme.colorScheme.surface)
-                                .pointerInput(Unit) {
-                                    detectHorizontalDragGestures { _, dragAmount ->
-                                        if (dragAmount.absoluteValue > 20 && changingFocus.not()) {
-                                            changingFocus = true
-                                            if (dragAmount > 0) {
-                                                moveToPrev()
-                                            } else {
-                                                moveToNext()
-                                            }
-                                        }
-                                    }
-                                }
-                        ) {
-                            DayView(
-                                screenWidth = screenWidth,
-                                focusedMonth = month.firstDay
-                            )
-                            DateView(
-                                month,
-                                schedules,
-                                holidays,
-                                userColorMap,
-                                onClickDate,
-                                screenWidth,
-                                screenHeight
-                            )
-                        }
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxWidth()
+                ) { page ->
+                    val month = months[page]
+                    Column(
+                        modifier = Modifier
+                            .width(screenWidth)
+                            .background(MaterialTheme.colorScheme.surface)
+                    ) {
+                        DayView(
+                            screenWidth = screenWidth,
+                            focusedMonth = month.firstDay
+                        )
+                        DateView(
+                            month,
+                            schedules,
+                            holidays,
+                            userColorMap,
+                            onClickDate,
+                            screenWidth,
+                            screenHeight
+                        )
                     }
                 }
             }

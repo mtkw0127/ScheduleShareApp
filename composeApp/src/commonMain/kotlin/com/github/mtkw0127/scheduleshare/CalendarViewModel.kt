@@ -58,11 +58,17 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
     var holidays by mutableStateOf<Map<LocalDate, HolidayRepository.Holiday>>(emptyMap())
         private set
 
+    // 今月のインデックス（前後100年分の中での位置）
+    val initialMonthIndex: Int
+
     init {
         loadMonths(initialFocusedMonth)
         loadSchedules()
         loadSharedUsers()
         loadHolidays()
+
+        // 初期月のインデックスを計算（前100年 = 1200ヶ月）
+        initialMonthIndex = 100 * 12
     }
 
     private fun loadSharedUsers() {
@@ -161,36 +167,33 @@ class CalendarState @OptIn(ExperimentalTime::class) constructor(
     }
 
     private fun loadMonths(centerMonth: LocalDate) {
-        val prevMonth = centerMonth.minus(1, DateTimeUnit.MONTH)
-        val nextMonth = centerMonth.plus(1, DateTimeUnit.MONTH)
+        // 前後100年分の月を生成（計200年 = 2400ヶ月）
+        val monthsList = mutableListOf<Month>()
 
-        months = listOf(
-            CalendarGenerator.createMonth(prevMonth),
-            CalendarGenerator.createMonth(centerMonth),
-            CalendarGenerator.createMonth(nextMonth)
-        )
+        // 開始日（centerMonthから100年前）
+        var currentMonth = centerMonth.minus(100 * 12, DateTimeUnit.MONTH)
+
+        // 200年分（2400ヶ月）生成
+        repeat(200 * 12) {
+            monthsList.add(CalendarGenerator.createMonth(currentMonth))
+            currentMonth = currentMonth.plus(1, DateTimeUnit.MONTH)
+        }
+
+        months = monthsList
     }
 
-    fun moveToNextMonth() {
-        val newFocusedMonth = focusedMonth.plus(1, DateTimeUnit.MONTH)
-
-        // 新しい月を追加（focusedMonthの次の月）
-        val newMonth = CalendarGenerator.createMonth(newFocusedMonth.plus(1, DateTimeUnit.MONTH))
-        months = months.drop(1) + newMonth
+    fun updateFocusedMonth(newFocusedMonth: LocalDate) {
         focusedMonth = newFocusedMonth
         loadSchedules()
         loadHolidays()
     }
 
-    fun moveToPrevMonth() {
-        val newFocusedMonth = focusedMonth.minus(1, DateTimeUnit.MONTH)
-
-        // 新しい月を追加（focusedMonthの前の月）
-        val newMonth = CalendarGenerator.createMonth(newFocusedMonth.minus(1, DateTimeUnit.MONTH))
-        months = listOf(newMonth) + months.dropLast(1)
-        focusedMonth = newFocusedMonth
-        loadSchedules()
-        loadHolidays()
+    // ページインデックスから対応する月を取得
+    fun getMonthForPage(pageIndex: Int): LocalDate {
+        if (months.isEmpty() || pageIndex !in months.indices) {
+            return focusedMonth
+        }
+        return months[pageIndex].firstDay
     }
 }
 

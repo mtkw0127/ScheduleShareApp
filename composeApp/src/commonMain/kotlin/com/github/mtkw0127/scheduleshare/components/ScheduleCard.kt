@@ -65,14 +65,39 @@ fun ScheduleCard(
             when {
                 // 60dp未満: タイトルのみ、1行に省略
                 availableHeight < 60.dp -> {
-                    Text(
-                        text = displayTitle,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Column {
+                        Text(
+                            text = displayTitle,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        // 参加者のアイコンを表示
+                        if (showUserIcons && schedule.assignedUsers.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                schedule.assignedUsers.take(5).forEach { user ->
+                                    UserIcon(
+                                        user = user,
+                                        color = getUserColor?.invoke(user.id) ?: Color.Gray,
+                                        size = 16.dp
+                                    )
+                                }
+                                if (schedule.assignedUsers.size > 5) {
+                                    Text(
+                                        text = "+${schedule.assignedUsers.size - 5}",
+                                        fontSize = 8.sp,
+                                        color = Color.White.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
                 // 60-100dp: タイトルと時刻
                 availableHeight < 100.dp -> {
@@ -93,6 +118,29 @@ fun ScheduleCard(
                                 color = Color.White.copy(alpha = 0.7f),
                                 maxLines = 1
                             )
+                        }
+                        // 参加者のアイコンを表示
+                        if (showUserIcons && schedule.assignedUsers.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                schedule.assignedUsers.take(5).forEach { user ->
+                                    UserIcon(
+                                        user = user,
+                                        color = getUserColor?.invoke(user.id) ?: Color.Gray,
+                                        size = 18.dp
+                                    )
+                                }
+                                if (schedule.assignedUsers.size > 5) {
+                                    Text(
+                                        text = "+${schedule.assignedUsers.size - 5}",
+                                        fontSize = 9.sp,
+                                        color = Color.White.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -131,16 +179,16 @@ fun ScheduleCard(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                schedule.assignedUsers.take(3).forEach { user ->
+                                schedule.assignedUsers.take(5).forEach { user ->
                                     UserIcon(
                                         user = user,
                                         color = getUserColor?.invoke(user.id) ?: Color.Gray,
                                         size = 20.dp
                                     )
                                 }
-                                if (schedule.assignedUsers.size > 3) {
+                                if (schedule.assignedUsers.size > 5) {
                                     Text(
-                                        text = "+${schedule.assignedUsers.size - 3}",
+                                        text = "+${schedule.assignedUsers.size - 5}",
                                         fontSize = 10.sp,
                                         color = Color.White.copy(alpha = 0.7f)
                                     )

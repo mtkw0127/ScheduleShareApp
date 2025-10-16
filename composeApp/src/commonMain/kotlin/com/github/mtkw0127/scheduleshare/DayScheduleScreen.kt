@@ -665,7 +665,8 @@ private fun OverlayScheduleView(
     onAddScheduleAtTime: (LocalTime) -> Unit,
     verticalScrollState: androidx.compose.foundation.ScrollState
 ) {
-    var verticalDragOffset by remember { mutableStateOf(0f) }
+    var verticalBacking by remember { mutableStateOf(0f) }
+    var verticalForwarding by remember { mutableStateOf(0f) }
     var currentDate by remember { mutableStateOf(currentDate) }
 
     // 従来通りの重ねて表示
@@ -686,9 +687,13 @@ private fun OverlayScheduleView(
 
                             totalHorizontalDrag += dragX
 
-                            // スクロール位置が0（上端）でさらに下にドラッグした場合
+                            // スクロール位置が上端でさらに下にドラッグした場合（前日への移動）
                             if (verticalScrollState.value == 0 && dragY > 0) {
-                                verticalDragOffset += dragY
+                                verticalBacking += dragY
+                            }
+                            // スクロール位置が下端でさらに上にドラッグした場合（翌日への移動）
+                            if (verticalScrollState.value == verticalScrollState.maxValue && dragY < 0) {
+                                verticalForwarding += dragY
                             }
                         }
                     } while (event.changes.any { it.pressed })
@@ -696,23 +701,30 @@ private fun OverlayScheduleView(
                     // ドラッグ終了時の処理
                     val threshold = 100f
 
-                    // 垂直ドラッグが閾値を超えている場合（前日への移動）
-                    if (verticalDragOffset > threshold) {
-                        // 前日に移動
-                        currentDate = currentDate.plus(DatePeriod(days = -1))
-                        onDateChange(currentDate, true)
-                    }
-                    // 水平ドラッグが閾値を超えている場合（前後の日への移動）
-                    else if (totalHorizontalDrag.absoluteValue > threshold) {
-                        currentDate = if (totalHorizontalDrag > 0) {
-                            currentDate.plus(DatePeriod(days = -1))
-                        } else {
-                            currentDate.plus(DatePeriod(days = 1))
+                    when {
+                        // 上端で下にドラッグ → 前日に移動
+                        verticalBacking > threshold -> {
+                            currentDate = currentDate.plus(DatePeriod(days = -1))
+                            onDateChange(currentDate, true)
                         }
-                        onDateChange(currentDate, true)
+                        // 下端で上にドラッグ → 翌日に移動
+                        verticalForwarding < (-1 * threshold) -> {
+                            currentDate = currentDate.plus(DatePeriod(days = 1))
+                            onDateChange(currentDate, true)
+                        }
+                        // 水平ドラッグが閾値を超えている場合（前後の日への移動）
+                        totalHorizontalDrag.absoluteValue > threshold -> {
+                            currentDate = if (totalHorizontalDrag > 0) {
+                                currentDate.plus(DatePeriod(days = -1))
+                            } else {
+                                currentDate.plus(DatePeriod(days = 1))
+                            }
+                            onDateChange(currentDate, false)
+                        }
                     }
 
-                    verticalDragOffset = 0f
+                    verticalBacking = 0f
+                    verticalForwarding = 0f
                 }
             }
     ) {

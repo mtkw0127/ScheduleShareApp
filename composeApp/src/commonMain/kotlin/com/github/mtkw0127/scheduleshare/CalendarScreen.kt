@@ -748,17 +748,23 @@ private fun Week(
 
                 when (val time = schedule.time) {
                     is ScheduleTime.MultiDateSchedule -> {
-                        // この予定の開始位置（週の何日目か）
-                        val startDayIndex = if (startDate <= firstDateOfWeek) {
-                            0
-                        } else {
-                            firstDateOfWeek.daysUntil(startDate)
-                        }
+                        // この週で実際に表示する範囲を計算
+                        val weekStart = firstDateOfWeek
+                        val weekEnd = weekDays.last().value
+
+                        // 表示する開始日と終了日（週の範囲内に制限）
+                        val displayStartDate = maxOf(startDate, weekStart)
+                        val displayEndDate = minOf(schedule.endDateTime.date, weekEnd)
+
+                        // 表示する開始位置のインデックス
+                        val displayStartDayIndex = weekStart.daysUntil(displayStartDate)
+
+                        // この週で表示する日数
+                        val displayDuration = displayStartDate.daysUntil(displayEndDate) + 1
 
                         // この予定が占める期間の各曜日のblockNumの最大値を取得
-                        val duration = time.duration()
                         val maxBlockInRange =
-                            (startDayIndex until (startDayIndex + duration).coerceAtMost(7))
+                            (displayStartDayIndex until (displayStartDayIndex + displayDuration).coerceAtMost(7))
                                 .maxOfOrNull { blockNum.getOrNull(it) ?: 0 } ?: 0
 
                         // この予定を配置する行
@@ -768,7 +774,7 @@ private fun Week(
                         if (row < maxVisibleSchedules) {
                             // この予定が占める範囲のblockNumを更新
                             blockNum = blockNum.toMutableList().apply {
-                                for (i in startDayIndex until (startDayIndex + duration).coerceAtMost(
+                                for (i in displayStartDayIndex until (displayStartDayIndex + displayDuration).coerceAtMost(
                                     7
                                 )) {
                                     this[i] = row + 1
@@ -784,9 +790,9 @@ private fun Week(
                             ScheduleBar(
                                 schedule = schedule,
                                 userColorMap = userColorMap,
-                                xOffset = dayCellWidth * startDayIndex,
+                                xOffset = dayCellWidth * displayStartDayIndex,
                                 yOffset = dayCellNumHeightDp * (row + 1),
-                                width = dayCellWidth * duration,
+                                width = dayCellWidth * displayDuration,
                                 continuesFromPrevWeek = continuesFromPrevWeek,
                                 continuesToNextWeek = continuesToNextWeek,
                                 onUpdateHeight = { height ->

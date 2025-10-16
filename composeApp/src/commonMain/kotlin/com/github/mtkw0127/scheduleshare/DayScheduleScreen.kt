@@ -1,5 +1,6 @@
 package com.github.mtkw0127.scheduleshare
 
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -177,19 +178,39 @@ fun DayScheduleScreen(
     // スクロール可能なコンテンツ
     val verticalScrollState = rememberScrollState()
 
-    // 日付が変更されたらスクロール位置を先頭にリセット（アニメーション付き）
-    LaunchedEffect(currentDate) {
+
+    suspend fun updateCurrentDateAndScroll(
+        newDate: LocalDate,
+        withAnimation: Boolean,
+    ) {
+        val animationSpec: AnimationSpec<Float> = tween(
+            durationMillis = 500,
+            easing = FastOutSlowInEasing
+        )
         isNavigating = true
         delay(0.25.seconds)
-        try {
-            verticalScrollState.animateScrollTo(
-                value = 0,
-                animationSpec = tween(
-                    durationMillis = 500,
-                    easing = FastOutSlowInEasing
-                )
-            )
-        } finally {
+        runCatching {
+//            if (withAnimation) {
+//                when {
+//                    // 翌日に移動する場合は先頭にスクロール
+//                    currentDate <= newDate -> {
+//                        verticalScrollState.animateScrollTo(
+//                            value = 0,
+//                            animationSpec = animationSpec
+//                        )
+//                    }
+//
+//                    // 前日に移動する場合は末尾にスクロール
+//                    newDate < currentDate -> {
+//                        verticalScrollState.animateScrollTo(
+//                            value = verticalScrollState.maxValue,
+//                            animationSpec = animationSpec
+//                        )
+//                    }
+//                }
+//            }
+            currentDate = newDate
+        }.also {
             isNavigating = false
         }
     }
@@ -264,8 +285,13 @@ fun DayScheduleScreen(
                 ColumnScheduleView(
                     schedulesByUser = schedulesByUser,
                     currentDate = currentDate,
-                    onDateChange = { newDate ->
-                        currentDate = newDate
+                    onDateChange = { newDate, withAnimation ->
+                        scope.launch {
+                            updateCurrentDateAndScroll(
+                                newDate = newDate,
+                                withAnimation = withAnimation
+                            )
+                        }
                         onDateChange(newDate)
                     },
                     holiday = holiday,
@@ -281,8 +307,13 @@ fun DayScheduleScreen(
                 OverlayScheduleView(
                     schedules = schedules,
                     currentDate = currentDate,
-                    onDateChange = { newDate ->
-                        currentDate = newDate
+                    onDateChange = { newDate, withAnimation: Boolean ->
+                        scope.launch {
+                            updateCurrentDateAndScroll(
+                                newDate = newDate,
+                                withAnimation = withAnimation
+                            )
+                        }
                         onDateChange(newDate)
                     },
                     holiday = holiday,
@@ -314,7 +345,7 @@ fun DayScheduleScreen(
 private fun ColumnScheduleView(
     schedulesByUser: Map<User, List<Schedule>>,
     currentDate: LocalDate,
-    onDateChange: (LocalDate) -> Unit,
+    onDateChange: (LocalDate, withAnimation: Boolean) -> Unit,
     holiday: HolidayRepository.Holiday?,
     getUserColor: (User.Id) -> Color,
     onScheduleClick: (Schedule) -> Unit,
@@ -374,10 +405,49 @@ private fun ColumnScheduleView(
             }
         }
 
+        var verticalBacking by remember { mutableStateOf(0f) }
+        var verticalForwarding by remember { mutableStateOf(0F) }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(verticalScrollState)
+                .pointerInput(verticalScrollState) {
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false)
+
+                        do {
+                            val event = awaitPointerEvent()
+                            event.changes.firstOrNull()?.let { change ->
+                                val dragAmount = change.positionChange().y
+                                if (verticalScrollState.value == 0 && dragAmount > 0) {
+                                    verticalBacking += dragAmount
+                                }
+                                if (verticalScrollState.value == verticalScrollState.maxValue && dragAmount < 0) {
+                                    verticalForwarding += dragAmount
+                                }
+                            }
+                        } while (event.changes.any { it.pressed })
+
+                        // ドラッグ終了時の処理
+                        val threshold = 100f
+                        when {
+                            verticalBacking > threshold -> {
+                                // 前日に移動
+                                currentDate = currentDate.plus(DatePeriod(days = -1))
+                                onDateChange(currentDate, true)
+                            }
+
+                            verticalForwarding < (-1 * threshold) -> {
+                                // 翌日に移動
+                                currentDate = currentDate.plus(DatePeriod(days = 1))
+                                onDateChange(currentDate, true)
+                            }
+                        }
+                        verticalBacking = 0F
+                        verticalForwarding = 0f
+                    }
+                }
         ) {
             // ユーザーごとに横並び表示（列分割）
             // 終日予定の最大数を計算（祝日も含む、最低1つは表示）
@@ -424,7 +494,7 @@ private fun ColumnScheduleView(
                                                 } else {
                                                     currentDate.plus(DatePeriod(days = 1))
                                                 }
-                                                onDateChange(currentDate)
+                                                onDateChange(currentDate, false)
                                             }
                                             horizontalDragOffset = 0f
                                         },
@@ -469,7 +539,7 @@ private fun ColumnScheduleView(
                                             } else {
                                                 currentDate.plus(DatePeriod(days = 1))
                                             }
-                                            onDateChange(currentDate)
+                                            onDateChange(currentDate, false)
                                         }
                                         overScrollOffset = 0f
                                     }
@@ -588,14 +658,14 @@ private fun ColumnScheduleView(
 private fun OverlayScheduleView(
     schedules: List<Schedule>,
     currentDate: LocalDate,
-    onDateChange: (LocalDate) -> Unit,
+    onDateChange: (LocalDate, withAnimation: Boolean) -> Unit,
     holiday: HolidayRepository.Holiday?,
     getUserColor: (User.Id) -> Color,
     onScheduleClick: (Schedule) -> Unit,
     onAddScheduleAtTime: (LocalTime) -> Unit,
     verticalScrollState: androidx.compose.foundation.ScrollState
 ) {
-    var dragOffset by remember { mutableStateOf(0f) }
+    var verticalDragOffset by remember { mutableStateOf(0f) }
     var currentDate by remember { mutableStateOf(currentDate) }
 
     // 従来通りの重ねて表示
@@ -603,25 +673,47 @@ private fun OverlayScheduleView(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(verticalScrollState)
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragEnd = {
-                        val threshold = 100f
-                        if (dragOffset.absoluteValue > threshold) {
-                            val newDate = if (dragOffset > 0) {
-                                currentDate.plus(DatePeriod(days = -1))
-                            } else {
-                                currentDate.plus(DatePeriod(days = 1))
+            .pointerInput(verticalScrollState) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    var totalHorizontalDrag = 0f
+
+                    do {
+                        val event = awaitPointerEvent()
+                        event.changes.firstOrNull()?.let { change ->
+                            val dragX = change.positionChange().x
+                            val dragY = change.positionChange().y
+
+                            totalHorizontalDrag += dragX
+
+                            // スクロール位置が0（上端）でさらに下にドラッグした場合
+                            if (verticalScrollState.value == 0 && dragY > 0) {
+                                verticalDragOffset += dragY
                             }
-                            currentDate = newDate
-                            onDateChange(newDate)
                         }
-                        dragOffset = 0f
-                    },
-                    onHorizontalDrag = { _, dragAmount ->
-                        dragOffset += dragAmount
+                    } while (event.changes.any { it.pressed })
+
+                    // ドラッグ終了時の処理
+                    val threshold = 100f
+
+                    // 垂直ドラッグが閾値を超えている場合（前日への移動）
+                    if (verticalDragOffset > threshold) {
+                        // 前日に移動
+                        currentDate = currentDate.plus(DatePeriod(days = -1))
+                        onDateChange(currentDate, true)
                     }
-                )
+                    // 水平ドラッグが閾値を超えている場合（前後の日への移動）
+                    else if (totalHorizontalDrag.absoluteValue > threshold) {
+                        currentDate = if (totalHorizontalDrag > 0) {
+                            currentDate.plus(DatePeriod(days = -1))
+                        } else {
+                            currentDate.plus(DatePeriod(days = 1))
+                        }
+                        onDateChange(currentDate, true)
+                    }
+
+                    verticalDragOffset = 0f
+                }
             }
     ) {
         // 終日の予定と祝日を最初に表示（常に表示）

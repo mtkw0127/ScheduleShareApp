@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -729,11 +730,20 @@ private fun Week(
                                 .padding(horizontal = 3.5.dp, vertical = 2.dp)
                         ) {
                             Text(
+                                text = "🎌",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 1,
+                                modifier = Modifier.absoluteOffset(0.dp, (-4).dp)
+                            )
+                            Text(
                                 text = holiday.name,
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
-                                maxLines = 1
+                                maxLines = 1,
+                                modifier = Modifier.offset(y = (3).dp)
                             )
                         }
                     }

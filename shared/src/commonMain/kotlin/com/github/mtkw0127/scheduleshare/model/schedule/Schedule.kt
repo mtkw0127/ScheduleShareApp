@@ -27,8 +27,11 @@ sealed interface ScheduleTime {
         val end: LocalDateTime
     ) : ScheduleTime, MultiDateSchedule {
         override fun isThisWeek(date: LocalDate): Boolean {
-            val weekDates = date..date.plus(6, DateTimeUnit.DAY)
-            return start.date in weekDates || end.date in weekDates
+            val weekStart = date
+            val weekEnd = date.plus(6, DateTimeUnit.DAY)
+            // 予定が週と重なっているかをチェック
+            // 予定の開始日が週の終わり以前 AND 予定の終了日が週の始まり以降
+            return start.date <= weekEnd && end.date >= weekStart
         }
 
         override fun duration(): Int {
@@ -42,8 +45,11 @@ sealed interface ScheduleTime {
         val endDate: LocalDate
     ) : ScheduleTime, MultiDateSchedule {
         override fun isThisWeek(date: LocalDate): Boolean {
-            val weekDates = date..date.plus(6, DateTimeUnit.DAY)
-            return startDate in weekDates || endDate in weekDates
+            val weekStart = date
+            val weekEnd = date.plus(6, DateTimeUnit.DAY)
+            // 予定が週と重なっているかをチェック
+            // 予定の開始日が週の終わり以前 AND 予定の終了日が週の始まり以降
+            return startDate <= weekEnd && endDate >= weekStart
         }
 
         override fun duration(): Int {

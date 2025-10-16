@@ -589,7 +589,7 @@ private fun ColumnScheduleView(
                                     Box(modifier = Modifier.height(64.dp)) {
                                         ScheduleCard(
                                             schedule = schedule,
-                                            containerColor = getUserColor(schedule.createUser.id),
+                                            containerColor = getUserColor(user.id),
                                             onClick = { onScheduleClick(schedule) }
                                         )
                                     }
@@ -614,7 +614,7 @@ private fun ColumnScheduleView(
                                 onScheduleClick = onScheduleClick,
                                 onTimelineClick = onAddScheduleAtTime,
                                 showTimeLabels = false,
-                                getUserColor = getUserColor
+                                getUserColor = { getUserColor(user.id) }
                             )
                         }
                     }

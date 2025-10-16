@@ -149,10 +149,10 @@ fun DayScheduleScreen(
 
     val schedules = remember(currentDate, visibleUsers) {
         val allSchedules = scheduleRepository.getSchedulesByDate(currentDate)
-        // visibleUsersに含まれるユーザーの予定のみをフィルタリング
+        // visibleUsersに含まれるユーザーがassignedUsersに含まれる予定のみをフィルタリング
         val visibleUserIds = visibleUsers.map { it.id }.toSet()
         allSchedules.filter { schedule ->
-            visibleUserIds.contains(schedule.createUser.id)
+            schedule.assignedUsers.any { user -> visibleUserIds.contains(user.id) }
         }
     }
 
@@ -166,7 +166,9 @@ fun DayScheduleScreen(
     val schedulesByUser = remember(schedules, visibleUsers) {
         // 列表示の場合は予定がなくてもユーザーを表示するため、全ユーザーをマップに含める
         visibleUsers.associateWith { user ->
-            schedules.filter { it.createUser.id == user.id }
+            schedules.filter { schedule ->
+                schedule.assignedUsers.any { it.id == user.id }
+            }
         }
     }
 

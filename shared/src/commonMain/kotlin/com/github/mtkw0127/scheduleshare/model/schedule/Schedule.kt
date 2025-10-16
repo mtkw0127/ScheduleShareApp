@@ -77,6 +77,7 @@ data class Schedule(
     val id: Id,
     val title: String,
     val description: String,
+    val location: String = "",
     val time: ScheduleTime,
     val createUser: User,
     val assignedUsers: List<User>,
@@ -141,11 +142,13 @@ data class Schedule(
             date: LocalDate,
             createUser: User,
             assignedUsers: List<User>,
+            location: String = "",
         ): Schedule {
             return Schedule(
                 id = id,
                 title = title,
                 description = description,
+                location = location,
                 time = ScheduleTime.SingleAllDay(date),
                 createUser = createUser,
                 assignedUsers = assignedUsers,
@@ -163,11 +166,13 @@ data class Schedule(
             endDate: LocalDate,
             createUser: User,
             assignedUsers: List<User>,
+            location: String = "",
         ): Schedule {
             return Schedule(
                 id = id,
                 title = title,
                 description = description,
+                location = location,
                 time = ScheduleTime.AllDayRange(startDate, endDate),
                 createUser = createUser,
                 assignedUsers = assignedUsers,
@@ -186,11 +191,13 @@ data class Schedule(
             assignedUsers: List<User>,
             startTime: LocalTime,
             endTime: LocalTime,
+            location: String = "",
         ): Schedule {
             return Schedule(
                 id = id,
                 title = title,
                 description = description,
+                location = location,
                 time = ScheduleTime.SingleTimeDay(date, startTime, endTime),
                 createUser = createUser,
                 assignedUsers,
@@ -209,12 +216,14 @@ data class Schedule(
             createUser: User,
             assignedUsers: List<User>,
             startTime: LocalTime,
-            endTime: LocalTime
+            endTime: LocalTime,
+            location: String = ""
         ): Schedule {
             return Schedule(
                 id = id,
                 title = title,
                 description = description,
+                location = location,
                 time = ScheduleTime.DateTimeRange(
                     startDate = startDate,
                     start = LocalDateTime(startDate, startTime),

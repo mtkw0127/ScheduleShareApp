@@ -11,12 +11,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -89,6 +87,7 @@ fun ScheduleAddScreen(
 
     var title by remember { mutableStateOf(existingSchedule?.title ?: "") }
     var description by remember { mutableStateOf(existingSchedule?.description ?: "") }
+    var location by remember { mutableStateOf(existingSchedule?.location ?: "") }
     var startDate by remember { mutableStateOf(existingSchedule?.startDateTime?.date ?: date) }
     var endDate by remember { mutableStateOf(existingSchedule?.endDateTime?.date ?: date) }
 
@@ -420,6 +419,40 @@ fun ScheduleAddScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // 場所入力欄（既存の予定の場合はコピーアイコン付き）
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = location,
+                    onValueChange = { location = it },
+                    label = { Text("場所") },
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = { focusManager.clearFocus() }
+                    ),
+                    singleLine = true
+                )
+                if (existingSchedule != null && location.isNotEmpty()) {
+                    IconButton(
+                        onClick = {
+                            clipboardManager.setText(location)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.copy),
+                            contentDescription = "場所をコピー",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // 詳細入力欄（既存の予定の場合はコピーアイコン付き）
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -477,6 +510,7 @@ fun ScheduleAddScreen(
                                 endDate = endDate,
                                 createUser = existingSchedule?.createUser ?: User.createTest(),
                                 assignedUsers = assignedUsers,
+                                location = location,
                             )
                         } else {
                             Schedule.createAllDay(
@@ -488,6 +522,7 @@ fun ScheduleAddScreen(
                                 date = startDate,
                                 createUser = existingSchedule?.createUser ?: User.createTest(),
                                 assignedUsers = assignedUsers,
+                                location = location,
                             )
                         }
                     } else {
@@ -509,6 +544,7 @@ fun ScheduleAddScreen(
                                 assignedUsers = assignedUsers,
                                 startTime = LocalTime(startH, startM),
                                 endTime = LocalTime(endH, endM),
+                                location = location,
                             )
                         } else {
                             Schedule.createTimed(
@@ -521,7 +557,8 @@ fun ScheduleAddScreen(
                                 createUser = existingSchedule?.createUser ?: User.createTest(),
                                 assignedUsers = assignedUsers,
                                 startTime = LocalTime(startH, startM),
-                                endTime = LocalTime(endH, endM)
+                                endTime = LocalTime(endH, endM),
+                                location = location,
                             )
                         }
                     }

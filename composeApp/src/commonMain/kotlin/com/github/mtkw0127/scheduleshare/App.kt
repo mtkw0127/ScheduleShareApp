@@ -80,7 +80,8 @@ fun App() {
                         createUser = testUser,
                         assignedUsers = listOf(testUser),
                         startTime = LocalTime(9, 0),
-                        endTime = LocalTime(18, 0)
+                        endTime = LocalTime(18, 0),
+                        location = "自宅"
                     )
                 )
 
@@ -93,7 +94,8 @@ fun App() {
                         createUser = testUser,
                         assignedUsers = listOf(testUser, partner, child1, child2),
                         startTime = LocalTime(19, 0),
-                        endTime = LocalTime(21, 0)
+                        endTime = LocalTime(21, 0),
+                        location = "イタリアンレストラン ラ・ベッラ"
                     )
                 )
 
@@ -106,6 +108,7 @@ fun App() {
                         endDate = LocalDate(2025, 10, 12),
                         createUser = testUser,
                         assignedUsers = listOf(testUser, partner, child1, child2),
+                        location = "沖縄県那覇市"
                     )
                 )
 
@@ -120,6 +123,7 @@ fun App() {
                         date = LocalDate(2025, 10, 8),
                         startTime = LocalTime(10, 0),
                         endTime = LocalTime(12, 0),
+                        location = "ヘアサロン シャイン"
                     )
                 )
 
@@ -132,7 +136,8 @@ fun App() {
                         assignedUsers = listOf(partner),
                         date = LocalDate(2025, 10, 8),
                         startTime = LocalTime(12, 30),
-                        endTime = LocalTime(14, 0)
+                        endTime = LocalTime(14, 0),
+                        location = "カフェ ロータス"
                     )
                 )
 
@@ -159,6 +164,7 @@ fun App() {
                         date = LocalDate(2025, 10, 8),
                         startTime = LocalTime(10, 0),
                         endTime = LocalTime(12, 0),
+                        location = "市民スポーツセンター"
                     )
                 )
 
@@ -170,6 +176,7 @@ fun App() {
                         createUser = child1,
                         assignedUsers = listOf(child1),
                         date = LocalDate(2025, 10, 9),
+                        location = "上野動物園"
                     )
                 )
 
@@ -184,6 +191,7 @@ fun App() {
                         date = LocalDate(2025, 10, 8),
                         startTime = LocalTime(14, 0),
                         endTime = LocalTime(15, 0),
+                        location = "ヤマハ音楽教室"
                     )
                 )
 
@@ -197,6 +205,7 @@ fun App() {
                         assignedUsers = listOf(child2),
                         startTime = LocalTime(13, 0),
                         endTime = LocalTime(16, 0),
+                        location = "市民文化ホール"
                     )
                 )
 

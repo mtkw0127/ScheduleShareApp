@@ -217,21 +217,14 @@ private fun UserIcon(
         contentAlignment = Alignment.Center
     ) {
         // iconUrlがnullの場合は名前の最初の文字を表示
-        if (user.iconUrl == null) {
-            Text(
-                text = user.name.firstOrNull()?.toString() ?: "?",
-                fontSize = (size.value * 0.5).sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        } else {
-            // TODO: 画像読み込みを実装（今回はテキストのみ）
-            Text(
-                text = user.name.firstOrNull()?.toString() ?: "?",
-                fontSize = (size.value * 0.5).sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-        }
+        val displayText = user.name.firstOrNull()?.toString() ?: "?"
+        Text(
+            text = displayText,
+            fontSize = (size.value * 0.5).sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.padding(0.dp),
+            lineHeight = (size.value * 0.5).sp
+        )
     }
 }

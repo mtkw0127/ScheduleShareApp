@@ -1,8 +1,5 @@
 package com.github.mtkw0127.scheduleshare
 
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -183,38 +180,11 @@ fun DayScheduleScreen(
 
     suspend fun updateCurrentDateAndScroll(
         newDate: LocalDate,
-        withAnimation: Boolean,
     ) {
-        val animationSpec: AnimationSpec<Float> = tween(
-            durationMillis = 500,
-            easing = FastOutSlowInEasing
-        )
         isNavigating = true
         delay(0.25.seconds)
-        runCatching {
-//            if (withAnimation) {
-//                when {
-//                    // 翌日に移動する場合は先頭にスクロール
-//                    currentDate <= newDate -> {
-//                        verticalScrollState.animateScrollTo(
-//                            value = 0,
-//                            animationSpec = animationSpec
-//                        )
-//                    }
-//
-//                    // 前日に移動する場合は末尾にスクロール
-//                    newDate < currentDate -> {
-//                        verticalScrollState.animateScrollTo(
-//                            value = verticalScrollState.maxValue,
-//                            animationSpec = animationSpec
-//                        )
-//                    }
-//                }
-//            }
-            currentDate = newDate
-        }.also {
-            isNavigating = false
-        }
+        currentDate = newDate
+        isNavigating = false
     }
 
     Scaffold(
@@ -291,7 +261,6 @@ fun DayScheduleScreen(
                         scope.launch {
                             updateCurrentDateAndScroll(
                                 newDate = newDate,
-                                withAnimation = withAnimation
                             )
                         }
                         onDateChange(newDate)
@@ -313,7 +282,6 @@ fun DayScheduleScreen(
                         scope.launch {
                             updateCurrentDateAndScroll(
                                 newDate = newDate,
-                                withAnimation = withAnimation
                             )
                         }
                         onDateChange(newDate)

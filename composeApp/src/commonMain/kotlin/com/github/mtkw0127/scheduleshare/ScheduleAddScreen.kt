@@ -255,46 +255,82 @@ fun ScheduleAddScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 開始日
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "開始日",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = "${startDate.year}/${startDate.monthNumber}/${startDate.day}",
-                    onValueChange = {},
-                    readOnly = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showStartDatePicker = true },
-                    enabled = false,
-                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                        disabledBorderColor = MaterialTheme.colorScheme.outline
-                    ),
-                )
-            }
-
-            // 開始時刻（終日がOFFの場合のみ表示）
-            if (!isAllDay) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Column(modifier = Modifier.fillMaxWidth()) {
+            // 開始日時
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // 開始日
+                Column(modifier = Modifier.weight(if (isAllDay) 1f else 0.6f)) {
                     Text(
-                        text = "開始時刻",
+                        text = "開始日",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
-                        value = "${startHour.padStart(2, '0')}:${startMinute.padStart(2, '0')}",
+                        value = "${startDate.year}/${startDate.monthNumber}/${startDate.day}",
                         onValueChange = {},
                         readOnly = true,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { showStartTimePicker = true },
+                            .clickable { showStartDatePicker = true },
+                        enabled = false,
+                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline
+                        ),
+                    )
+                }
+
+                // 開始時刻（終日がOFFの場合のみ表示）
+                if (!isAllDay) {
+                    Column(modifier = Modifier.weight(0.4f)) {
+                        Text(
+                            text = "開始時刻",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = "${startHour.padStart(2, '0')}:${startMinute.padStart(2, '0')}",
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showStartTimePicker = true },
+                            enabled = false,
+                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledBorderColor = MaterialTheme.colorScheme.outline
+                            )
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 終了日時
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // 終了日
+                Column(modifier = Modifier.weight(if (isAllDay) 1f else 0.6f)) {
+                    Text(
+                        text = "終了日",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = "${endDate.year}/${endDate.monthNumber}/${endDate.day}",
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showEndDatePicker = true },
                         enabled = false,
                         colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                             disabledTextColor = MaterialTheme.colorScheme.onSurface,
@@ -302,56 +338,30 @@ fun ScheduleAddScreen(
                         )
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 終了日
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "終了日",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = "${endDate.year}/${endDate.monthNumber}/${endDate.day}",
-                    onValueChange = {},
-                    readOnly = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showEndDatePicker = true },
-                    enabled = false,
-                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                        disabledBorderColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-            }
-
-            // 終了時刻（終日がOFFの場合のみ表示）
-            if (!isAllDay) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "終了時刻",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = "${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}",
-                        onValueChange = {},
-                        readOnly = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showEndTimePicker = true },
-                        enabled = false,
-                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                            disabledBorderColor = MaterialTheme.colorScheme.outline
+                // 終了時刻（終日がOFFの場合のみ表示）
+                if (!isAllDay) {
+                    Column(modifier = Modifier.weight(0.4f)) {
+                        Text(
+                            text = "終了時刻",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = "${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}",
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showEndTimePicker = true },
+                            enabled = false,
+                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledBorderColor = MaterialTheme.colorScheme.outline
+                            )
+                        )
+                    }
                 }
             }
 

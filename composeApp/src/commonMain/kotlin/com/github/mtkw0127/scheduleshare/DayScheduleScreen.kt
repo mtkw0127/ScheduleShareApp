@@ -765,7 +765,9 @@ private fun OverlayScheduleView(
                 ScheduleCard(
                     schedule = schedule,
                     containerColor = getUserColor(schedule.createUser.id),
-                    onClick = { onScheduleClick(schedule) }
+                    onClick = { onScheduleClick(schedule) },
+                    showUserIcons = true,
+                    getUserColor = getUserColor
                 )
                 Spacer(modifier = Modifier.height(4.dp))
             }
@@ -778,7 +780,8 @@ private fun OverlayScheduleView(
             currentDate = currentDate,
             onScheduleClick = onScheduleClick,
             onTimelineClick = onAddScheduleAtTime,
-            getUserColor = getUserColor
+            getUserColor = getUserColor,
+            showUserIcons = true
         )
     }
 }
@@ -791,7 +794,8 @@ private fun TimelineView(
     onTimelineClick: (LocalTime) -> Unit = {},
     showTimeLabels: Boolean = true,
     getUserColor: (User.Id) -> Color = { Color.Unspecified },
-    currentDate: LocalDate
+    currentDate: LocalDate,
+    showUserIcons: Boolean = false
 ) {
     val hourHeight = 60.dp
 
@@ -864,7 +868,9 @@ private fun TimelineView(
                         ScheduleCard(
                             schedule = schedule,
                             containerColor = getUserColor(schedule.createUser.id),
-                            onClick = { onScheduleClick(schedule) }
+                            onClick = { onScheduleClick(schedule) },
+                            showUserIcons = showUserIcons,
+                            getUserColor = if (showUserIcons) getUserColor else null
                         )
                     }
                 }

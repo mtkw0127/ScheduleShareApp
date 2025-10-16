@@ -678,6 +678,8 @@ private fun OverlayScheduleView(
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
                     var totalHorizontalDrag = 0f
+                    var shouldNavigate = false
+                    val threshold = 100f
 
                     do {
                         val event = awaitPointerEvent()
@@ -690,36 +692,56 @@ private fun OverlayScheduleView(
                             // スクロール位置が上端でさらに下にドラッグした場合（前日への移動）
                             if (verticalScrollState.value == 0 && dragY > 0) {
                                 verticalBacking += dragY
+                                // 閾値を超えたら即座にイベントを消費
+                                if (verticalBacking > threshold && !shouldNavigate) {
+                                    shouldNavigate = true
+                                    change.consume()
+                                }
                             }
                             // スクロール位置が下端でさらに上にドラッグした場合（翌日への移動）
                             if (verticalScrollState.value == verticalScrollState.maxValue && dragY < 0) {
                                 verticalForwarding += dragY
+                                // 閾値を超えたら即座にイベントを消費
+                                if (verticalForwarding < (-1 * threshold) && !shouldNavigate) {
+                                    shouldNavigate = true
+                                    change.consume()
+                                }
+                            }
+                            // 水平ドラッグの閾値チェック
+                            if (totalHorizontalDrag.absoluteValue > threshold && !shouldNavigate) {
+                                shouldNavigate = true
+                                change.consume()
+                            }
+
+                            // ナビゲーション確定後は全てのイベントを消費し続ける
+                            if (shouldNavigate) {
+                                change.consume()
                             }
                         }
                     } while (event.changes.any { it.pressed })
 
                     // ドラッグ終了時の処理
-                    val threshold = 100f
-
-                    when {
-                        // 上端で下にドラッグ → 前日に移動
-                        verticalBacking > threshold -> {
-                            currentDate = currentDate.plus(DatePeriod(days = -1))
-                            onDateChange(currentDate, true)
-                        }
-                        // 下端で上にドラッグ → 翌日に移動
-                        verticalForwarding < (-1 * threshold) -> {
-                            currentDate = currentDate.plus(DatePeriod(days = 1))
-                            onDateChange(currentDate, true)
-                        }
-                        // 水平ドラッグが閾値を超えている場合（前後の日への移動）
-                        totalHorizontalDrag.absoluteValue > threshold -> {
-                            currentDate = if (totalHorizontalDrag > 0) {
-                                currentDate.plus(DatePeriod(days = -1))
-                            } else {
-                                currentDate.plus(DatePeriod(days = 1))
+                    if (shouldNavigate) {
+                        when {
+                            // 上端で下にドラッグ → 前日に移動
+                            verticalBacking > threshold -> {
+                                currentDate = currentDate.plus(DatePeriod(days = -1))
+                                onDateChange(currentDate, true)
                             }
-                            onDateChange(currentDate, false)
+                            // 下端で上にドラッグ → 翌日に移動
+                            verticalForwarding < (-1 * threshold) -> {
+                                currentDate = currentDate.plus(DatePeriod(days = 1))
+                                onDateChange(currentDate, true)
+                            }
+                            // 水平ドラッグが閾値を超えている場合（前後の日への移動）
+                            totalHorizontalDrag.absoluteValue > threshold -> {
+                                currentDate = if (totalHorizontalDrag > 0) {
+                                    currentDate.plus(DatePeriod(days = -1))
+                                } else {
+                                    currentDate.plus(DatePeriod(days = 1))
+                                }
+                                onDateChange(currentDate, false)
+                            }
                         }
                     }
 
@@ -825,7 +847,9 @@ private fun TimelineView(
                         .border(
                             width = 0.5.dp,
                             color = MaterialTheme.colorScheme.outlineVariant
-                        )
+                        ).clickable {
+                            onTimelineClick(LocalTime(hour, 0))
+                        }
                 ) {
                     if (showTimeLabels) {
                         // 時刻表示部分（1人目のみ）
@@ -844,15 +868,6 @@ private fun TimelineView(
                             )
                         }
                     }
-
-                    // スケジュール配置用のスペース（クリック可能）
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                onTimelineClick(LocalTime(hour, 0))
-                            }
-                    )
                 }
             }
         }

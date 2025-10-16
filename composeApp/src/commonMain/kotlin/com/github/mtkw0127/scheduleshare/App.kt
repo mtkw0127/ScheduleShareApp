@@ -344,11 +344,32 @@ fun App() {
                         },
                         onScheduleClick = { schedule ->
                             navController.navigate(
-                                Screen.ScheduleAdd.from(
-                                    daySchedule.toLocalDate(),
-                                    schedule.id.value
-                                )
+                                Screen.ScheduleDetail.from(schedule.id.value)
                             )
+                        }
+                    )
+                }
+
+                composable<Screen.ScheduleDetail> { backStackEntry ->
+                    val scheduleDetail: Screen.ScheduleDetail = backStackEntry.toRoute()
+                    ScheduleDetailScreen(
+                        scheduleId = scheduleDetail.scheduleId,
+                        scheduleRepository = scheduleRepository,
+                        userRepository = userRepository,
+                        onBackClick = {
+                            navController.popBackStack()
+                        },
+                        onEditClick = {
+                            // 予定の詳細から編集画面へ遷移
+                            val schedule = scheduleRepository.getScheduleById(Schedule.Id(scheduleDetail.scheduleId))
+                            if (schedule != null) {
+                                navController.navigate(
+                                    Screen.ScheduleAdd.from(
+                                        date = schedule.startDateTime.date,
+                                        scheduleId = scheduleDetail.scheduleId
+                                    )
+                                )
+                            }
                         }
                     )
                 }
@@ -385,10 +406,7 @@ fun App() {
                         },
                         onScheduleClick = { schedule ->
                             navController.navigate(
-                                Screen.ScheduleAdd.from(
-                                    weekSchedule.toLocalDate(),
-                                    schedule.id.value
-                                )
+                                Screen.ScheduleDetail.from(schedule.id.value)
                             )
                         }
                     )

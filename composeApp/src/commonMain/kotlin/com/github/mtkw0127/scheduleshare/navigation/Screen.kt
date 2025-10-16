@@ -60,6 +60,17 @@ sealed interface Screen {
     }
 
     @Serializable
+    data class ScheduleDetail(
+        val scheduleId: String
+    ) : Screen {
+        companion object {
+            fun from(scheduleId: String): ScheduleDetail {
+                return ScheduleDetail(scheduleId = scheduleId)
+            }
+        }
+    }
+
+    @Serializable
     data class ScheduleAdd(
         val year: Int,
         val month: Int,

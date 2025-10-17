@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -22,12 +23,10 @@ import com.github.mtkw0127.scheduleshare.shared.preferences.SharedUserPreference
 import com.github.mtkw0127.scheduleshare.shared.preferences.UserPreferenceRepository
 import com.github.mtkw0127.scheduleshare.shared.preferences.createDataStore
 import com.github.mtkw0127.scheduleshare.theme.ScheduleShareTheme
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
@@ -252,40 +251,61 @@ fun App() {
                             sharedUserPreferenceRepository,
                             holidayRepository
                         )
-                    val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+                    val scope = rememberCoroutineScope()
 
-                    CalendarScreen(
-                        months = calendarState.months,
-                        initialMonthIndex = calendarState.initialMonthIndex,
-                        focusedMonth = calendarState.focusedMonth,
-                        schedules = calendarState.schedules,
-                        holidays = calendarState.holidays,
-                        sharedUsers = calendarState.sharedUsers,
-                        userVisibilityMap = calendarState.userVisibilityMap,
-                        userColorMap = calendarState.userColorMap,
-                        onPageChanged = { pageIndex ->
-                            val newMonth = calendarState.getMonthForPage(pageIndex)
-                            calendarState.updateFocusedMonth(newMonth)
-                        },
-                        onClickDate = { day ->
-                            navController.navigate(Screen.DaySchedule.from(day.value))
-                        },
-                        onClickSchedule = { schedule ->
-                            navController.navigate(Screen.ScheduleDetail.from(schedule.id.value))
-                        },
-                        onUserIconClick = {
-                            navController.navigate(Screen.Settings)
-                        },
-                        onQRShareClick = {
-                            navController.navigate(Screen.QRShare)
-                        },
-                        onUserVisibilityChange = { userId, visible ->
-                            calendarState.updateUserVisibility(userId, visible)
-                        },
-                        onUserColorChange = { userId, color ->
-                            calendarState.updateUserColor(userId, color)
-                        }
-                    )
+                    // 保存された表示モードを読み込む
+                    val initialViewMode = remember {
+                        androidx.compose.runtime.mutableStateOf<UserPreferenceRepository.ViewMode?>(
+                            null
+                        )
+                    }
+                    LaunchedEffect(Unit) {
+                        val savedMode = userPreferenceRepository.getCalendarViewMode()
+                        initialViewMode.value = savedMode
+                    }
+
+                    // 初期表示モードが読み込まれるまで待つ
+                    val viewMode = initialViewMode.value
+                    if (viewMode != null) {
+                        CalendarScreen(
+                            months = calendarState.months,
+                            initialMonthIndex = calendarState.initialMonthIndex,
+                            focusedMonth = calendarState.focusedMonth,
+                            schedules = calendarState.schedules,
+                            holidays = calendarState.holidays,
+                            sharedUsers = calendarState.sharedUsers,
+                            userVisibilityMap = calendarState.userVisibilityMap,
+                            userColorMap = calendarState.userColorMap,
+                            onPageChanged = { pageIndex ->
+                                val newMonth = calendarState.getMonthForPage(pageIndex)
+                                calendarState.updateFocusedMonth(newMonth)
+                            },
+                            onClickDate = { day ->
+                                navController.navigate(Screen.DaySchedule.from(day.value))
+                            },
+                            onClickSchedule = { schedule ->
+                                navController.navigate(Screen.ScheduleDetail.from(schedule.id.value))
+                            },
+                            onUserIconClick = {
+                                navController.navigate(Screen.Settings)
+                            },
+                            onQRShareClick = {
+                                navController.navigate(Screen.QRShare)
+                            },
+                            onUserVisibilityChange = { userId, visible ->
+                                calendarState.updateUserVisibility(userId, visible)
+                            },
+                            onUserColorChange = { userId, color ->
+                                calendarState.updateUserColor(userId, color)
+                            },
+                            initialViewMode = viewMode,
+                            onViewModeChanged = { mode ->
+                                scope.launch {
+                                    userPreferenceRepository.setCalendarViewMode(mode)
+                                }
+                            }
+                        )
+                    }
                 }
 
                 composable<Screen.Settings> {
@@ -358,7 +378,8 @@ fun App() {
                         },
                         onEditClick = {
                             // 予定の詳細から編集画面へ遷移
-                            val schedule = scheduleRepository.getScheduleById(Schedule.Id(scheduleDetail.scheduleId))
+                            val schedule =
+                                scheduleRepository.getScheduleById(Schedule.Id(scheduleDetail.scheduleId))
                             if (schedule != null) {
                                 navController.navigate(
                                     Screen.ScheduleAdd.from(

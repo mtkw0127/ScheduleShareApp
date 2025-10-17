@@ -9,5 +9,12 @@ data class UserPreferences(
      * true: ユーザーごとに縦割りで表示
      * false: すべてのユーザーの予定を一緒に表示
      */
-    val isColumnLayoutEnabled: Boolean = true
+    val isColumnLayoutEnabled: Boolean = true,
+
+    /**
+     * カレンダー画面の表示モード
+     * "Calendar": カレンダー表示
+     * "List": リスト表示
+     */
+    val calendarViewMode: String = "Calendar"
 )

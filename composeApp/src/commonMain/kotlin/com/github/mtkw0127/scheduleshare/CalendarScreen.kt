@@ -21,10 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -32,6 +28,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +38,7 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -73,7 +72,7 @@ import com.github.mtkw0127.scheduleshare.model.schedule.ScheduleTime
 import com.github.mtkw0127.scheduleshare.model.user.User
 import com.github.mtkw0127.scheduleshare.model.user.UserColor
 import com.github.mtkw0127.scheduleshare.repository.HolidayRepository
-import kotlinx.coroutines.delay
+import com.github.mtkw0127.scheduleshare.shared.preferences.UserPreferenceRepository
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -89,10 +88,6 @@ import scheduleshare.composeapp.generated.resources.view_list
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-sealed class ViewMode {
-    data object Calendar : ViewMode()
-    data object List : ViewMode()
-}
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -111,7 +106,9 @@ fun CalendarScreen(
     onUserIconClick: () -> Unit = {},
     onQRShareClick: () -> Unit = {},
     onUserVisibilityChange: (User.Id, Boolean) -> Unit = { _, _ -> },
-    onUserColorChange: (User.Id, UserColor) -> Unit = { _, _ -> }
+    onUserColorChange: (User.Id, UserColor) -> Unit = { _, _ -> },
+    initialViewMode: UserPreferenceRepository.ViewMode = UserPreferenceRepository.ViewMode.Calendar,
+    onViewModeChanged: (UserPreferenceRepository.ViewMode) -> Unit = {}
 ) {
     val pagerState = rememberPagerState(
         initialPage = initialMonthIndex,
@@ -120,22 +117,25 @@ fun CalendarScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var selectedViewMode by rememberSaveable(
-        stateSaver = androidx.compose.runtime.saveable.Saver<ViewMode, String>(
+        initialViewMode,
+        stateSaver = androidx.compose.runtime.saveable.Saver(
             save = { mode ->
-                when (mode) {
-                    ViewMode.Calendar -> "Calendar"
-                    ViewMode.List -> "List"
-                }
+                mode.toString()
             },
             restore = { saved ->
                 when (saved) {
-                    "List" -> ViewMode.List
-                    else -> ViewMode.Calendar
+                    "List" -> UserPreferenceRepository.ViewMode.List
+                    else -> UserPreferenceRepository.ViewMode.Calendar
                 }
             }
         )
-    ) { mutableStateOf(ViewMode.Calendar) }
+    ) { mutableStateOf(initialViewMode) }
     var viewModeMenuExpanded by remember { mutableStateOf(false) }
+
+    // 表示モードが変更されたらコールバックを呼ぶ
+    LaunchedEffect(selectedViewMode) {
+        onViewModeChanged(selectedViewMode)
+    }
 
     // 各ユーザーの表示状態を管理
     val userVisibilityState = remember(sharedUsers, userVisibilityMap) {
@@ -294,8 +294,11 @@ fun CalendarScreen(
                             ) {
                                 Icon(
                                     imageVector = when (selectedViewMode) {
-                                        ViewMode.Calendar -> vectorResource(Res.drawable.calendar_month)
-                                        ViewMode.List -> vectorResource(Res.drawable.view_list)
+                                        UserPreferenceRepository.ViewMode.Calendar -> vectorResource(
+                                            Res.drawable.calendar_month
+                                        )
+
+                                        UserPreferenceRepository.ViewMode.List -> vectorResource(Res.drawable.view_list)
                                     },
                                     contentDescription = "ビュー切り替え",
                                     tint = MaterialTheme.colorScheme.onPrimary
@@ -318,13 +321,14 @@ fun CalendarScreen(
                                                 modifier = Modifier.size(20.dp)
                                             )
                                             Text("カレンダー")
-                                            if (selectedViewMode == ViewMode.Calendar) {
+                                            if (selectedViewMode == UserPreferenceRepository.ViewMode.Calendar) {
                                                 Text("✓", fontWeight = FontWeight.Bold)
                                             }
                                         }
                                     },
                                     onClick = {
-                                        selectedViewMode = ViewMode.Calendar
+                                        selectedViewMode =
+                                            UserPreferenceRepository.ViewMode.Calendar
                                         viewModeMenuExpanded = false
                                     }
                                 )
@@ -340,13 +344,13 @@ fun CalendarScreen(
                                                 modifier = Modifier.size(20.dp)
                                             )
                                             Text("リスト")
-                                            if (selectedViewMode == ViewMode.List) {
+                                            if (selectedViewMode == UserPreferenceRepository.ViewMode.List) {
                                                 Text("✓", fontWeight = FontWeight.Bold)
                                             }
                                         }
                                     },
                                     onClick = {
-                                        selectedViewMode = ViewMode.List
+                                        selectedViewMode = UserPreferenceRepository.ViewMode.List
                                         viewModeMenuExpanded = false
                                     }
                                 )
@@ -373,7 +377,7 @@ fun CalendarScreen(
             }
         ) {
             when (selectedViewMode) {
-                ViewMode.Calendar -> {
+                UserPreferenceRepository.ViewMode.Calendar -> {
                     BoxWithConstraints(modifier = Modifier.padding(it)) {
                         val screenWidth = maxWidth
                         val screenHeight = maxHeight
@@ -405,7 +409,8 @@ fun CalendarScreen(
                         }
                     }
                 }
-                ViewMode.List -> {
+
+                UserPreferenceRepository.ViewMode.List -> {
                     MonthListView(
                         months = months,
                         focusedMonth = focusedMonth,
@@ -792,7 +797,9 @@ private fun Week(
 
                         // この予定が占める期間の各曜日のblockNumの最大値を取得
                         val maxBlockInRange =
-                            (displayStartDayIndex until (displayStartDayIndex + displayDuration).coerceAtMost(7))
+                            (displayStartDayIndex until (displayStartDayIndex + displayDuration).coerceAtMost(
+                                7
+                            ))
                                 .maxOfOrNull { blockNum.getOrNull(it) ?: 0 } ?: 0
 
                         // この予定を配置する行
@@ -1010,7 +1017,7 @@ private fun MonthListView(
     val initialMonthIndex = remember(focusedMonth) {
         months.indexOfFirst { month ->
             month.firstDay.year == focusedMonth.year &&
-            month.firstDay.month == focusedMonth.month
+                    month.firstDay.month == focusedMonth.month
         }.coerceAtLeast(0)
     }
 
@@ -1078,12 +1085,15 @@ private fun getDaysInMonth(date: LocalDate): Int {
         kotlinx.datetime.Month.MAY, kotlinx.datetime.Month.JULY,
         kotlinx.datetime.Month.AUGUST, kotlinx.datetime.Month.OCTOBER,
         kotlinx.datetime.Month.DECEMBER -> 31
+
         kotlinx.datetime.Month.APRIL, kotlinx.datetime.Month.JUNE,
         kotlinx.datetime.Month.SEPTEMBER, kotlinx.datetime.Month.NOVEMBER -> 30
+
         kotlinx.datetime.Month.FEBRUARY -> {
             // 閏年判定
             if ((date.year % 4 == 0 && date.year % 100 != 0) ||
-                (date.year % 400 == 0)) 29 else 28
+                (date.year % 400 == 0)
+            ) 29 else 28
         }
     }
 }
@@ -1105,8 +1115,10 @@ private fun DateScheduleRow(
                 when {
                     date.dayOfWeek == kotlinx.datetime.DayOfWeek.SATURDAY ->
                         Color.Blue.copy(alpha = 0.05f)
+
                     date.dayOfWeek == kotlinx.datetime.DayOfWeek.SUNDAY || holiday != null ->
                         Color.Red.copy(alpha = 0.05f)
+
                     else -> Color.Transparent
                 }
             )
@@ -1217,11 +1229,22 @@ private fun ScheduleListItem(
                 Text(
                     text = when (val time = schedule.time) {
                         is ScheduleTime.SingleTimeDay ->
-                            "${time.startTime.hour}:${time.startTime.minute.toString().padStart(2, '0')}-${time.endTime.hour}:${time.endTime.minute.toString().padStart(2, '0')}"
+                            "${time.startTime.hour}:${
+                                time.startTime.minute.toString().padStart(2, '0')
+                            }-${time.endTime.hour}:${
+                                time.endTime.minute.toString().padStart(2, '0')
+                            }"
+
                         is ScheduleTime.DateTimeRange ->
-                            "${time.start.time.hour}:${time.start.time.minute.toString().padStart(2, '0')}-${time.end.time.hour}:${time.end.time.minute.toString().padStart(2, '0')}"
+                            "${time.start.time.hour}:${
+                                time.start.time.minute.toString().padStart(2, '0')
+                            }-${time.end.time.hour}:${
+                                time.end.time.minute.toString().padStart(2, '0')
+                            }"
+
                         is ScheduleTime.AllDayRange ->
                             "終日(${time.startDate.day}日-${time.endDate.day}日)"
+
                         else -> "終日"
                     },
                     fontSize = 12.sp,

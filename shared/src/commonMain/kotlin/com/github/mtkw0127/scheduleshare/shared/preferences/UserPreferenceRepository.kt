@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -18,6 +19,7 @@ class UserPreferenceRepository(
 ) {
     private companion object {
         val IS_COLUMN_LAYOUT_ENABLED = booleanPreferencesKey("is_column_layout_enabled")
+        val CALENDAR_VIEW_MODE = stringPreferencesKey("calendar_view_mode")
     }
 
     /**
@@ -30,7 +32,8 @@ class UserPreferenceRepository(
         }
         .map { preferences ->
             UserPreferences(
-                isColumnLayoutEnabled = preferences[IS_COLUMN_LAYOUT_ENABLED] ?: true
+                isColumnLayoutEnabled = preferences[IS_COLUMN_LAYOUT_ENABLED] ?: true,
+                calendarViewMode = preferences[CALENDAR_VIEW_MODE] ?: "Calendar"
             )
         }
 
@@ -57,5 +60,40 @@ class UserPreferenceRepository(
                 preferences[IS_COLUMN_LAYOUT_ENABLED] ?: true
             }
             .first()
+    }
+
+    sealed class ViewMode {
+        data object Calendar : ViewMode()
+        data object List : ViewMode()
+    }
+
+    /**
+     * カレンダー表示モードを保存
+     * @param mode "Calendar" または "List"
+     */
+    suspend fun setCalendarViewMode(mode: ViewMode) {
+        dataStore.edit { preferences ->
+            preferences[CALENDAR_VIEW_MODE] = mode.toString()
+        }
+    }
+
+    /**
+     * カレンダー表示モードを取得
+     * @return "Calendar" または "List" (デフォルト: "Calendar")
+     */
+    suspend fun getCalendarViewMode(): ViewMode {
+        return dataStore.data
+            .catch { exception ->
+                emit(emptyPreferences())
+            }
+            .map { preferences ->
+                val text = preferences[CALENDAR_VIEW_MODE]
+                return@map when (text) {
+                    ViewMode.Calendar.toString() -> ViewMode.Calendar
+                    ViewMode.List.toString() -> ViewMode.List
+                    else -> ViewMode.Calendar
+                }
+            }
+            .first() as ViewMode
     }
 }

@@ -1,7 +1,8 @@
 package com.github.mtkw0127.scheduleshare
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,7 @@ import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_back
 import scheduleshare.composeapp.generated.resources.edit
+import scheduleshare.composeapp.generated.resources.map
 
 @androidx.compose.material3.ExperimentalMaterial3Api
 @Composable
@@ -206,14 +208,25 @@ fun ScheduleDetailScreen(
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = schedule.location,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable {
-                        mapUtil.openMap(schedule.location)
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Text(
+                        text = schedule.location,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = { mapUtil.openMap(schedule.location) }) {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.map),
+                            contentDescription = "地図で開く",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
-                )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(16.dp))

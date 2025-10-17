@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -30,8 +32,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -80,7 +80,6 @@ import kotlinx.datetime.daysUntil
 import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
-import scheduleshare.composeapp.generated.resources.arrow_drop_down
 import scheduleshare.composeapp.generated.resources.menu
 import scheduleshare.composeapp.generated.resources.qr_code
 import scheduleshare.composeapp.generated.resources.user
@@ -111,8 +110,8 @@ fun CalendarScreen(
     )
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var viewModeMenuExpanded by remember { mutableStateOf(false) }
     var selectedViewMode by remember { mutableStateOf("カレンダー") }
+    var viewModeMenuExpanded by remember { mutableStateOf(false) }
 
     // 各ユーザーの表示状態を管理
     val userVisibilityState = remember(sharedUsers, userVisibilityMap) {
@@ -264,25 +263,16 @@ fun CalendarScreen(
                         }
                     },
                     actions = {
-                        // 表示モード切り替えドロップダウン
+                        // ビュー切り替えメニュー
                         Box {
-                            IconButton(onClick = { viewModeMenuExpanded = true }) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 4.dp)
-                                ) {
-                                    Text(
-                                        text = selectedViewMode,
-                                        fontSize = 16.sp,
-                                        color = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                    Icon(
-                                        imageVector = vectorResource(Res.drawable.arrow_drop_down),
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
+                            IconButton(
+                                onClick = { viewModeMenuExpanded = true }
+                            ) {
+                                Text(
+                                    text = "☰",
+                                    fontSize = 24.sp,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
                             }
 
                             DropdownMenu(
@@ -292,10 +282,10 @@ fun CalendarScreen(
                                 DropdownMenuItem(
                                     text = {
                                         Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
+                                            Text("📅")
                                             Text("カレンダー")
                                             if (selectedViewMode == "カレンダー") {
                                                 Text("✓", fontWeight = FontWeight.Bold)
@@ -310,10 +300,10 @@ fun CalendarScreen(
                                 DropdownMenuItem(
                                     text = {
                                         Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
+                                            Text("☰")
                                             Text("リスト")
                                             if (selectedViewMode == "リスト") {
                                                 Text("✓", fontWeight = FontWeight.Bold)

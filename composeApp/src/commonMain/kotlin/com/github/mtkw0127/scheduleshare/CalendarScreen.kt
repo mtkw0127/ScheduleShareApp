@@ -48,6 +48,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -118,7 +119,22 @@ fun CalendarScreen(
     )
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var selectedViewMode by remember { mutableStateOf<ViewMode>(ViewMode.Calendar) }
+    var selectedViewMode by rememberSaveable(
+        stateSaver = androidx.compose.runtime.saveable.Saver<ViewMode, String>(
+            save = { mode ->
+                when (mode) {
+                    ViewMode.Calendar -> "Calendar"
+                    ViewMode.List -> "List"
+                }
+            },
+            restore = { saved ->
+                when (saved) {
+                    "List" -> ViewMode.List
+                    else -> ViewMode.Calendar
+                }
+            }
+        )
+    ) { mutableStateOf(ViewMode.Calendar) }
     var viewModeMenuExpanded by remember { mutableStateOf(false) }
 
     // 各ユーザーの表示状態を管理

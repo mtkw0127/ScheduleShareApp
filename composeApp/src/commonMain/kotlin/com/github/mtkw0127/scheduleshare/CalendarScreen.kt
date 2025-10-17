@@ -88,6 +88,11 @@ import scheduleshare.composeapp.generated.resources.view_list
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+sealed class ViewMode {
+    data object Calendar : ViewMode()
+    data object List : ViewMode()
+}
+
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun CalendarScreen(
@@ -112,7 +117,7 @@ fun CalendarScreen(
     )
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var selectedViewMode by remember { mutableStateOf("カレンダー") }
+    var selectedViewMode by remember { mutableStateOf<ViewMode>(ViewMode.Calendar) }
     var viewModeMenuExpanded by remember { mutableStateOf(false) }
 
     // 各ユーザーの表示状態を管理
@@ -271,10 +276,9 @@ fun CalendarScreen(
                                 onClick = { viewModeMenuExpanded = true }
                             ) {
                                 Icon(
-                                    imageVector = if (selectedViewMode == "カレンダー") {
-                                        vectorResource(Res.drawable.calendar_month)
-                                    } else {
-                                        vectorResource(Res.drawable.view_list)
+                                    imageVector = when (selectedViewMode) {
+                                        ViewMode.Calendar -> vectorResource(Res.drawable.calendar_month)
+                                        ViewMode.List -> vectorResource(Res.drawable.view_list)
                                     },
                                     contentDescription = "ビュー切り替え",
                                     tint = MaterialTheme.colorScheme.onPrimary
@@ -297,13 +301,13 @@ fun CalendarScreen(
                                                 modifier = Modifier.size(20.dp)
                                             )
                                             Text("カレンダー")
-                                            if (selectedViewMode == "カレンダー") {
+                                            if (selectedViewMode == ViewMode.Calendar) {
                                                 Text("✓", fontWeight = FontWeight.Bold)
                                             }
                                         }
                                     },
                                     onClick = {
-                                        selectedViewMode = "カレンダー"
+                                        selectedViewMode = ViewMode.Calendar
                                         viewModeMenuExpanded = false
                                     }
                                 )
@@ -319,13 +323,13 @@ fun CalendarScreen(
                                                 modifier = Modifier.size(20.dp)
                                             )
                                             Text("リスト")
-                                            if (selectedViewMode == "リスト") {
+                                            if (selectedViewMode == ViewMode.List) {
                                                 Text("✓", fontWeight = FontWeight.Bold)
                                             }
                                         }
                                     },
                                     onClick = {
-                                        selectedViewMode = "リスト"
+                                        selectedViewMode = ViewMode.List
                                         viewModeMenuExpanded = false
                                     }
                                 )
@@ -352,7 +356,7 @@ fun CalendarScreen(
             }
         ) {
             when (selectedViewMode) {
-                "カレンダー" -> {
+                ViewMode.Calendar -> {
                     BoxWithConstraints(modifier = Modifier.padding(it)) {
                         val screenWidth = maxWidth
                         val screenHeight = maxHeight
@@ -384,7 +388,7 @@ fun CalendarScreen(
                         }
                     }
                 }
-                "リスト" -> {
+                ViewMode.List -> {
                     MonthListView(
                         focusedMonth = focusedMonth,
                         schedules = schedules,

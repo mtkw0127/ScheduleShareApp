@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -19,6 +20,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -62,6 +66,7 @@ import com.github.mtkw0127.scheduleshare.extension.toYm
 import com.github.mtkw0127.scheduleshare.model.calendar.Day
 import com.github.mtkw0127.scheduleshare.model.calendar.Month
 import com.github.mtkw0127.scheduleshare.model.calendar.Week
+import com.github.mtkw0127.scheduleshare.model.calendar.Weekday
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.model.schedule.ScheduleTime
 import com.github.mtkw0127.scheduleshare.model.user.User
@@ -97,8 +102,6 @@ fun CalendarScreen(
     onClickDate: (Day) -> Unit = {},
     onUserIconClick: () -> Unit = {},
     onQRShareClick: () -> Unit = {},
-    onWeekScheduleClick: () -> Unit = {},
-    onDayScheduleClick: () -> Unit = {},
     onUserVisibilityChange: (User.Id, Boolean) -> Unit = { _, _ -> },
     onUserColorChange: (User.Id, UserColor) -> Unit = { _, _ -> }
 ) {
@@ -109,7 +112,7 @@ fun CalendarScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var viewModeMenuExpanded by remember { mutableStateOf(false) }
-    var selectedViewMode by remember { mutableStateOf("月") }
+    var selectedViewMode by remember { mutableStateOf("カレンダー") }
 
     // 各ユーザーの表示状態を管理
     val userVisibilityState = remember(sharedUsers, userVisibilityMap) {
@@ -293,16 +296,15 @@ fun CalendarScreen(
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text("日")
-                                            if (selectedViewMode == "日") {
+                                            Text("カレンダー")
+                                            if (selectedViewMode == "カレンダー") {
                                                 Text("✓", fontWeight = FontWeight.Bold)
                                             }
                                         }
                                     },
                                     onClick = {
-                                        selectedViewMode = "日"
+                                        selectedViewMode = "カレンダー"
                                         viewModeMenuExpanded = false
-                                        onDayScheduleClick()
                                     }
                                 )
                                 DropdownMenuItem(
@@ -312,33 +314,14 @@ fun CalendarScreen(
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text("週")
-                                            if (selectedViewMode == "週") {
+                                            Text("リスト")
+                                            if (selectedViewMode == "リスト") {
                                                 Text("✓", fontWeight = FontWeight.Bold)
                                             }
                                         }
                                     },
                                     onClick = {
-                                        selectedViewMode = "週"
-                                        viewModeMenuExpanded = false
-                                        onWeekScheduleClick()
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text("月")
-                                            if (selectedViewMode == "月") {
-                                                Text("✓", fontWeight = FontWeight.Bold)
-                                            }
-                                        }
-                                    },
-                                    onClick = {
-                                        selectedViewMode = "月"
+                                        selectedViewMode = "リスト"
                                         viewModeMenuExpanded = false
                                     }
                                 )
@@ -364,34 +347,48 @@ fun CalendarScreen(
                 )
             }
         ) {
-            BoxWithConstraints(modifier = Modifier.padding(it)) {
-                val screenWidth = maxWidth
-                val screenHeight = maxHeight
+            when (selectedViewMode) {
+                "カレンダー" -> {
+                    BoxWithConstraints(modifier = Modifier.padding(it)) {
+                        val screenWidth = maxWidth
+                        val screenHeight = maxHeight
 
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxWidth()
-                ) { page ->
-                    val month = months[page]
-                    Column(
-                        modifier = Modifier
-                            .width(screenWidth)
-                            .background(MaterialTheme.colorScheme.surface)
-                    ) {
-                        DayView(
-                            screenWidth = screenWidth,
-                            focusedMonth = month.firstDay
-                        )
-                        DateView(
-                            month,
-                            schedules,
-                            holidays,
-                            userColorMap,
-                            onClickDate,
-                            screenWidth,
-                            screenHeight
-                        )
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier.fillMaxWidth()
+                        ) { page ->
+                            val month = months[page]
+                            Column(
+                                modifier = Modifier
+                                    .width(screenWidth)
+                                    .background(MaterialTheme.colorScheme.surface)
+                            ) {
+                                DayView(
+                                    screenWidth = screenWidth,
+                                    focusedMonth = month.firstDay
+                                )
+                                DateView(
+                                    month,
+                                    schedules,
+                                    holidays,
+                                    userColorMap,
+                                    onClickDate,
+                                    screenWidth,
+                                    screenHeight
+                                )
+                            }
+                        }
                     }
+                }
+                "リスト" -> {
+                    MonthListView(
+                        focusedMonth = focusedMonth,
+                        schedules = schedules,
+                        holidays = holidays,
+                        userColorMap = userColorMap,
+                        onClickDate = onClickDate,
+                        modifier = Modifier.padding(it)
+                    )
                 }
             }
         }
@@ -964,3 +961,204 @@ private fun DateCell(
     }
 }
 
+@Composable
+private fun MonthListView(
+    focusedMonth: LocalDate,
+    schedules: Map<LocalDate, List<Schedule>>,
+    holidays: Map<LocalDate, HolidayRepository.Holiday>,
+    userColorMap: Map<User.Id, UserColor>,
+    onClickDate: (Day) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // 月の日数を取得
+    val daysInMonth = when (focusedMonth.month) {
+        kotlinx.datetime.Month.JANUARY, kotlinx.datetime.Month.MARCH,
+        kotlinx.datetime.Month.MAY, kotlinx.datetime.Month.JULY,
+        kotlinx.datetime.Month.AUGUST, kotlinx.datetime.Month.OCTOBER,
+        kotlinx.datetime.Month.DECEMBER -> 31
+        kotlinx.datetime.Month.APRIL, kotlinx.datetime.Month.JUNE,
+        kotlinx.datetime.Month.SEPTEMBER, kotlinx.datetime.Month.NOVEMBER -> 30
+        kotlinx.datetime.Month.FEBRUARY -> {
+            // 閏年判定
+            if ((focusedMonth.year % 4 == 0 && focusedMonth.year % 100 != 0) ||
+                (focusedMonth.year % 400 == 0)) 29 else 28
+        }
+    }
+
+    LazyColumn(modifier = modifier.fillMaxSize()) {
+        items(daysInMonth) { index ->
+            val dayOfMonth = index + 1
+            val date = LocalDate(focusedMonth.year, focusedMonth.month, dayOfMonth)
+            val daySchedules = schedules[date] ?: emptyList()
+            val holiday = holidays[date]
+
+            DateScheduleRow(
+                date = date,
+                schedules = daySchedules,
+                holiday = holiday,
+                userColorMap = userColorMap,
+                onClickDate = onClickDate
+            )
+        }
+    }
+}
+
+@Composable
+private fun DateScheduleRow(
+    date: LocalDate,
+    schedules: List<Schedule>,
+    holiday: HolidayRepository.Holiday?,
+    userColorMap: Map<User.Id, UserColor>,
+    onClickDate: (Day) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClickDate(Weekday(date)) }
+            .background(
+                when {
+                    date.dayOfWeek == kotlinx.datetime.DayOfWeek.SATURDAY ->
+                        Color.Blue.copy(alpha = 0.05f)
+                    date.dayOfWeek == kotlinx.datetime.DayOfWeek.SUNDAY || holiday != null ->
+                        Color.Red.copy(alpha = 0.05f)
+                    else -> Color.Transparent
+                }
+            )
+            .padding(vertical = 8.dp, horizontal = 8.dp)
+    ) {
+        // 左列: 日付
+        Column(
+            modifier = Modifier
+                .width(70.dp)
+                .padding(end = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = date.day.toString(),
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = when {
+                    holiday != null -> Color.Red
+                    date.dayOfWeek == kotlinx.datetime.DayOfWeek.SATURDAY -> Color.Blue
+                    date.dayOfWeek == kotlinx.datetime.DayOfWeek.SUNDAY -> Color.Red
+                    else -> MaterialTheme.colorScheme.onSurface
+                }
+            )
+            Text(
+                text = getDayOfWeekJapanese(date.dayOfWeek),
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (holiday != null) {
+                Text(
+                    text = holiday.name,
+                    fontSize = 9.sp,
+                    color = Color.Red,
+                    maxLines = 2,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        VerticalDivider(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(1.dp)
+        )
+
+        // 右列: 予定リスト
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 12.dp)
+        ) {
+            if (schedules.isEmpty()) {
+                Text(
+                    text = "予定なし",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            } else {
+                schedules.sortedBy { it.startDateTime }.forEach { schedule ->
+                    ScheduleListItem(
+                        schedule = schedule,
+                        userColor = userColorMap[schedule.createUser.id] ?: UserColor.default()
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+            }
+        }
+    }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+}
+
+@Composable
+private fun ScheduleListItem(
+    schedule: Schedule,
+    userColor: UserColor
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // ユーザー色のインジケーター
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .background(Color(userColor.value), CircleShape)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // 予定情報
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = schedule.title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Row(
+                modifier = Modifier.padding(top = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // 時刻表示
+                Text(
+                    text = when (val time = schedule.time) {
+                        is ScheduleTime.SingleTimeDay ->
+                            "${time.startTime.hour}:${time.startTime.minute.toString().padStart(2, '0')}-${time.endTime.hour}:${time.endTime.minute.toString().padStart(2, '0')}"
+                        is ScheduleTime.DateTimeRange ->
+                            "${time.start.time.hour}:${time.start.time.minute.toString().padStart(2, '0')}-${time.end.time.hour}:${time.end.time.minute.toString().padStart(2, '0')}"
+                        is ScheduleTime.AllDayRange ->
+                            "終日(${time.startDate.day}日-${time.endDate.day}日)"
+                        else -> "終日"
+                    },
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                // ユーザー名
+                Text(
+                    text = schedule.createUser.name,
+                    fontSize = 12.sp,
+                    color = Color(userColor.value),
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+// 曜日を日本語で取得するヘルパー関数
+private fun getDayOfWeekJapanese(dayOfWeek: kotlinx.datetime.DayOfWeek): String {
+    return when (dayOfWeek) {
+        kotlinx.datetime.DayOfWeek.MONDAY -> "月"
+        kotlinx.datetime.DayOfWeek.TUESDAY -> "火"
+        kotlinx.datetime.DayOfWeek.WEDNESDAY -> "水"
+        kotlinx.datetime.DayOfWeek.THURSDAY -> "木"
+        kotlinx.datetime.DayOfWeek.FRIDAY -> "金"
+        kotlinx.datetime.DayOfWeek.SATURDAY -> "土"
+        kotlinx.datetime.DayOfWeek.SUNDAY -> "日"
+    }
+}

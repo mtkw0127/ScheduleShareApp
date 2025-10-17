@@ -276,12 +276,6 @@ fun App() {
                         onQRShareClick = {
                             navController.navigate(Screen.QRShare)
                         },
-                        onWeekScheduleClick = {
-                            navController.navigate(Screen.WeekSchedule.from(today))
-                        },
-                        onDayScheduleClick = {
-                            navController.navigate(Screen.DaySchedule.from(today))
-                        },
                         onUserVisibilityChange = { userId, visible ->
                             calendarState.updateUserVisibility(userId, visible)
                         },

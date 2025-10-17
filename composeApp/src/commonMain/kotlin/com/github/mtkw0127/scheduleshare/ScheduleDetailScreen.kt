@@ -236,7 +236,7 @@ fun ScheduleDetailScreen(
                             imageVector = vectorResource(Res.drawable.map),
                             contentDescription = "地図で開く",
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }

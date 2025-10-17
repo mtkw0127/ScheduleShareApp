@@ -80,9 +80,11 @@ import kotlinx.datetime.daysUntil
 import kotlinx.datetime.todayIn
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
+import scheduleshare.composeapp.generated.resources.calendar_month
 import scheduleshare.composeapp.generated.resources.menu
 import scheduleshare.composeapp.generated.resources.qr_code
 import scheduleshare.composeapp.generated.resources.user
+import scheduleshare.composeapp.generated.resources.view_list
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -268,10 +270,14 @@ fun CalendarScreen(
                             IconButton(
                                 onClick = { viewModeMenuExpanded = true }
                             ) {
-                                Text(
-                                    text = if (selectedViewMode == "カレンダー") "📅" else "📋",
-                                    fontSize = 24.sp,
-                                    color = MaterialTheme.colorScheme.onPrimary
+                                Icon(
+                                    imageVector = if (selectedViewMode == "カレンダー") {
+                                        vectorResource(Res.drawable.calendar_month)
+                                    } else {
+                                        vectorResource(Res.drawable.view_list)
+                                    },
+                                    contentDescription = "ビュー切り替え",
+                                    tint = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
 
@@ -285,7 +291,11 @@ fun CalendarScreen(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text("📅")
+                                            Icon(
+                                                imageVector = vectorResource(Res.drawable.calendar_month),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
                                             Text("カレンダー")
                                             if (selectedViewMode == "カレンダー") {
                                                 Text("✓", fontWeight = FontWeight.Bold)
@@ -303,7 +313,11 @@ fun CalendarScreen(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text("📋")
+                                            Icon(
+                                                imageVector = vectorResource(Res.drawable.view_list),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
                                             Text("リスト")
                                             if (selectedViewMode == "リスト") {
                                                 Text("✓", fontWeight = FontWeight.Bold)

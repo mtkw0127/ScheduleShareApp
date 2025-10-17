@@ -1,5 +1,6 @@
 package com.github.mtkw0127.scheduleshare
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -24,6 +25,7 @@ import com.github.mtkw0127.scheduleshare.components.CommonTopAppBar
 import com.github.mtkw0127.scheduleshare.model.schedule.Schedule
 import com.github.mtkw0127.scheduleshare.repository.ScheduleRepository
 import com.github.mtkw0127.scheduleshare.repository.UserRepository
+import com.github.mtkw0127.scheduleshare.util.rememberMapUtil
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_back
@@ -41,6 +43,7 @@ fun ScheduleDetailScreen(
     val schedule = remember(scheduleId) {
         scheduleRepository.getScheduleById(Schedule.Id(scheduleId))
     }
+    val mapUtil = rememberMapUtil()
 
     if (schedule == null) {
         // スケジュールが見つからない場合
@@ -206,7 +209,10 @@ fun ScheduleDetailScreen(
                 Text(
                     text = schedule.location,
                     fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable {
+                        mapUtil.openMap(schedule.location)
+                    }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()

@@ -407,12 +407,17 @@ fun CalendarScreen(
                 }
                 ViewMode.List -> {
                     MonthListView(
+                        months = months,
                         focusedMonth = focusedMonth,
                         schedules = schedules,
                         holidays = holidays,
                         userColorMap = userColorMap,
                         onClickDate = onClickDate,
                         onClickSchedule = onClickSchedule,
+                        onPageChanged = { monthIndex ->
+                            val newMonth = months[monthIndex]
+                            onPageChanged(monthIndex)
+                        },
                         modifier = Modifier.padding(it)
                     )
                 }
@@ -989,16 +994,86 @@ private fun DateCell(
 
 @Composable
 private fun MonthListView(
+    months: List<Month>,
     focusedMonth: LocalDate,
     schedules: Map<LocalDate, List<Schedule>>,
     holidays: Map<LocalDate, HolidayRepository.Holiday>,
     userColorMap: Map<User.Id, UserColor>,
     onClickDate: (Day) -> Unit,
     onClickSchedule: (Schedule) -> Unit,
+    onPageChanged: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // 月の日数を取得
-    val daysInMonth = when (focusedMonth.month) {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    // 初期表示位置を設定（focusedMonthに対応する月にスクロール）
+    val initialMonthIndex = remember(focusedMonth) {
+        months.indexOfFirst { month ->
+            month.firstDay.year == focusedMonth.year &&
+            month.firstDay.month == focusedMonth.month
+        }.coerceAtLeast(0)
+    }
+
+    LaunchedEffect(initialMonthIndex) {
+        // 初回表示時に対象月にスクロール
+        var totalDays = 0
+        for (i in 0 until initialMonthIndex) {
+            val month = months[i]
+            val daysInMonth = getDaysInMonth(month.firstDay)
+            totalDays += daysInMonth
+        }
+        if (totalDays > 0) {
+            listState.scrollToItem(totalDays)
+        }
+    }
+
+    // スクロール位置を監視して現在の月を検出
+    LaunchedEffect(listState.firstVisibleItemIndex) {
+        var accumulatedDays = 0
+        var currentMonthIndex = 0
+
+        for (i in months.indices) {
+            val month = months[i]
+            val daysInMonth = getDaysInMonth(month.firstDay)
+
+            if (listState.firstVisibleItemIndex < accumulatedDays + daysInMonth) {
+                currentMonthIndex = i
+                break
+            }
+            accumulatedDays += daysInMonth
+        }
+
+        onPageChanged(currentMonthIndex)
+    }
+
+    LazyColumn(
+        state = listState,
+        modifier = modifier.fillMaxSize()
+    ) {
+        months.forEach { month ->
+            val daysInMonth = getDaysInMonth(month.firstDay)
+
+            items(daysInMonth) { index ->
+                val dayOfMonth = index + 1
+                val date = LocalDate(month.firstDay.year, month.firstDay.month, dayOfMonth)
+                val daySchedules = schedules[date] ?: emptyList()
+                val holiday = holidays[date]
+
+                DateScheduleRow(
+                    date = date,
+                    schedules = daySchedules,
+                    holiday = holiday,
+                    userColorMap = userColorMap,
+                    onClickDate = onClickDate,
+                    onClickSchedule = onClickSchedule
+                )
+            }
+        }
+    }
+}
+
+private fun getDaysInMonth(date: LocalDate): Int {
+    return when (date.month) {
         kotlinx.datetime.Month.JANUARY, kotlinx.datetime.Month.MARCH,
         kotlinx.datetime.Month.MAY, kotlinx.datetime.Month.JULY,
         kotlinx.datetime.Month.AUGUST, kotlinx.datetime.Month.OCTOBER,
@@ -1007,26 +1082,8 @@ private fun MonthListView(
         kotlinx.datetime.Month.SEPTEMBER, kotlinx.datetime.Month.NOVEMBER -> 30
         kotlinx.datetime.Month.FEBRUARY -> {
             // 閏年判定
-            if ((focusedMonth.year % 4 == 0 && focusedMonth.year % 100 != 0) ||
-                (focusedMonth.year % 400 == 0)) 29 else 28
-        }
-    }
-
-    LazyColumn(modifier = modifier.fillMaxSize()) {
-        items(daysInMonth) { index ->
-            val dayOfMonth = index + 1
-            val date = LocalDate(focusedMonth.year, focusedMonth.month, dayOfMonth)
-            val daySchedules = schedules[date] ?: emptyList()
-            val holiday = holidays[date]
-
-            DateScheduleRow(
-                date = date,
-                schedules = daySchedules,
-                holiday = holiday,
-                userColorMap = userColorMap,
-                onClickDate = onClickDate,
-                onClickSchedule = onClickSchedule
-            )
+            if ((date.year % 4 == 0 && date.year % 100 != 0) ||
+                (date.year % 400 == 0)) 29 else 28
         }
     }
 }

@@ -17,6 +17,8 @@ junit = "4.13.2"
 kotlin = "2.2.20"
 kotlinx-datetime = "0.7.1"
 kotlinx-serialization = "1.9.0"
+ktorClientCio = "3.3.1"
+supabase = "3.2.5"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -29,6 +31,12 @@ androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "a
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "androidx-datastore" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClientCio" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktorClientCio" }
+supabase-auth-kt = { module = "io.github.jan-tennert.supabase:auth-kt", version.ref = "supabase" }
+supabase-compose-auth = { module = "io.github.jan-tennert.supabase:compose-auth", version.ref = "supabase" }
+supabase-compose-auth-ui = { module = "io.github.jan-tennert.supabase:compose-auth-ui", version.ref = "supabase" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCio" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

@@ -44,6 +44,9 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.androidx.datastore)
             implementation(libs.androidx.datastore.preferences)
+            implementation(libs.supabase.auth.kt)
+            implementation(libs.supabase.compose.auth)
+            implementation(libs.supabase.compose.auth.ui)
             implementation(projects.shared)
         }
         commonTest.dependencies {

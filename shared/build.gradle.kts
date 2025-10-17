@@ -20,6 +20,16 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.androidx.datastore)
             implementation(libs.androidx.datastore.preferences)
+            implementation(libs.supabase.auth.kt)
+            implementation(libs.supabase.compose.auth)
+            implementation(libs.supabase.compose.auth.ui)
+            implementation(libs.ktor.client.core)
+        }
+        androidMain.dependencies {
+            implementation(libs.ktor.client.cio)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

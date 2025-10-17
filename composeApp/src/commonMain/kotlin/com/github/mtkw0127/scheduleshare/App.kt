@@ -235,7 +235,7 @@ fun App() {
             ) {
                 composable<Screen.Login> {
                     LoginScreen(
-                        onLoginClick = {
+                        onLoginSuccess = {
                             navController.navigate(Screen.Calendar) {
                                 popUpTo(Screen.Login) { inclusive = true }
                             }

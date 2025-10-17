@@ -124,7 +124,7 @@ fun CalendarScreen(
             },
             restore = { saved ->
                 when (saved) {
-                    "List" -> UserPreferenceRepository.ViewMode.List
+                    UserPreferenceRepository.ViewMode.List.toString() -> UserPreferenceRepository.ViewMode.List
                     else -> UserPreferenceRepository.ViewMode.Calendar
                 }
             }
@@ -420,7 +420,6 @@ fun CalendarScreen(
                         onClickDate = onClickDate,
                         onClickSchedule = onClickSchedule,
                         onPageChanged = { monthIndex ->
-                            val newMonth = months[monthIndex]
                             onPageChanged(monthIndex)
                         },
                         modifier = Modifier.padding(it)
@@ -1182,6 +1181,7 @@ private fun DateScheduleRow(
                     ScheduleListItem(
                         schedule = schedule,
                         userColor = userColorMap[schedule.createUser.id] ?: UserColor.default(),
+                        userColorMap = userColorMap,
                         onClick = { onClickSchedule(schedule) }
                     )
                     Spacer(modifier = Modifier.height(4.dp))
@@ -1196,6 +1196,7 @@ private fun DateScheduleRow(
 private fun ScheduleListItem(
     schedule: Schedule,
     userColor: UserColor,
+    userColorMap: Map<User.Id, UserColor>,
     onClick: () -> Unit
 ) {
     Row(
@@ -1251,12 +1252,15 @@ private fun ScheduleListItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 // ユーザー名
-                Text(
-                    text = schedule.createUser.name,
-                    fontSize = 12.sp,
-                    color = Color(userColor.value),
-                    fontWeight = FontWeight.Medium
-                )
+                schedule.assignedUsers.forEach { assignedUser ->
+                    val color = userColorMap[assignedUser.id] ?: UserColor.default()
+                    Text(
+                        text = assignedUser.name,
+                        fontSize = 12.sp,
+                        color = Color(color.value),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }

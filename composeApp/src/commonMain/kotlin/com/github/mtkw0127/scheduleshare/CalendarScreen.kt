@@ -269,7 +269,7 @@ fun CalendarScreen(
                                 onClick = { viewModeMenuExpanded = true }
                             ) {
                                 Text(
-                                    text = "☰",
+                                    text = if (selectedViewMode == "カレンダー") "📅" else "📋",
                                     fontSize = 24.sp,
                                     color = MaterialTheme.colorScheme.onPrimary
                                 )
@@ -303,7 +303,7 @@ fun CalendarScreen(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text("☰")
+                                            Text("📋")
                                             Text("リスト")
                                             if (selectedViewMode == "リスト") {
                                                 Text("✓", fontWeight = FontWeight.Bold)

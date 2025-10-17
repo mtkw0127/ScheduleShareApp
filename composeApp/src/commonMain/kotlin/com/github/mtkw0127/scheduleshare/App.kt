@@ -270,6 +270,9 @@ fun App() {
                         onClickDate = { day ->
                             navController.navigate(Screen.DaySchedule.from(day.value))
                         },
+                        onClickSchedule = { schedule ->
+                            navController.navigate(Screen.ScheduleDetail.from(schedule.id.value))
+                        },
                         onUserIconClick = {
                             navController.navigate(Screen.Settings)
                         },

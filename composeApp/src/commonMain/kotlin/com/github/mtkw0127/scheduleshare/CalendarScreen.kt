@@ -106,6 +106,7 @@ fun CalendarScreen(
     userColorMap: Map<User.Id, UserColor>,
     onPageChanged: (Int) -> Unit,
     onClickDate: (Day) -> Unit = {},
+    onClickSchedule: (Schedule) -> Unit = {},
     onUserIconClick: () -> Unit = {},
     onQRShareClick: () -> Unit = {},
     onUserVisibilityChange: (User.Id, Boolean) -> Unit = { _, _ -> },
@@ -395,6 +396,7 @@ fun CalendarScreen(
                         holidays = holidays,
                         userColorMap = userColorMap,
                         onClickDate = onClickDate,
+                        onClickSchedule = onClickSchedule,
                         modifier = Modifier.padding(it)
                     )
                 }
@@ -976,6 +978,7 @@ private fun MonthListView(
     holidays: Map<LocalDate, HolidayRepository.Holiday>,
     userColorMap: Map<User.Id, UserColor>,
     onClickDate: (Day) -> Unit,
+    onClickSchedule: (Schedule) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // 月の日数を取得
@@ -1005,7 +1008,8 @@ private fun MonthListView(
                 schedules = daySchedules,
                 holiday = holiday,
                 userColorMap = userColorMap,
-                onClickDate = onClickDate
+                onClickDate = onClickDate,
+                onClickSchedule = onClickSchedule
             )
         }
     }
@@ -1017,7 +1021,8 @@ private fun DateScheduleRow(
     schedules: List<Schedule>,
     holiday: HolidayRepository.Holiday?,
     userColorMap: Map<User.Id, UserColor>,
-    onClickDate: (Day) -> Unit
+    onClickDate: (Day) -> Unit,
+    onClickSchedule: (Schedule) -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -1091,7 +1096,8 @@ private fun DateScheduleRow(
                 schedules.sortedBy { it.startDateTime }.forEach { schedule ->
                     ScheduleListItem(
                         schedule = schedule,
-                        userColor = userColorMap[schedule.createUser.id] ?: UserColor.default()
+                        userColor = userColorMap[schedule.createUser.id] ?: UserColor.default(),
+                        onClick = { onClickSchedule(schedule) }
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                 }
@@ -1104,11 +1110,13 @@ private fun DateScheduleRow(
 @Composable
 private fun ScheduleListItem(
     schedule: Schedule,
-    userColor: UserColor
+    userColor: UserColor,
+    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

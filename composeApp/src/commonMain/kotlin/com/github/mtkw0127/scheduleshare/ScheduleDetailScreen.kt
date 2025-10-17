@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,7 +27,7 @@ import com.github.mtkw0127.scheduleshare.repository.UserRepository
 import org.jetbrains.compose.resources.vectorResource
 import scheduleshare.composeapp.generated.resources.Res
 import scheduleshare.composeapp.generated.resources.arrow_back
-import scheduleshare.composeapp.generated.resources.plus
+import scheduleshare.composeapp.generated.resources.edit
 
 @androidx.compose.material3.ExperimentalMaterial3Api
 @Composable
@@ -90,21 +88,17 @@ fun ScheduleDetailScreen(
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
+                },
+                actions = {
+                    IconButton(onClick = onEditClick) {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.edit),
+                            contentDescription = "編集",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                 }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onEditClick,
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.plus),
-                    contentDescription = "編集",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
         }
     ) { paddingValues ->
         Column(

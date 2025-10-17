@@ -119,7 +119,6 @@ fun ScheduleDetailScreen(
             Text(
                 text = schedule.title,
                 fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(16.dp))
